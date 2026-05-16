@@ -1,0 +1,1 @@
+src/app/middlewares/storage.middleware.ts(46,36): error TS2339: Property 'bucket' does not exist on type '{ project_id: string; bucket_name: string; credentials_path: string; }'.

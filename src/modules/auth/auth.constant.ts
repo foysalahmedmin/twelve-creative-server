@@ -1,0 +1,10 @@
+export const AUTH_CACHE_PREFIX = 'auth';
+export const AUTH_TOKEN_CACHE_TTL = 900; // 15 minutes
+export const AUTH_REFRESH_TOKEN_TTL_DAYS = 30;
+export const AUTH_ACCESS_TOKEN_TTL = '15m';
+export const AUTH_REFRESH_TOKEN_TTL = '30d';
+export const AUTH_PASSWORD_RESET_TTL_MINUTES = 15;
+export const AUTH_EMAIL_VERIFICATION_TTL_HOURS = 24;
+export const AUTH_MAX_FAILED_LOGIN_ATTEMPTS = 5;
+export const AUTH_LOCKOUT_DURATION_MINUTES = 30;
+export const AUTH_BCRYPT_SALT_ROUNDS = 12;

@@ -1,0 +1,5 @@
+export const NOTIFICATION_RECIPIENT_CACHE_PREFIX = 'notification_recipient';
+export const NOTIFICATION_RECIPIENT_CACHE_TTL = 300; // 5 minutes
+export const NOTIFICATION_RECIPIENT_DEFAULT_PAGE_LIMIT = 30;
+export const NOTIFICATION_RECIPIENT_UNREAD_CACHE_TTL = 60; // 1 minute for unread count
+export const NOTIFICATION_RECIPIENT_BULK_MARK_READ_LIMIT = 50;
