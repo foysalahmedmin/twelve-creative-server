@@ -2,6 +2,13 @@ import { Document, Model, Types } from 'mongoose';
 
 export type TTestimonialCategory = 'message' | 'video_message';
 
+export type TVideoSource = 'youtube' | 'url' | 'upload';
+
+export type TVideoRef = {
+  source: TVideoSource;
+  value: string;
+};
+
 export type TTestimonial = {
   _id?: Types.ObjectId | string;
   name: string;
@@ -9,8 +16,8 @@ export type TTestimonial = {
   image: string; // URL — headshot
   category: TTestimonialCategory;
   message?: string;
-  video_message?: string; // URL — uploaded video or external link
-  thumbnail?: string; // URL — poster for video
+  video_message?: TVideoRef; // required when category === 'video_message'
+  thumbnail?: string; // URL — optional, auto-derived for YouTube videos
   order: number;
   is_active: boolean;
   is_deleted?: boolean;

@@ -5,6 +5,18 @@ import {
   TTestimonialModel,
 } from './testimonial.type';
 
+const videoRefSchema = new Schema(
+  {
+    source: {
+      type: String,
+      enum: ['youtube', 'url', 'upload'],
+      required: true,
+    },
+    value: { type: String, required: true, trim: true },
+  },
+  { _id: false },
+);
+
 const testimonialSchema = new Schema<TTestimonialDocument>(
   {
     name: {
@@ -36,8 +48,8 @@ const testimonialSchema = new Schema<TTestimonialDocument>(
       maxlength: [400, 'Message cannot exceed 400 characters'],
     },
     video_message: {
-      type: String,
-      trim: true,
+      type: videoRefSchema,
+      default: undefined,
     },
     thumbnail: {
       type: String,
