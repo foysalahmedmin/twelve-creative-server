@@ -5,6 +5,7 @@ import categoryRoutes from '../modules/category/category.route';
 import fileRoutes from '../modules/file/file.route';
 import NotificationRecipientRoutes from '../modules/notification-recipient/notification-recipient.route';
 import notificationRoutes from '../modules/notification/notification.route';
+import showcaseVideoRoutes from '../modules/showcase-video/showcase-video.route';
 import testimonialRoutes from '../modules/testimonial/testimonial.route';
 import userRoutes from '../modules/user/user.route';
 
@@ -42,6 +43,10 @@ const moduleRoutes = [
   {
     path: '/testimonial',
     route: testimonialRoutes,
+  },
+  {
+    path: '/showcase-video',
+    route: showcaseVideoRoutes,
   },
 ];
 
