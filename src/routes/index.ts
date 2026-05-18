@@ -5,6 +5,7 @@ import categoryRoutes from '../modules/category/category.route';
 import fileRoutes from '../modules/file/file.route';
 import NotificationRecipientRoutes from '../modules/notification-recipient/notification-recipient.route';
 import notificationRoutes from '../modules/notification/notification.route';
+import testimonialRoutes from '../modules/testimonial/testimonial.route';
 import userRoutes from '../modules/user/user.route';
 
 const router = express.Router();
@@ -37,6 +38,10 @@ const moduleRoutes = [
   {
     path: '/archive',
     route: archiveRoutes,
+  },
+  {
+    path: '/testimonial',
+    route: testimonialRoutes,
   },
 ];
 
