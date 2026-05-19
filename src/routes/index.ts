@@ -5,11 +5,13 @@ import bookingRoutes from '../modules/booking/booking.route';
 import brandRoutes from '../modules/brand/brand.route';
 import categoryRoutes from '../modules/category/category.route';
 import contactMessageRoutes from '../modules/contact-message/contact-message.route';
+import faqRoutes from '../modules/faq/faq.route';
 import fileRoutes from '../modules/file/file.route';
 import NotificationRecipientRoutes from '../modules/notification-recipient/notification-recipient.route';
 import notificationRoutes from '../modules/notification/notification.route';
 import showcaseVideoRoutes from '../modules/showcase-video/showcase-video.route';
 import siteSettingRoutes from '../modules/site-setting/site-setting.route';
+import teamMemberRoutes from '../modules/team-member/team-member.route';
 import testimonialRoutes from '../modules/testimonial/testimonial.route';
 import userRoutes from '../modules/user/user.route';
 import workRoutes from '../modules/work/work.route';
@@ -72,6 +74,14 @@ const moduleRoutes = [
   {
     path: '/work',
     route: workRoutes,
+  },
+  {
+    path: '/faq',
+    route: faqRoutes,
+  },
+  {
+    path: '/team-member',
+    route: teamMemberRoutes,
   },
 ];
 
