@@ -1,7 +1,9 @@
 import express from 'express';
 import archiveRoutes from '../modules/archive/archive.route';
 import authRoutes from '../modules/auth/auth.route';
+import bookingRoutes from '../modules/booking/booking.route';
 import categoryRoutes from '../modules/category/category.route';
+import contactMessageRoutes from '../modules/contact-message/contact-message.route';
 import fileRoutes from '../modules/file/file.route';
 import NotificationRecipientRoutes from '../modules/notification-recipient/notification-recipient.route';
 import notificationRoutes from '../modules/notification/notification.route';
@@ -47,6 +49,14 @@ const moduleRoutes = [
   {
     path: '/showcase-video',
     route: showcaseVideoRoutes,
+  },
+  {
+    path: '/booking',
+    route: bookingRoutes,
+  },
+  {
+    path: '/contact-message',
+    route: contactMessageRoutes,
   },
 ];
 
