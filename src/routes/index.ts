@@ -2,14 +2,17 @@ import express from 'express';
 import archiveRoutes from '../modules/archive/archive.route';
 import authRoutes from '../modules/auth/auth.route';
 import bookingRoutes from '../modules/booking/booking.route';
+import brandRoutes from '../modules/brand/brand.route';
 import categoryRoutes from '../modules/category/category.route';
 import contactMessageRoutes from '../modules/contact-message/contact-message.route';
 import fileRoutes from '../modules/file/file.route';
 import NotificationRecipientRoutes from '../modules/notification-recipient/notification-recipient.route';
 import notificationRoutes from '../modules/notification/notification.route';
 import showcaseVideoRoutes from '../modules/showcase-video/showcase-video.route';
+import siteSettingRoutes from '../modules/site-setting/site-setting.route';
 import testimonialRoutes from '../modules/testimonial/testimonial.route';
 import userRoutes from '../modules/user/user.route';
+import workRoutes from '../modules/work/work.route';
 
 const router = express.Router();
 
@@ -57,6 +60,18 @@ const moduleRoutes = [
   {
     path: '/contact-message',
     route: contactMessageRoutes,
+  },
+  {
+    path: '/brand',
+    route: brandRoutes,
+  },
+  {
+    path: '/site-setting',
+    route: siteSettingRoutes,
+  },
+  {
+    path: '/work',
+    route: workRoutes,
   },
 ];
 
