@@ -7,6 +7,7 @@ import categoryRoutes from '../modules/category/category.route';
 import contactMessageRoutes from '../modules/contact-message/contact-message.route';
 import faqRoutes from '../modules/faq/faq.route';
 import fileRoutes from '../modules/file/file.route';
+import insightRoutes from '../modules/insight/insight.route';
 import NotificationRecipientRoutes from '../modules/notification-recipient/notification-recipient.route';
 import notificationRoutes from '../modules/notification/notification.route';
 import showcaseVideoRoutes from '../modules/showcase-video/showcase-video.route';
@@ -82,6 +83,10 @@ const moduleRoutes = [
   {
     path: '/team-member',
     route: teamMemberRoutes,
+  },
+  {
+    path: '/insight',
+    route: insightRoutes,
   },
 ];
 
