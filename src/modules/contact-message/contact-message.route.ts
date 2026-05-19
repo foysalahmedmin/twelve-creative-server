@@ -9,7 +9,7 @@ const router = express.Router();
 
 const publicSubmitLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
-  max: 12,
+  max: 30,
   standardHeaders: true,
   legacyHeaders: false,
   message: {

@@ -7,10 +7,12 @@ import * as BookingValidations from './booking.validator';
 
 const router = express.Router();
 
-// Stricter per-IP limit on the public submission endpoint.
+// Per-IP limit on the public submission endpoint.
+// 30/hr is enough to soak up a NAT'd corporate office's legitimate traffic
+// without making automated abuse trivial. Tune via env if a real campaign hits it.
 const publicSubmitLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
-  max: 12,
+  max: 30,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
