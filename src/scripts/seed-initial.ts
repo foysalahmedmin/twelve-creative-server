@@ -1,0 +1,807 @@
+/**
+ * Initial content seed for the Twelve Creative database.
+ *
+ * Populates every module that drives a public-facing surface so the site
+ * never renders empty in a demo or fresh-launch scenario. Content mirrors
+ * the static seed data the frontend used pre-backend (testimonials, videos,
+ * works, brands, FAQs, team) plus 3 launch-ready Insight articles + the
+ * site contact/socials singleton.
+ *
+ * Idempotent — by default each module is skipped if it already has any
+ * non-deleted document. Pass `--force` to clear and reseed every module.
+ *
+ * Usage:
+ *   pnpm seed:initial            # safe — only seeds empty modules
+ *   pnpm seed:initial --force    # destructive — clears + reseeds everything
+ *
+ * Does NOT seed: users (use pnpm seed:admin), bookings, contact-messages
+ * (those are user-submitted and should start empty).
+ */
+
+/* eslint-disable no-console */
+import mongoose from 'mongoose';
+import { disconnectDB, initializeDB } from '../config/db';
+import { Brand } from '../modules/brand/brand.model';
+import { Faq } from '../modules/faq/faq.model';
+import { Insight } from '../modules/insight/insight.model';
+import { ShowcaseVideo } from '../modules/showcase-video/showcase-video.model';
+import { SiteSetting } from '../modules/site-setting/site-setting.model';
+import { TeamMember } from '../modules/team-member/team-member.model';
+import { Testimonial } from '../modules/testimonial/testimonial.model';
+import { Work } from '../modules/work/work.model';
+
+const FORCE = process.argv.includes('--force');
+
+const SAMPLE_VIDEO =
+  'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
+
+// ─── Testimonials ────────────────────────────────────────────────────────────
+const TESTIMONIALS = [
+  // Video testimonials
+  {
+    name: 'Elena Marchetti',
+    designation: 'Owner, Casa del Mar Restaurant Group',
+    image:
+      'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=400&h=400&fit=crop&auto=format',
+    category: 'video_message' as const,
+    video_message: { source: 'url' as const, value: SAMPLE_VIDEO },
+    thumbnail:
+      'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=768&h=512&fit=crop&auto=format',
+    order: 1,
+    is_active: true,
+  },
+  {
+    name: 'Daniel Hartwell',
+    designation: 'Founder, Meridian Properties',
+    image:
+      'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400&h=400&fit=crop&auto=format',
+    category: 'video_message' as const,
+    video_message: { source: 'url' as const, value: SAMPLE_VIDEO },
+    thumbnail:
+      'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=768&h=512&fit=crop&auto=format',
+    order: 2,
+    is_active: true,
+  },
+  {
+    name: 'Marcus Reid',
+    designation: 'Director, Velocity Aviation',
+    image:
+      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&auto=format',
+    category: 'video_message' as const,
+    video_message: { source: 'url' as const, value: SAMPLE_VIDEO },
+    thumbnail:
+      'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=768&h=512&fit=crop&auto=format',
+    order: 3,
+    is_active: true,
+  },
+  {
+    name: 'Priya Anand',
+    designation: 'Managing Partner, Brightline Advisors',
+    image:
+      'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&h=400&fit=crop&auto=format',
+    category: 'video_message' as const,
+    video_message: { source: 'url' as const, value: SAMPLE_VIDEO },
+    thumbnail:
+      'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=768&h=512&fit=crop&auto=format',
+    order: 4,
+    is_active: true,
+  },
+  // Text testimonials
+  {
+    name: 'Jacob Nguyen',
+    designation: 'Chef & Partner, Hudson Hospitality',
+    image:
+      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop&auto=format',
+    category: 'message' as const,
+    message:
+      'Before Twelve Creative, our content was inconsistent and reservations were unpredictable. Within months, the brand felt sharper and the calendar started filling itself.',
+    order: 5,
+    is_active: true,
+  },
+  {
+    name: 'Sofia Reyes',
+    designation: 'VP Marketing, Atlas Developments',
+    image:
+      'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop&auto=format',
+    category: 'message' as const,
+    message:
+      'They positioned the project, built the film, ran the campaign, and installed the CRM. We finally saw the path from interest to qualified buyer.',
+    order: 6,
+    is_active: true,
+  },
+  {
+    name: 'Aaron Whitfield',
+    designation: 'Founder, Skyline Charter',
+    image:
+      'https://images.unsplash.com/photo-1463453091185-61582044d556?w=400&h=400&fit=crop&auto=format',
+    category: 'message' as const,
+    message:
+      'Aviation buyers move on trust. Twelve Creative built the founder content and follow-up system that finally matched the level of our service.',
+    order: 7,
+    is_active: true,
+  },
+  {
+    name: 'Naomi Brooks',
+    designation: 'Managing Director, Forge Advisors',
+    image:
+      'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=400&fit=crop&auto=format',
+    category: 'message' as const,
+    message:
+      'What we needed was structure — clearer message, stronger website, working follow-up. They delivered all of it as one connected system.',
+    order: 8,
+    is_active: true,
+  },
+];
+
+// ─── Showcase Videos (Visual Library) ────────────────────────────────────────
+const SHOWCASE_VIDEOS = [
+  {
+    video: { source: 'url' as const, value: SAMPLE_VIDEO },
+    thumbnail:
+      'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=512&h=912&fit=crop&auto=format',
+    alt: 'Hospitality brand film — restaurant interior',
+    order: 1,
+    is_active: true,
+  },
+  {
+    video: { source: 'url' as const, value: SAMPLE_VIDEO },
+    thumbnail:
+      'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=512&h=912&fit=crop&auto=format',
+    alt: 'Real estate project reveal — luxury residential',
+    order: 2,
+    is_active: true,
+  },
+  {
+    video: { source: 'url' as const, value: SAMPLE_VIDEO },
+    thumbnail:
+      'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=512&h=912&fit=crop&auto=format',
+    alt: 'Aviation charter — founder film',
+    order: 3,
+    is_active: true,
+  },
+  {
+    video: { source: 'url' as const, value: SAMPLE_VIDEO },
+    thumbnail:
+      'https://images.unsplash.com/photo-1559339352-11d035aa65de?w=512&h=912&fit=crop&auto=format',
+    alt: 'Restaurant menu launch — campaign asset',
+    order: 4,
+    is_active: true,
+  },
+];
+
+// ─── Brands ──────────────────────────────────────────────────────────────────
+// Wordmark logos via placehold.co — clean text-based placeholders the client
+// can swap for real logos one by one through the admin UI.
+const brandLogo = (name: string) =>
+  `https://placehold.co/240x80/0a0a0a/ffffff?text=${encodeURIComponent(name)}`;
+
+const BRANDS = [
+  'Casa del Mar',
+  'Hudson Hospitality',
+  'Meridian Properties',
+  'Atlas Developments',
+  'Velocity Aviation',
+  'Skyline Charter',
+  'Forge Advisors',
+  'Brightline Partners',
+  'Vesta Group',
+  'Obsidian Real Estate',
+  'Northstar Aviation',
+  'Monarch Consulting',
+].map((name, index) => ({
+  name,
+  logo: brandLogo(name),
+  order: index + 1,
+  is_active: true,
+}));
+
+// ─── FAQs ────────────────────────────────────────────────────────────────────
+const FAQS = [
+  {
+    question: 'What does Twelve Creative actually do?',
+    answer:
+      'We build the marketing structure behind business growth. We work across positioning, creative production, distribution, websites, CRM, and automation — connecting these pieces so the business has a clearer path from attention to revenue.',
+    group: 'General',
+  },
+  {
+    question: 'How is Twelve Creative different from a typical agency?',
+    answer:
+      'Most agencies focus on one thing — content, ads, websites, or strategy. We build these pieces together. We look at the full path: how the business is positioned, how it is presented, how people discover it, and what happens after they show interest. The goal is a system, not just an activity.',
+    group: 'General',
+  },
+  {
+    question: 'What types of businesses do you work with?',
+    answer:
+      'Restaurant groups and hospitality brands, real estate developers and luxury property companies, private aviation and charter businesses, professional service firms, founders building personal brands connected to real offers, and companies without a full internal marketing department.',
+    group: 'General',
+  },
+  {
+    question: 'What does the process look like?',
+    answer:
+      'Understand the business, clarify the position, build the creative, launch distribution, install the system, and improve based on reality. We start with diagnosis, then move through positioning, creative, distribution, and backend installation — refining over time.',
+    group: 'Process',
+  },
+  {
+    question: 'How do we get started?',
+    answer:
+      'Submit an inquiry through the contact page. Tell us what you are building, where the business is now, and what needs to move. If the project is aligned, we will reach out to schedule a conversation.',
+    group: 'Process',
+  },
+  {
+    question: 'Do you work on a project basis or retainer?',
+    answer:
+      'Both. We offer defined project buildouts (System Install) for businesses that need a specific deliverable, and ongoing growth partnerships for companies that want embedded strategic and creative support over time.',
+    group: 'Pricing',
+  },
+  {
+    question: 'Do you show pricing on the website?',
+    answer:
+      'No. Every business is different. The scope, timeline, and investment depend on what needs to be built. The best first step is a conversation.',
+    group: 'Pricing',
+  },
+  {
+    question: 'What industries do you have the most experience in?',
+    answer:
+      'Hospitality — restaurants, lounges, rooftops, chefs, and hospitality groups. Real Estate — developers, luxury properties, commercial spaces. Aviation — private aviation brands and charter professionals. Professional Services — firms that depend on trust and referrals.',
+    group: 'General',
+  },
+].map((faq, index) => ({ ...faq, order: index + 1, is_active: true }));
+
+// ─── Team Members ────────────────────────────────────────────────────────────
+const TEAM = [
+  {
+    name: 'Carlos Doce',
+    role: 'Founder, Twelve Creative',
+    bio: 'Founder of Twelve Creative. 15+ years across film, production, and growth systems. NYU film + business.',
+    image:
+      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&h=600&fit=crop&auto=format',
+    socials: {
+      linkedin: 'https://www.linkedin.com/in/carlosdoce',
+    },
+  },
+  {
+    name: 'Strategy Lead',
+    role: 'Positioning & Offer',
+    bio: 'Shapes the message, offer, and angle every campaign sits on top of.',
+    image:
+      'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=500&h=600&fit=crop&auto=format',
+  },
+  {
+    name: 'Creative Director',
+    role: 'Film & Photography',
+    bio: 'Leads brand films, founder content, and the visual identity behind every project we ship.',
+    image:
+      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=500&h=600&fit=crop&auto=format',
+  },
+  {
+    name: 'Distribution Lead',
+    role: 'Paid Media & Campaigns',
+    bio: 'Owns the channel mix — paid social, email, SMS, retargeting — and the analytics behind it.',
+    image:
+      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=500&h=600&fit=crop&auto=format',
+  },
+  {
+    name: 'Systems Engineer',
+    role: 'CRM & Automation',
+    bio: 'Builds the backend that turns inbound interest into qualified, follow-through-ready conversations.',
+    image:
+      'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=500&h=600&fit=crop&auto=format',
+  },
+  {
+    name: 'Account Partner',
+    role: 'Client Operations',
+    bio: 'Day-to-day partner for clients — coordinates production, decisions, and timelines across teams.',
+    image:
+      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&h=600&fit=crop&auto=format',
+  },
+].map((member, index) => ({ ...member, order: index + 1, is_active: true }));
+
+// ─── Works (Case Studies) ────────────────────────────────────────────────────
+const WORKS = [
+  {
+    slug: 'hudson-hospitality',
+    type: 'Hospitality',
+    title:
+      'Helping a restaurant concept become easier to market — and eventually sell.',
+    description:
+      'A restaurant group had been trying to sell a sister concept for several years. Twelve Creative supported the brand with ongoing content, website updates, social, campaign execution, and a stronger digital presence — making the concept more visible, more organized, and more attractive in the market.',
+    image:
+      'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1280&h=720&fit=crop&auto=format',
+    image_alt: 'Restaurant interior — Hudson Hospitality',
+    metrics: [
+      { label: 'Revenue', value: '+40%', sub: 'Year one growth' },
+      { label: 'Timeline', value: '12 mo', sub: 'Engagement length' },
+      { label: 'Outcome', value: '3 sites', sub: 'Successfully sold' },
+      { label: 'Reach', value: '+220%', sub: 'Local awareness' },
+    ],
+    tag_slugs: ['Hospitality', 'Brand Films', 'Campaign Execution'],
+    hero_stats: [
+      { label: 'Revenue Growth', value: '+40%' },
+      { label: 'Locations Sold', value: '3 of 3' },
+    ],
+    client: {
+      name: 'Hudson Hospitality',
+      industry: 'Restaurant Group',
+      domain: 'hudsonhospitality.example',
+      employees: '50-200',
+      tags: ['Restaurant', 'Hospitality', 'Multi-location'],
+      desc: 'A multi-concept restaurant group operating across hospitality categories — full-service dining, a sister pizzeria, and a private events space.',
+      logo: 'https://images.unsplash.com/photo-1559339352-11d035aa65de?w=128&h=128&fit=crop&auto=format',
+    },
+    situation_intro:
+      'The group was trying to sell their sister pizzeria concept. The concept had loyal regulars but inconsistent visibility, limited content, and a digital presence that did not match the quality of the in-room experience.',
+    challenge_intro:
+      'Make the concept easier to market, easier to talk about, and easier for buyers to evaluate — without compromising the existing guest experience.',
+    challenge_items: [
+      {
+        title: 'Inconsistent content',
+        desc: "Social and web content was sporadic, often inconsistent with the brand's actual quality.",
+      },
+      {
+        title: 'Weak digital presence',
+        desc: 'The website did not communicate the concept clearly to potential buyers or guests.',
+      },
+      {
+        title: 'No campaign rhythm',
+        desc: 'Seasonal moments and events were not being promoted in any organized way.',
+      },
+    ],
+    solution_intro:
+      'We installed a clear monthly content rhythm, sharpened the website, and ran campaigns around key seasonal moments — making the concept feel alive, organized, and credible.',
+    solution_phases: [
+      {
+        phase: 'Positioning & Audit',
+        time: 'Month 1',
+        desc: "Clarified the concept's positioning, target guest, and the story buyers needed to believe.",
+      },
+      {
+        phase: 'Website & Content Refresh',
+        time: 'Month 2',
+        desc: 'Updated the website with cleaner messaging, stronger photography, and clearer paths to reservations.',
+      },
+      {
+        phase: 'Ongoing Production',
+        time: 'Months 3-12',
+        desc: 'Monthly content production, paid social campaigns, and email blasts tied to events and seasonal launches.',
+      },
+    ],
+    outcome_desc:
+      'After one year of working together, revenue increased by approximately 40%. The improved visibility and consistency helped attract buyers and contributed to the successful sale of all three locations.',
+    outcome_video: { source: 'url' as const, value: SAMPLE_VIDEO },
+    testimonial: {
+      quote:
+        "They didn't just make our content look better. They made the business easier to talk about — and easier to sell.",
+      name: 'Elena Marchetti',
+      role: 'Owner, Hudson Hospitality',
+      avatar_url:
+        'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=128&h=128&fit=crop&auto=format',
+    },
+    calendly_url: '/contact',
+    order: 1,
+    is_published: true,
+  },
+  {
+    slug: 'meridian-properties',
+    type: 'Real Estate',
+    title: 'Turning a luxury development into a clear, credible buyer story.',
+    description:
+      'A real estate developer needed to position a new residential project for serious buyers and brokers. Twelve Creative built the positioning, sales film, broker assets, and lead system that supported the full sales cycle.',
+    image:
+      'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1280&h=720&fit=crop&auto=format',
+    image_alt: 'Luxury residential development — Meridian Properties',
+    metrics: [
+      { label: 'Qualified Leads', value: '+145%', sub: 'Vs. prior launch' },
+      { label: 'Sales Cycle', value: '-30%', sub: 'Time to commit' },
+      { label: 'Broker Activity', value: '3×', sub: 'Engagement' },
+      { label: 'Timeline', value: '6 mo', sub: 'Pre-launch to close' },
+    ],
+    tag_slugs: ['Real Estate', 'Sales Film', 'Lead Generation'],
+    hero_stats: [
+      { label: 'Qualified Leads', value: '+145%' },
+      { label: 'Sales Cycle', value: '-30%' },
+    ],
+    client: {
+      name: 'Meridian Properties',
+      industry: 'Real Estate Development',
+      domain: 'meridianproperties.example',
+      employees: '20-50',
+      tags: ['Luxury', 'Residential', 'Development'],
+      desc: 'A real estate developer focused on luxury residential and mixed-use projects in coastal markets.',
+      logo: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=128&h=128&fit=crop&auto=format',
+    },
+    situation_intro:
+      'The team had a strong project but a weak presentation. Renders existed but the story did not — buyers and brokers struggled to understand the value quickly.',
+    challenge_intro:
+      'Turn the project into a clear, credible, marketable story — and connect that story to a real lead system.',
+    challenge_items: [
+      {
+        title: 'Weak positioning',
+        desc: "Marketing materials emphasized features instead of the buyer's reason to act.",
+      },
+      {
+        title: 'No central lead path',
+        desc: 'Inquiries were scattered across forms, brokers, and email — with no working CRM.',
+      },
+      {
+        title: 'Broker-facing gaps',
+        desc: 'Brokers had no premium materials to share with their networks.',
+      },
+    ],
+    solution_intro:
+      "We rebuilt the project's story end-to-end: positioning, sales film, broker assets, landing page, and CRM-backed lead system.",
+    solution_phases: [
+      {
+        phase: 'Positioning',
+        time: 'Weeks 1-2',
+        desc: 'Defined the buyer profile, value angle, and core sales narrative.',
+      },
+      {
+        phase: 'Sales Film & Assets',
+        time: 'Weeks 3-6',
+        desc: 'Produced a project film, broker decks, and a campaign-ready landing page.',
+      },
+      {
+        phase: 'Lead System Install',
+        time: 'Weeks 7-9',
+        desc: 'Connected the landing page to a CRM with qualification, follow-up, and reporting.',
+      },
+    ],
+    outcome_desc:
+      'Qualified inquiries increased 145% versus the prior launch, and the average buyer commitment timeline compressed by roughly 30%. Brokers engaged the materials three times more than before.',
+    outcome_video: { source: 'url' as const, value: SAMPLE_VIDEO },
+    testimonial: {
+      quote:
+        'They positioned the project, built the film, ran the campaign, and installed the CRM. We finally saw the path from interest to qualified buyer.',
+      name: 'Daniel Hartwell',
+      role: 'Founder, Meridian Properties',
+      avatar_url:
+        'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=128&h=128&fit=crop&auto=format',
+    },
+    calendly_url: '/contact',
+    order: 2,
+    is_published: true,
+  },
+  {
+    slug: 'skyline-charter',
+    type: 'Aviation',
+    title: 'Building the trust infrastructure for a private aviation brand.',
+    description:
+      'A charter business needed to look and feel as serious as the service they delivered. We built the founder content, lead funnel, and follow-up system that matched their level — and started attracting the right conversations.',
+    image:
+      'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=1280&h=720&fit=crop&auto=format',
+    image_alt: 'Private aviation — Skyline Charter',
+    metrics: [
+      { label: 'Qualified Calls', value: '+180%', sub: 'Quarter over quarter' },
+      { label: 'Inquiries', value: '+92%', sub: 'Inbound' },
+      { label: 'Close Rate', value: '+22%', sub: 'On qualified' },
+      { label: 'Timeline', value: '5 mo', sub: 'End-to-end build' },
+    ],
+    tag_slugs: ['Aviation', 'Founder Content', 'Lead Funnel'],
+    hero_stats: [
+      { label: 'Qualified Calls', value: '+180%' },
+      { label: 'Close Rate', value: '+22%' },
+    ],
+    client: {
+      name: 'Skyline Charter',
+      industry: 'Private Aviation',
+      domain: 'skylinecharter.example',
+      employees: '10-50',
+      tags: ['Charter', 'Aviation', 'Founder-led'],
+      desc: 'A founder-led private aviation brand operating charter services for high-trust buyers and corporate clients.',
+      logo: 'https://images.unsplash.com/photo-1540962351504-03099e0a754b?w=128&h=128&fit=crop&auto=format',
+    },
+    situation_intro:
+      'The founder ran a serious operation but the marketing felt generic. Buyers landing on the site could not tell what made this charter different from any other listing.',
+    challenge_intro:
+      "Communicate trust, access, safety, and process — and create a qualification path that protected the founder's time.",
+    challenge_items: [
+      {
+        title: 'Generic marketing',
+        desc: 'Existing materials looked like every other charter listing — no clear differentiator.',
+      },
+      {
+        title: 'No founder presence',
+        desc: 'The founder was the trust anchor but never appeared in the content.',
+      },
+      {
+        title: 'Wasted founder time',
+        desc: 'Unqualified inquiries were eating into the founder’s focus on real deals.',
+      },
+    ],
+    solution_intro:
+      'We produced founder-led video content, rebuilt the inquiry path with qualification logic, and connected the system to automated follow-up.',
+    solution_phases: [
+      {
+        phase: 'Founder Content',
+        time: 'Weeks 1-3',
+        desc: 'Filmed founder interviews and behind-the-scenes content that established trust.',
+      },
+      {
+        phase: 'Qualification Funnel',
+        time: 'Weeks 4-6',
+        desc: 'Built an inquiry path that pre-qualified leads before reaching the founder.',
+      },
+      {
+        phase: 'Automation & Follow-up',
+        time: 'Weeks 7-8',
+        desc: 'CRM, email sequences, and SMS reminders so no qualified lead fell through the cracks.',
+      },
+    ],
+    outcome_desc:
+      "Qualified calls increased 180% quarter over quarter while the founder spent less time on unqualified leads. Close rate on qualified opportunities improved by 22%.",
+    outcome_video: { source: 'url' as const, value: SAMPLE_VIDEO },
+    testimonial: {
+      quote:
+        'Aviation buyers move on trust. Twelve Creative built the founder content and follow-up system that finally matched the level of our service.',
+      name: 'Aaron Whitfield',
+      role: 'Founder, Skyline Charter',
+      avatar_url:
+        'https://images.unsplash.com/photo-1463453091185-61582044d556?w=128&h=128&fit=crop&auto=format',
+    },
+    calendly_url: '/contact',
+    order: 3,
+    is_published: true,
+  },
+];
+
+// ─── Insights / Blog Articles ────────────────────────────────────────────────
+const INSIGHTS = [
+  {
+    slug: 'why-most-marketing-fails-structure',
+    title: 'Why most marketing fails: a structure problem, not a content problem',
+    excerpt:
+      "The businesses we work with rarely have a content problem. They have a structure problem. Here's how to tell the difference — and what to do about it.",
+    cover:
+      'https://images.unsplash.com/photo-1552664730-d307ca884978?w=1280&h=720&fit=crop&auto=format',
+    category: 'Positioning',
+    status: 'published' as const,
+    content: `## The symptom looks like content
+
+When marketing isn't working, the first instinct is almost always to "make more content." Post more on social. Run more ads. Refresh the website. Add a podcast.
+
+This rarely fixes anything. The problem is usually structural, not creative.
+
+## The real diagnosis
+
+Ask three questions before producing another asset:
+
+1. **Can the business be explained in one sentence that the buyer actually wants?** If not, more content amplifies confusion.
+2. **Does attention have somewhere to go?** A landing page, a calendar, a clear next step — without it, ads burn money.
+3. **What happens after someone shows interest?** Without follow-up, qualified leads cool off in a day.
+
+If any of these are no, the answer isn't more content. It's structure.
+
+## What structure means
+
+- **Positioning** — what the business is, who it's for, why it matters.
+- **Distribution** — where attention is found, in what context, at what frequency.
+- **Conversion path** — how attention becomes interest, interest becomes a conversation, and a conversation becomes revenue.
+- **Follow-up system** — what happens after the first touch, automated and reliable.
+
+Content is the surface. Structure is what holds it together. Build the structure first, and the same content suddenly works.
+
+## A useful test
+
+For each piece of marketing you have running right now, trace the path from "stranger sees it" to "money in the business." If any step in that path is fuzzy, that's where to focus next — not on more content for the top of the funnel.`,
+  },
+  {
+    slug: 'positioning-before-production',
+    title: 'Positioning comes first. Production is the easy part.',
+    excerpt:
+      'Beautiful content for a business that hasn’t clarified its position is expensive decoration. Position first, then produce.',
+    cover:
+      'https://images.unsplash.com/photo-1531403009284-440f080d1e12?w=1280&h=720&fit=crop&auto=format',
+    category: 'Strategy',
+    status: 'published' as const,
+    content: `## The expensive shortcut
+
+A common pattern: a business spends $50k on a beautiful brand film, runs it for a quarter, and sees no measurable lift. The film looks great. The metrics don't move.
+
+Almost every time we audit one of these, the same root cause shows up: **the business never clarified its position before they produced**.
+
+## What positioning actually is
+
+Positioning is not a tagline. It's a clear answer to:
+
+- **Who is this for?** Not "everyone who needs marketing" — a specific buyer with a specific situation.
+- **What problem does this solve?** The buyer's problem, in their own words.
+- **Why this business, not any other?** The honest, defensible reason.
+- **What does the buyer need to believe before they'll act?** This is the one most businesses skip.
+
+Without these answers, every piece of content has to do the explaining itself — which makes it bloated, generic, and forgettable.
+
+## With positioning, production is easy
+
+When positioning is sharp, content writes itself. The video brief is one paragraph. The landing page headline is obvious. The ad creative is a riff on a single core idea.
+
+Without it, every brief becomes a fight, every revision drags, and the final asset still doesn't land.
+
+## The order of operations
+
+1. **Position** — until you can explain the business in one sentence the buyer wants to read.
+2. **Audit** — what already exists, what's missing, what's confusing.
+3. **Produce** — focused on the message, not the format.
+4. **Distribute** — to the audience you actually want, in the context they're already in.
+5. **Connect** — to a path that turns interest into a conversation.
+
+This order is boring. It also works.`,
+  },
+  {
+    slug: 'creative-without-systems',
+    title: "Creative without systems: why great content still doesn't convert",
+    excerpt:
+      "Beautiful work is necessary but not sufficient. The systems behind it decide whether attention ever turns into revenue.",
+    cover:
+      'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1280&h=720&fit=crop&auto=format',
+    category: 'Systems',
+    status: 'published' as const,
+    content: `## The disconnect
+
+We talk to a lot of businesses with great content and bad outcomes. Their videos look like they came from a top-tier production house. Their photography is editorial. Their social feed is enviable.
+
+Their pipeline is empty.
+
+## Where the gap shows up
+
+Walk the path a real buyer takes:
+
+- They see a piece of content. ✅ Beautiful.
+- They click through. ✅ Site loads cleanly.
+- They want to know more. ❓ No clear next step.
+- They submit a form. ❓ No autoresponder, no calendar.
+- They wait. ❌ Three days pass.
+- They forget.
+
+The content did its job. The system didn't exist. The buyer leaves.
+
+## What "system" actually means
+
+It's unglamorous infrastructure:
+
+- **A landing page that converts** — clear offer, clear ask, one path forward.
+- **A CRM that captures every inquiry** — not five spreadsheets and an email inbox.
+- **Automated follow-up** — within minutes, not days.
+- **A calendar that books itself** — not a back-and-forth chain of emails.
+- **A reporting layer** — so you can see what's working and what isn't.
+
+None of this is creative work. All of it determines whether creative work pays off.
+
+## How to think about the investment
+
+Every dollar spent on creative without the system behind it is a dollar spent on awareness — which is fine, but rarely what the business actually needed.
+
+If the brief is "we need to grow," start with the system. The content will work harder against the same audience, the same budget, the same effort.`,
+  },
+];
+
+// ─── Site Setting (singleton) ────────────────────────────────────────────────
+const SITE_SETTING = {
+  contact_email: 'hello@twelvecreative.io',
+  contact_phone: '+1 (000) 000-0000',
+  contact_address: 'New York, NY',
+  booking_notification_email: 'hello@twelvecreative.io',
+  social: {
+    instagram: 'https://www.instagram.com/twelvecreative',
+    linkedin: 'https://www.linkedin.com/company/twelvecreative',
+    youtube: 'https://www.youtube.com/@twelvecreative',
+    x: 'https://x.com/twelvecreative',
+  },
+};
+
+// ─── Runner ──────────────────────────────────────────────────────────────────
+
+interface SeedReport {
+  module: string;
+  action: 'inserted' | 'skipped' | 'replaced';
+  count: number;
+}
+
+async function seedModule<T>(
+  name: string,
+  model: { countDocuments: (filter: object) => { exec: () => Promise<number> }; deleteMany: (filter: object) => Promise<unknown>; insertMany: (docs: T[]) => Promise<unknown[]> },
+  docs: T[],
+): Promise<SeedReport> {
+  const existing = await model.countDocuments({ is_deleted: { $ne: true } }).exec();
+
+  if (existing > 0 && !FORCE) {
+    return { module: name, action: 'skipped', count: existing };
+  }
+
+  if (FORCE) {
+    await model.deleteMany({});
+  }
+
+  await model.insertMany(docs);
+  return {
+    module: name,
+    action: FORCE && existing > 0 ? 'replaced' : 'inserted',
+    count: docs.length,
+  };
+}
+
+async function seedSiteSetting(): Promise<SeedReport> {
+  const existing = await SiteSetting.findOne();
+
+  if (existing && !FORCE) {
+    return { module: 'site-setting', action: 'skipped', count: 1 };
+  }
+
+  if (existing && FORCE) {
+    await SiteSetting.deleteMany({});
+  }
+
+  await SiteSetting.create(SITE_SETTING);
+  return {
+    module: 'site-setting',
+    action: existing ? 'replaced' : 'inserted',
+    count: 1,
+  };
+}
+
+async function run(): Promise<void> {
+  console.log(
+    FORCE
+      ? '⚠️  --force enabled — existing data in each module will be replaced.'
+      : 'ℹ️  Safe mode — modules with existing data will be skipped (use --force to override).',
+  );
+
+  await initializeDB();
+
+  try {
+    const reports: SeedReport[] = [];
+
+    // Insights use save() hooks (read_minutes, published_at) — can't use insertMany for them.
+    const insightCount = await Insight.countDocuments({
+      is_deleted: { $ne: true },
+    });
+    if (insightCount > 0 && !FORCE) {
+      reports.push({
+        module: 'insight',
+        action: 'skipped',
+        count: insightCount,
+      });
+    } else {
+      if (FORCE) await Insight.deleteMany({});
+      for (const doc of INSIGHTS) {
+        await Insight.create(doc);
+      }
+      reports.push({
+        module: 'insight',
+        action: FORCE && insightCount > 0 ? 'replaced' : 'inserted',
+        count: INSIGHTS.length,
+      });
+    }
+
+    reports.push(await seedModule('testimonial', Testimonial, TESTIMONIALS));
+    reports.push(
+      await seedModule('showcase-video', ShowcaseVideo, SHOWCASE_VIDEOS),
+    );
+    reports.push(await seedModule('brand', Brand, BRANDS));
+    reports.push(await seedModule('faq', Faq, FAQS));
+    reports.push(await seedModule('team-member', TeamMember, TEAM));
+    reports.push(await seedModule('work', Work, WORKS));
+    reports.push(await seedSiteSetting());
+
+    console.log('\n📊 Seed report:');
+    for (const r of reports) {
+      const icon =
+        r.action === 'inserted'
+          ? '✅'
+          : r.action === 'replaced'
+            ? '♻️ '
+            : '⏭️ ';
+      console.log(
+        `  ${icon} ${r.module.padEnd(20)} ${r.action.padEnd(10)} ${r.count} doc(s)`,
+      );
+    }
+    console.log('\n✨ Done.');
+  } catch (err) {
+    console.error('❌ Seed failed:', err);
+    process.exitCode = 1;
+  } finally {
+    await disconnectDB();
+    await mongoose.connection.close();
+  }
+}
+
+run();
