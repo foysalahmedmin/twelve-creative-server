@@ -13,8 +13,10 @@ export const createShowcaseVideo = catchAsync(async (req, res) => {
   });
 });
 
-export const getPublicShowcaseVideos = catchAsync(async (_req, res) => {
-  const result = await ShowcaseVideoServices.getPublicShowcaseVideos();
+export const getPublicShowcaseVideos = catchAsync(async (req, res) => {
+  const raw = typeof req.query.aspect === 'string' ? req.query.aspect : undefined;
+  const aspect = raw === 'reel' || raw === 'landscape' ? raw : undefined;
+  const result = await ShowcaseVideoServices.getPublicShowcaseVideos(aspect);
   sendResponse(res, {
     status: httpStatus.OK,
     success: true,

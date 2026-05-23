@@ -9,10 +9,12 @@ export const createShowcaseVideo = async (
   return await ShowcaseVideoRepository.create(data);
 };
 
-export const getPublicShowcaseVideos = async (): Promise<{
+export const getPublicShowcaseVideos = async (
+  aspect?: 'reel' | 'landscape',
+): Promise<{
   data: TShowcaseVideo[];
 }> => {
-  const data = await ShowcaseVideoRepository.findPublic();
+  const data = await ShowcaseVideoRepository.findPublic(aspect);
   return { data };
 };
 

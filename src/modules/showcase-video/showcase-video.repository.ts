@@ -29,8 +29,12 @@ export const findByIdWithDeleted = async (
     .lean();
 };
 
-export const findPublic = async (): Promise<TShowcaseVideo[]> => {
-  return await ShowcaseVideo.find({ is_active: true })
+export const findPublic = async (
+  aspect?: 'reel' | 'landscape',
+): Promise<TShowcaseVideo[]> => {
+  const filter: Record<string, unknown> = { is_active: true };
+  if (aspect) filter.aspect = aspect;
+  return await ShowcaseVideo.find(filter)
     .sort({ order: 1, created_at: -1 })
     .lean();
 };

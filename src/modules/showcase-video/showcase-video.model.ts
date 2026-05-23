@@ -34,6 +34,12 @@ const showcaseVideoSchema = new Schema<TShowcaseVideoDocument>(
       minlength: [2, 'Alt must be at least 2 characters'],
       maxlength: [180, 'Alt cannot exceed 180 characters'],
     },
+    aspect: {
+      type: String,
+      enum: ['reel', 'landscape'],
+      default: 'reel',
+      required: true,
+    },
     order: { type: Number, default: 0 },
     is_active: { type: Boolean, default: true },
     is_deleted: { type: Boolean, default: false, select: false },
@@ -45,6 +51,7 @@ const showcaseVideoSchema = new Schema<TShowcaseVideoDocument>(
 );
 
 showcaseVideoSchema.index({ is_active: 1 });
+showcaseVideoSchema.index({ aspect: 1 });
 showcaseVideoSchema.index({ order: 1 });
 showcaseVideoSchema.index({ created_at: -1 });
 

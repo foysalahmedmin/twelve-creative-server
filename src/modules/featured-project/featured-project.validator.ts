@@ -16,33 +16,34 @@ const videoRefSchema = z.object({
   value: urlOrPath,
 });
 
-const aspectEnum = z.enum(['reel', 'landscape']);
+const aspectEnum = z.enum(['reel', 'video']);
 
 const baseBody = z.object({
-  video: videoRefSchema,
-  thumbnail: urlOrPath.optional(),
-  alt: z.string().trim().min(2).max(180),
+  title: z.string().trim().min(2).max(200),
+  category: z.string().trim().min(2).max(80),
   aspect: aspectEnum.optional(),
+  thumbnail: urlOrPath,
+  video: videoRefSchema,
   order: z.coerce.number().int().nonnegative().optional(),
   is_active: z
     .preprocess((v) => (typeof v === 'string' ? v === 'true' : v), z.boolean())
     .optional(),
 });
 
-export const showcaseVideoIdSchema = z.object({
+export const featuredProjectIdSchema = z.object({
   params: z.object({ id: idSchema }),
 });
 
-export const createShowcaseVideoValidationSchema = z.object({
+export const createFeaturedProjectValidationSchema = z.object({
   body: baseBody,
 });
 
-export const updateShowcaseVideoValidationSchema = z.object({
+export const updateFeaturedProjectValidationSchema = z.object({
   params: z.object({ id: idSchema }),
   body: baseBody.partial(),
 });
 
-export const reorderShowcaseVideosValidationSchema = z.object({
+export const reorderFeaturedProjectsValidationSchema = z.object({
   body: z.object({
     items: z
       .array(

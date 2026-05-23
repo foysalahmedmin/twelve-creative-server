@@ -6,6 +6,7 @@ import brandRoutes from '../modules/brand/brand.route';
 import categoryRoutes from '../modules/category/category.route';
 import contactMessageRoutes from '../modules/contact-message/contact-message.route';
 import faqRoutes from '../modules/faq/faq.route';
+import featuredProjectRoutes from '../modules/featured-project/featured-project.route';
 import fileRoutes from '../modules/file/file.route';
 import insightRoutes from '../modules/insight/insight.route';
 import NotificationRecipientRoutes from '../modules/notification-recipient/notification-recipient.route';
@@ -87,6 +88,10 @@ const moduleRoutes = [
   {
     path: '/insight',
     route: insightRoutes,
+  },
+  {
+    path: '/featured-project',
+    route: featuredProjectRoutes,
   },
 ];
 
