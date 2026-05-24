@@ -28,6 +28,7 @@ import { Industry } from '../modules/industry/industry.model';
 import { Insight } from '../modules/insight/insight.model';
 import { Service } from '../modules/service/service.model';
 import { ShowcaseVideo } from '../modules/showcase-video/showcase-video.model';
+import { PageHero } from '../modules/page-hero/page-hero.model';
 import { SiteSetting } from '../modules/site-setting/site-setting.model';
 import { TeamMember } from '../modules/team-member/team-member.model';
 import { Testimonial } from '../modules/testimonial/testimonial.model';
@@ -1227,6 +1228,99 @@ The CRM isn't the boring backend. It's where marketing ROI actually lives.`,
 ];
 
 // ─── Site Setting (singleton) ────────────────────────────────────────────────
+const PAGE_HEROES = [
+  {
+    page: 'home',
+    title: 'We Build The Structure Behind Growth',
+    description:
+      'Twelve Creative helps businesses clarify their positioning, create stronger content, distribute it with purpose, and install the systems that turn attention into revenue.',
+    trust_label: 'Trusted across industries',
+    primary_cta: { label: 'Start a Conversation', href: '/contact' },
+    secondary_cta: { label: 'View Our Work', href: '/works' },
+    video: { source: 'url', value: SAMPLE_VIDEO },
+    is_active: true,
+  },
+  {
+    page: 'about',
+    label: 'About',
+    title: 'Built for businesses that need strategy and execution in the same room.',
+    description:
+      'Twelve Creative was built from the belief that creative work should be connected to the business it serves. We exist to close the gap between strategy and execution.',
+    is_active: true,
+  },
+  {
+    page: 'works',
+    label: 'Work',
+    title: 'Work built around business context.',
+    description:
+      'Our work is not measured by how it looks in isolation. It is measured by whether it helps the business become clearer, more credible, and better equipped to convert attention into action.',
+    is_active: true,
+  },
+  {
+    page: 'industries',
+    label: 'Industries',
+    title: 'Built for businesses where trust, presentation, and follow-up matter.',
+    description:
+      'Twelve Creative works across industries where the buying decision depends on credibility, timing, taste, and a clear path to action.',
+    is_active: true,
+  },
+  {
+    page: 'what-we-build',
+    label: 'What We Build',
+    title: 'Marketing works better when the pieces are connected.',
+    description:
+      'Twelve Creative builds the creative, strategic, and operational pieces that help a business move from visibility to revenue.',
+    is_active: true,
+  },
+  {
+    page: 'contact',
+    label: 'Contact',
+    title: "Let's build something worth building.",
+    description:
+      'Tell us where the business is and what needs to move. If the project is aligned, we will reach out to schedule a conversation.',
+    is_active: true,
+  },
+  {
+    page: 'blogs',
+    label: 'Insights',
+    title: 'Notes on positioning, creative, and growth systems.',
+    description:
+      'Field-tested thinking from the work we do for hospitality, real estate, aviation, and professional service operators.',
+    is_active: true,
+  },
+  {
+    page: 'process',
+    label: 'Our Process',
+    title: 'Our process is built around clarity first.',
+    description:
+      'We do not begin by making random assets. We begin by understanding what the business is trying to move, where the friction is, and what structure needs to be built.',
+    is_active: true,
+  },
+];
+
+async function seedPageHeroes(): Promise<SeedReport> {
+  const existing = await PageHero.countDocuments();
+
+  if (existing > 0 && !FORCE) {
+    return { module: 'page-hero', action: 'skipped', count: existing };
+  }
+
+  if (FORCE) await PageHero.deleteMany({});
+
+  for (const doc of PAGE_HEROES) {
+    await PageHero.findOneAndUpdate(
+      { page: doc.page },
+      { $set: doc },
+      { upsert: true },
+    );
+  }
+  return {
+    module: 'page-hero',
+    action: existing ? 'replaced' : 'inserted',
+    count: PAGE_HEROES.length,
+  };
+}
+
 const SITE_SETTING = {
   contact_email: 'hello@twelvecreative.io',
   contact_phone: '+1 (000) 000-0000',
@@ -1350,6 +1444,7 @@ async function run(): Promise<void> {
     reports.push(await seedModule('faq', Faq, FAQS));
     reports.push(await seedModule('team-member', TeamMember, TEAM));
     reports.push(await seedModule('work', Work, WORKS));
+    reports.push(await seedPageHeroes());
     reports.push(await seedSiteSetting());
 
     console.log('\n📊 Seed report:');
