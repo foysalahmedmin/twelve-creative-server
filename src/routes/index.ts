@@ -8,6 +8,7 @@ import contactMessageRoutes from '../modules/contact-message/contact-message.rou
 import faqRoutes from '../modules/faq/faq.route';
 import featuredProjectRoutes from '../modules/featured-project/featured-project.route';
 import fileRoutes from '../modules/file/file.route';
+import industryRoutes from '../modules/industry/industry.route';
 import insightRoutes from '../modules/insight/insight.route';
 import serviceRoutes from '../modules/service/service.route';
 import NotificationRecipientRoutes from '../modules/notification-recipient/notification-recipient.route';
@@ -97,6 +98,10 @@ const moduleRoutes = [
   {
     path: '/service',
     route: serviceRoutes,
+  },
+  {
+    path: '/industry',
+    route: industryRoutes,
   },
 ];
 

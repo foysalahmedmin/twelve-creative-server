@@ -24,6 +24,7 @@ import { disconnectDB, initializeDB } from '../config/db';
 import { Brand } from '../modules/brand/brand.model';
 import { Faq } from '../modules/faq/faq.model';
 import { FeaturedProject } from '../modules/featured-project/featured-project.model';
+import { Industry } from '../modules/industry/industry.model';
 import { Insight } from '../modules/insight/insight.model';
 import { Service } from '../modules/service/service.model';
 import { ShowcaseVideo } from '../modules/showcase-video/showcase-video.model';
@@ -535,6 +536,93 @@ const SERVICES = [
       'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=768&h=552&fit=crop&auto=format',
     icon: 'growth' as const,
     order: 6,
+    is_active: true,
+  },
+];
+
+// ─── Industries ──────────────────────────────────────────────────────────────
+// Drives the home page tab pills + the /industries grid. Slug doubles as the
+// in-page anchor (/industries#<slug>). Icon enum is locked to four keys that
+// match the frontend INDUSTRY_ICON_MAP.
+const INDUSTRIES = [
+  {
+    slug: 'hospitality',
+    name: 'Hospitality',
+    headline: 'Hospitality marketing that understands the room.',
+    description:
+      'Restaurants and hospitality brands grow when experience, menu, atmosphere, events, and local market all work together. We help connect the moments to revenue.',
+    image:
+      'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80',
+    icon: 'hospitality' as const,
+    work: [
+      'Restaurant content',
+      'Chef features',
+      'Wine dinner campaigns',
+      'Reservations strategy',
+      'Influencer coordination',
+      'Event promotion',
+    ],
+    order: 1,
+    is_active: true,
+  },
+  {
+    slug: 'real-estate',
+    name: 'Real Estate',
+    headline: 'Real estate marketing needs more than beautiful renders.',
+    description:
+      'Developments, luxury properties, and commercial spaces need to be positioned correctly before they are promoted. We turn projects into clear, credible campaigns.',
+    image:
+      'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80',
+    icon: 'real-estate' as const,
+    work: [
+      'Project positioning',
+      'Sales decks',
+      'Property films',
+      'Broker-facing assets',
+      'Lead generation',
+      'CRM and follow-up',
+    ],
+    order: 2,
+    is_active: true,
+  },
+  {
+    slug: 'aviation',
+    name: 'Aviation',
+    headline: 'High-trust marketing for high-value decisions.',
+    description:
+      'Private aviation is relationship-driven and credibility-dependent. We build positioning, content, funnels, and systems to support serious conversations.',
+    image:
+      'https://images.unsplash.com/photo-1540962351504-03099e0a754b?auto=format&fit=crop&w=800&q=80',
+    icon: 'aviation' as const,
+    work: [
+      'Founder content',
+      'Charter campaigns',
+      'Landing pages',
+      'Lead funnels',
+      'Qualification forms',
+      'CRM systems',
+    ],
+    order: 3,
+    is_active: true,
+  },
+  {
+    slug: 'professional-services',
+    name: 'Professional Services',
+    headline: 'Make expertise easier to understand.',
+    description:
+      'Professional service businesses often have real value but unclear communication. We translate expertise into a clearer message and stronger acquisition.',
+    image:
+      'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&q=80',
+    icon: 'professional-services' as const,
+    work: [
+      'Personal brand strategy',
+      'Service positioning',
+      'Educational content',
+      'Lead funnels',
+      'CRM setup',
+      'Paid campaigns',
+    ],
+    order: 4,
     is_active: true,
   },
 ];
@@ -1248,6 +1336,7 @@ async function run(): Promise<void> {
       ),
     );
     reports.push(await seedModule('service', Service, SERVICES));
+    reports.push(await seedModule('industry', Industry, INDUSTRIES));
     reports.push(await seedModule('brand', Brand, BRANDS));
     reports.push(await seedModule('faq', Faq, FAQS));
     reports.push(await seedModule('team-member', TeamMember, TEAM));
