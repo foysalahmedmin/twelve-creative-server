@@ -176,6 +176,42 @@ const SHOWCASE_VIDEOS = [
     order: 4,
     is_active: true,
   },
+  {
+    video: { source: 'url' as const, value: SAMPLE_VIDEO },
+    thumbnail:
+      'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=512&h=912&fit=crop&auto=format',
+    alt: 'Founder interview — professional services',
+    aspect: 'reel' as const,
+    order: 5,
+    is_active: true,
+  },
+  {
+    video: { source: 'url' as const, value: SAMPLE_VIDEO },
+    thumbnail:
+      'https://images.unsplash.com/photo-1540962351504-03099e0a754b?w=512&h=912&fit=crop&auto=format',
+    alt: 'Aviation hangar walkthrough — charter brand',
+    aspect: 'reel' as const,
+    order: 6,
+    is_active: true,
+  },
+  {
+    video: { source: 'url' as const, value: SAMPLE_VIDEO },
+    thumbnail:
+      'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=512&h=912&fit=crop&auto=format',
+    alt: 'Cocktail bar opening — hospitality teaser',
+    aspect: 'reel' as const,
+    order: 7,
+    is_active: true,
+  },
+  {
+    video: { source: 'url' as const, value: SAMPLE_VIDEO },
+    thumbnail:
+      'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=512&h=912&fit=crop&auto=format',
+    alt: 'Luxury property reveal — penthouse tour',
+    aspect: 'reel' as const,
+    order: 8,
+    is_active: true,
+  },
   // Landscape videos (Work Showcase grid)
   {
     video: { source: 'url' as const, value: SAMPLE_VIDEO },
@@ -183,7 +219,7 @@ const SHOWCASE_VIDEOS = [
       'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1280&h=720&fit=crop&auto=format',
     alt: 'Hudson Hospitality — opening night recap',
     aspect: 'landscape' as const,
-    order: 5,
+    order: 9,
     is_active: true,
   },
   {
@@ -192,7 +228,7 @@ const SHOWCASE_VIDEOS = [
       'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1280&h=720&fit=crop&auto=format',
     alt: 'Meridian Properties — project reveal',
     aspect: 'landscape' as const,
-    order: 6,
+    order: 10,
     is_active: true,
   },
   {
@@ -201,7 +237,7 @@ const SHOWCASE_VIDEOS = [
       'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=1280&h=720&fit=crop&auto=format',
     alt: 'Skyline Charter — founder interview',
     aspect: 'landscape' as const,
-    order: 7,
+    order: 11,
     is_active: true,
   },
   {
@@ -210,7 +246,7 @@ const SHOWCASE_VIDEOS = [
       'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1280&h=720&fit=crop&auto=format',
     alt: 'Vesta Group — year in review',
     aspect: 'landscape' as const,
-    order: 8,
+    order: 12,
     is_active: true,
   },
   {
@@ -219,7 +255,7 @@ const SHOWCASE_VIDEOS = [
       'https://images.unsplash.com/photo-1559339352-11d035aa65de?w=1280&h=720&fit=crop&auto=format',
     alt: 'Casa del Mar — brand story',
     aspect: 'landscape' as const,
-    order: 9,
+    order: 13,
     is_active: true,
   },
   {
@@ -228,7 +264,7 @@ const SHOWCASE_VIDEOS = [
       'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=1280&h=720&fit=crop&auto=format',
     alt: 'Monarch Consulting — founder film',
     aspect: 'landscape' as const,
-    order: 10,
+    order: 14,
     is_active: true,
   },
 ];
@@ -895,6 +931,100 @@ None of this is creative work. All of it determines whether creative work pays o
 Every dollar spent on creative without the system behind it is a dollar spent on awareness — which is fine, but rarely what the business actually needed.
 
 If the brief is "we need to grow," start with the system. The content will work harder against the same audience, the same budget, the same effort.`,
+  },
+  {
+    slug: 'distribution-is-half-the-work',
+    title: 'Distribution is half the work — and almost always under-invested',
+    excerpt:
+      "Most teams spend 80% of their budget producing the asset and 20% getting it in front of people. That ratio is upside down.",
+    cover:
+      'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1280&h=720&fit=crop&auto=format',
+    category: 'Distribution',
+    status: 'published' as const,
+    content: `## The asset is not the product
+
+Brands spend months on a flagship video. It's beautiful. It's strategic. It cost real money.
+
+Then it gets posted once, runs for two weeks, and quietly disappears under the next thing the team is producing.
+
+This is the most common waste in marketing — and it's almost never a creative problem.
+
+## The 50/50 rule
+
+If you're producing a hero asset (a brand film, a campaign launch, a major case study), budget the same amount of money and effort on **getting it in front of people** as you spent making it.
+
+That sounds extreme. It isn't. It's just honest about how attention works in 2026:
+
+- The average buyer needs to see something **7–14 times** before they act on it.
+- Algorithms reward consistency and depth, not novelty.
+- Your audience isn't all in the same place — you need to be in their feed, their inbox, their podcast queue, and their broker's email.
+
+## What "distribution work" actually looks like
+
+For a single hero asset, plan for:
+
+- **Cutdowns** — 60s, 30s, 15s, 6s for ads; vertical reels; story slices.
+- **Paid placement** — Meta, LinkedIn, YouTube pre-roll, programmatic where it makes sense.
+- **Owned channels** — email, SMS, newsletter, podcast plug, sales decks.
+- **Earned + partner** — broker outreach, PR pitch, influencer/operator drops.
+- **Repurposing schedule** — the asset reappears in different forms over 90 days, not 14.
+
+## A test for your last big campaign
+
+Pull up the analytics from your last big launch. Ask three questions:
+
+1. How many cutdowns did the hero asset generate? (If under 5, you under-distributed.)
+2. How much of the budget went to paid placement vs. production? (If production is more than 60%, the ratio is off.)
+3. How long after launch was the asset still actively running somewhere? (If under 30 days, you cut the cycle short.)
+
+The fix isn't a bigger budget. It's a better split.`,
+  },
+  {
+    slug: 'crm-is-marketing',
+    title: "CRM is a marketing function — most businesses don't treat it that way",
+    excerpt:
+      "The handoff between marketing and sales is where most leads die. The fix is treating CRM as marketing infrastructure, not a sales tool.",
+    cover:
+      'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=1280&h=720&fit=crop&auto=format',
+    category: 'Systems',
+    status: 'published' as const,
+    content: `## The handoff is where leads die
+
+A typical small business runs marketing and sales as two separate islands. Marketing generates the interest, drops the lead into a form, and considers its job done. Sales picks up the lead two days later — by which point the buyer's moved on.
+
+The "handoff" sounds like a sales problem. It isn't. It's a **system problem**, and it lives in the CRM.
+
+## What a marketing-grade CRM does
+
+A CRM treated as a marketing tool, not just a contact database, does five things:
+
+1. **Captures** every inquiry, from every channel, into one record.
+2. **Qualifies** automatically — based on form fields, behavior, source — so the team knows what to focus on.
+3. **Routes** the right lead to the right person, instantly.
+4. **Follows up** automatically — within minutes, with personalized email + SMS sequences.
+5. **Reports** back into marketing — which channels produce which kinds of leads, what closes, what doesn't.
+
+Most CRMs are set up for #1 only. Sometimes #4 (a half-built drip). Rarely #2, #3, #5.
+
+## The cost of skipping this
+
+A lead that gets a personalized response **within 5 minutes** is roughly 9× more likely to convert than the same lead getting a reply 24 hours later. (Source: too many studies to count — go google it.)
+
+Most businesses miss this 5-minute window every single day, on every single qualified lead. The team feels busy. The pipeline isn't growing.
+
+## A 1-week fix
+
+You don't need a six-month CRM project to close this gap. In a week:
+
+- **Day 1–2** — connect every inquiry form on the site to a single CRM (HubSpot, Pipedrive, Notion, whatever the team uses).
+- **Day 3** — write 3 follow-up email templates (immediate, 24h, 72h).
+- **Day 4** — set up an automation: form submit → first email instantly + Slack ping to the team.
+- **Day 5** — add an SMS step for high-intent forms (booking requests, callback asks).
+- **Days 6–7** — pull a report on what came in, what got opened, what got replied to.
+
+By the end of week 1, you've built a system that catches what was leaking before. Most of the time that alone moves the pipeline meaningfully.
+
+The CRM isn't the boring backend. It's where marketing ROI actually lives.`,
   },
 ];
 
