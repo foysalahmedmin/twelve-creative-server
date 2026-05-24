@@ -74,7 +74,7 @@ describe('Notification Service', () => {
   const mockNotification: TNotification = {
     title: 'Test Notification',
     message: 'Test message',
-    type: 'news-request',
+    type: 'booking',
     priority: 'medium',
     channels: ['web'],
     sender: mockSenderId,

@@ -37,7 +37,7 @@ const getUser = async (_id: string) => {
 const auth = (...roles: (TRole | 'guest')[]) => {
   return catchAsync(
     async (req: Request, _res: Response, next: NextFunction) => {
-      const token = req.headers.authorization;
+      const token = req.headers.authorization?.trim() || undefined;
 
       if (roles.includes('guest') && req.guest?._id && !token) {
         return next();

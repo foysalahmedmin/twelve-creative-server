@@ -12,7 +12,7 @@ export type TNotification = {
   type: TType;
   priority?: TPriority;
   channels: TChannel[];
-  sender: Types.ObjectId | string;
+  sender?: Types.ObjectId | string | null;
   expires_at?: Date;
   status?: TStatus;
   is_deleted?: boolean;

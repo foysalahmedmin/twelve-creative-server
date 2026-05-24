@@ -5,6 +5,7 @@ import { sendEmail } from '../../utils/send-email';
 import config from '../../config/env';
 import * as ContactMessageRepository from './contact-message.repository';
 import { TContactMessage } from './contact-message.type';
+import { createSystemNotification } from '../../utils/create-system-notification';
 
 const escapeHtml = (s: string) =>
   s
@@ -58,6 +59,12 @@ export const createContactMessage = async (
     is_archived: false,
   });
   fireAndForgetEmail(msg);
+  createSystemNotification({
+    title: `New message from ${msg.name}`,
+    message: msg.subject || msg.email,
+    type: 'contact',
+    metadata: { url: '/admin/messages' },
+  });
   return msg;
 };
 

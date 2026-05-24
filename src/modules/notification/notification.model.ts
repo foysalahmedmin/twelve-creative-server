@@ -21,17 +21,7 @@ const notificationSchema = new Schema<TNotificationDocument>(
     type: {
       type: String,
       required: true,
-      enum: [
-        'news-request',
-        'news-request-approval',
-        'news-headline-request',
-        'news-headline-request-approval',
-        'news-break-request',
-        'news-break-request-approval',
-        'reaction',
-        'comment',
-        'reply',
-      ],
+      enum: ['contact', 'booking'],
     },
 
     priority: {
@@ -49,7 +39,8 @@ const notificationSchema = new Schema<TNotificationDocument>(
     sender: {
       type: Schema.Types.ObjectId,
       ref: 'User',
-      required: true,
+      required: false,
+      default: null,
     },
 
     expires_at: {

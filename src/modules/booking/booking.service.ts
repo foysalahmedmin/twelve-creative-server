@@ -5,6 +5,7 @@ import { sendEmail } from '../../utils/send-email';
 import config from '../../config/env';
 import * as BookingRepository from './booking.repository';
 import { TBooking } from './booking.type';
+import { createSystemNotification } from '../../utils/create-system-notification';
 
 const escapeHtml = (s: string) =>
   s
@@ -64,6 +65,14 @@ export const createBooking = async (
     source: 'booking_form',
   });
   fireAndForgetEmail(booking);
+  createSystemNotification({
+    title: `New booking from ${booking.name}`,
+    message: booking.company
+      ? `${booking.company} — ${booking.email}`
+      : booking.email,
+    type: 'booking',
+    metadata: { url: '/admin/bookings' },
+  });
   return booking;
 };
 
