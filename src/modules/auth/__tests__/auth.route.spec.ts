@@ -52,7 +52,7 @@ jest.mock('../../../middlewares/auth.middleware', () => {
     ) => {
       (req as express.Request & { user: unknown }).user = {
         _id: '507f1f77bcf86cd799439011',
-        role: 'user',
+        role: 'editor',
         name: 'John Doe',
         email: 'john@example.com',
       };
@@ -119,7 +119,7 @@ const mockTokenResponse = {
     _id: '507f1f77bcf86cd799439011',
     name: 'John Doe',
     email: 'john@example.com',
-    role: 'user',
+    role: 'editor',
   },
 };
 
@@ -178,7 +178,7 @@ describe('POST /api/auth/signup', () => {
       name: 'John Doe',
       email: 'john@example.com',
       password: 'password123',
-      role: 'user',
+      role: 'editor',
     });
 
     expect(res.status).toBe(httpStatus.OK);

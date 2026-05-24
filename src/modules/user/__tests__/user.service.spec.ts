@@ -33,7 +33,7 @@ const mockUser = (): TUser => ({
   _id: '507f1f77bcf86cd799439011' as unknown as never,
   name: 'John Doe',
   email: 'john@example.com',
-  role: 'user',
+  role: 'editor',
   status: 'in-progress',
   is_verified: true,
   is_deleted: false,
@@ -42,7 +42,7 @@ const mockUser = (): TUser => ({
 
 const mockJwtPayload = () => ({
   _id: '507f1f77bcf86cd799439011',
-  role: 'user' as const,
+  role: 'editor' as const,
   email: 'john@example.com',
   name: 'John Doe',
   iat: 0,

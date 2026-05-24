@@ -54,7 +54,7 @@ const mockUserDoc = (overrides = {}) => ({
   name: 'John Doe',
   email: 'john@example.com',
   password: 'hashed',
-  role: 'user',
+  role: 'editor',
   status: 'in-progress',
   is_deleted: false,
   is_verified: false,
@@ -241,7 +241,7 @@ describe('AuthService.changePassword', () => {
     ).mockResolvedValue(user);
 
     const result = await AuthService.changePassword(
-      { email: 'john@example.com', role: 'user' },
+      { email: 'john@example.com', role: 'editor' },
       { current_password: 'old_pass', new_password: 'new_pass' },
     );
 
@@ -261,7 +261,7 @@ describe('AuthService.changePassword', () => {
 
     await expect(
       AuthService.changePassword(
-        { email: 'john@example.com', role: 'user' },
+        { email: 'john@example.com', role: 'editor' },
         { current_password: 'wrong', new_password: 'new_pass' },
       ),
     ).rejects.toMatchObject({ status: httpStatus.FORBIDDEN });
@@ -343,7 +343,7 @@ describe('AuthService.emailVerificationSource', () => {
       _id: '507f1f77bcf86cd799439011',
       name: 'John',
       email: 'john@example.com',
-      role: 'user',
+      role: 'editor',
     });
 
     expect(sendEmail).toHaveBeenCalledWith(
