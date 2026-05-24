@@ -27,5 +27,17 @@ export const updateSiteSettingValidationSchema = z.object({
       })
       .partial()
       .optional(),
+    faq_section: z
+      .object({
+        image: optionalUrl,
+        image_alt: z.string().trim().max(200).optional(),
+        title: z.string().trim().max(200).optional(),
+        description: z.string().trim().max(800).optional(),
+        name: z.string().trim().max(100).optional(),
+        position: z.string().trim().max(100).optional(),
+        contact_link: z.string().trim().max(500).optional(),
+      })
+      .partial()
+      .optional(),
   }),
 });

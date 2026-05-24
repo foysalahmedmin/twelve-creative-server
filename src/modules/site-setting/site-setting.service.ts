@@ -13,11 +13,17 @@ export const updateSiteSetting = async (
     const created = await SiteSetting.create(payload);
     return created.toObject();
   }
-  // Deep-merge social separately so partial updates don't blow away other keys.
+  // Deep-merge nested objects so partial updates don't blow away sibling keys.
   if (payload.social) {
     existing.social = {
       ...(existing.social ?? {}),
       ...payload.social,
+    };
+  }
+  if (payload.faq_section) {
+    existing.faq_section = {
+      ...(existing.faq_section ?? {}),
+      ...payload.faq_section,
     };
   }
   if (payload.contact_email !== undefined)

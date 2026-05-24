@@ -1238,6 +1238,15 @@ const SITE_SETTING = {
     youtube: 'https://www.youtube.com/@twelvecreative',
     x: 'https://x.com/twelvecreative',
   },
+  faq_section: {
+    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&auto=format',
+    image_alt: 'Carlos Doce — Founder of Twelve Creative',
+    title: 'Have more questions?',
+    description: "Let's talk it out. Tell us where the business is now and what needs to move next. If the project is aligned, we'll schedule a conversation.",
+    name: 'Carlos Doce',
+    position: 'Founder, Twelve Creative',
+    contact_link: '/contact',
+  },
 };
 
 // ─── Runner ──────────────────────────────────────────────────────────────────

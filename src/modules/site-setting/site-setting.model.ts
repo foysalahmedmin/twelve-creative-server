@@ -16,6 +16,19 @@ const socialsSchema = new Schema(
   { _id: false },
 );
 
+const faqSectionSchema = new Schema(
+  {
+    image: { type: String, trim: true, maxlength: 2048 },
+    image_alt: { type: String, trim: true, maxlength: 200 },
+    title: { type: String, trim: true, maxlength: 200 },
+    description: { type: String, trim: true, maxlength: 800 },
+    name: { type: String, trim: true, maxlength: 100 },
+    position: { type: String, trim: true, maxlength: 100 },
+    contact_link: { type: String, trim: true, maxlength: 500 },
+  },
+  { _id: false },
+);
+
 const siteSettingSchema = new Schema<TSiteSettingDocument>(
   {
     contact_email: { type: String, trim: true, lowercase: true, maxlength: 200 },
@@ -28,6 +41,7 @@ const siteSettingSchema = new Schema<TSiteSettingDocument>(
       lowercase: true,
       maxlength: 200,
     },
+    faq_section: { type: faqSectionSchema, default: () => ({}) },
   },
   {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
