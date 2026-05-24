@@ -9,6 +9,7 @@ import faqRoutes from '../modules/faq/faq.route';
 import featuredProjectRoutes from '../modules/featured-project/featured-project.route';
 import fileRoutes from '../modules/file/file.route';
 import insightRoutes from '../modules/insight/insight.route';
+import serviceRoutes from '../modules/service/service.route';
 import NotificationRecipientRoutes from '../modules/notification-recipient/notification-recipient.route';
 import notificationRoutes from '../modules/notification/notification.route';
 import showcaseVideoRoutes from '../modules/showcase-video/showcase-video.route';
@@ -92,6 +93,10 @@ const moduleRoutes = [
   {
     path: '/featured-project',
     route: featuredProjectRoutes,
+  },
+  {
+    path: '/service',
+    route: serviceRoutes,
   },
 ];
 
