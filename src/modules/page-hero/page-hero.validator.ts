@@ -32,6 +32,7 @@ export const upsertPageHeroValidationSchema = z.object({
     label: z.string().trim().max(80).optional(),
     title: z.string().trim().max(300).optional(),
     description: z.string().trim().max(600).optional(),
+    thumbnail: optionalUrl.nullable(),
     video: videoRefSchema,
     trust_label: z.string().trim().max(100).optional(),
     primary_cta: ctaSchema,

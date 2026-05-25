@@ -15,13 +15,18 @@ export const upsertPageHero = async (
   page: TPageKey,
   payload: Partial<Omit<TPageHero, 'page' | '_id'>>,
 ): Promise<TPageHero> => {
-  const cleaned: Record<string, unknown> = {};
+  const set: Record<string, unknown> = {};
+  const unset: Record<string, 1> = {};
   for (const [k, v] of Object.entries(payload)) {
-    if (v !== null && v !== undefined) cleaned[k] = v;
+    if (v === null) unset[k] = 1;
+    else if (v !== undefined) set[k] = v;
   }
+  const update: Record<string, unknown> = {};
+  if (Object.keys(set).length) update.$set = set;
+  if (Object.keys(unset).length) update.$unset = unset;
   const result = await PageHero.findOneAndUpdate(
     { page },
-    { $set: cleaned },
+    update,
     { upsert: true, new: true, lean: true },
   );
   return result!;
