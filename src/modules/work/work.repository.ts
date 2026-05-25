@@ -33,7 +33,11 @@ export const findAdminPaginated = async (
   data: TWork[];
   meta: { total: number; page: number; limit: number; total_pages: number };
 }> => {
-  const q = new AppQueryFind(Work, query)
+  const qp: Record<string, unknown> = { ...query };
+  if (qp.filter === 'published') qp.is_published = true;
+  else if (qp.filter === 'draft') qp.is_published = false;
+
+  const q = new AppQueryFind(Work, qp)
     .search(['title', 'slug', 'type', 'description'])
     .filter()
     .sort()

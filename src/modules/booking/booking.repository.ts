@@ -27,7 +27,13 @@ export const findAdminPaginated = async (
   data: TBooking[];
   meta: { total: number; page: number; limit: number; total_pages: number };
 }> => {
-  const q = new AppQueryFind(Booking, query)
+  const qp: Record<string, unknown> = { ...query };
+  const statuses = ['pending', 'in_progress', 'completed', 'cancelled'];
+  if (typeof qp.filter === 'string' && statuses.includes(qp.filter)) {
+    qp.status = qp.filter;
+  }
+
+  const q = new AppQueryFind(Booking, qp)
     .search(['name', 'email', 'company', 'industry'])
     .filter()
     .sort()

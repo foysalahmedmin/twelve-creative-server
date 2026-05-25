@@ -55,6 +55,7 @@ class AppQueryFind<T> {
       'page',
       'fields',
       'is_count_only',
+      'filter',
     ];
     excludedFields.forEach((field) => delete queryObj[field]);
 

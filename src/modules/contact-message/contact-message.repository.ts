@@ -27,7 +27,18 @@ export const findAdminPaginated = async (
   data: TContactMessage[];
   meta: { total: number; page: number; limit: number; total_pages: number };
 }> => {
-  const q = new AppQueryFind(ContactMessage, query)
+  const qp: Record<string, unknown> = { ...query };
+  if (qp.filter === 'unread') {
+    qp.is_read = false;
+    qp.is_archived = false;
+  } else if (qp.filter === 'read') {
+    qp.is_read = true;
+    qp.is_archived = false;
+  } else if (qp.filter === 'archived') {
+    qp.is_archived = true;
+  }
+
+  const q = new AppQueryFind(ContactMessage, qp)
     .search(['name', 'email', 'subject', 'message'])
     .filter()
     .sort()

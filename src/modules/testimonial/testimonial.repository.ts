@@ -41,7 +41,11 @@ export const findAdminPaginated = async (
   data: TTestimonial[];
   meta: { total: number; page: number; limit: number; total_pages: number };
 }> => {
-  const testimonialQuery = new AppQueryFind(Testimonial, query)
+  const q: Record<string, unknown> = { ...query };
+  if (q.filter === 'active') q.is_active = true;
+  else if (q.filter === 'inactive') q.is_active = false;
+
+  const testimonialQuery = new AppQueryFind(Testimonial, q)
     .search(['name', 'designation', 'message'])
     .filter()
     .sort()
