@@ -28,6 +28,7 @@ export type TFile = {
   caption?: string;
   status: TFileStatus;
   is_deleted: boolean;
+  deleted_at?: Date | null;
   metadata?: {
     path?: string; // For local
     bucket?: string; // For GCS

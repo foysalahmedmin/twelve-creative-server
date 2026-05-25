@@ -67,6 +67,7 @@ const fileSchema = new Schema<TFileDocument>(
       default: false,
       select: false,
     },
+    deleted_at: { type: Date, default: null },
     metadata: {
       path: String,
       bucket: String,
@@ -128,6 +129,7 @@ fileSchema.statics.isFileExist = async function (_id: string) {
 // Instance methods
 fileSchema.methods.softDelete = async function () {
   this.is_deleted = true;
+  this.deleted_at = new Date();
   return await this.save();
 };
 

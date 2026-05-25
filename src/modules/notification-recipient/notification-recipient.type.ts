@@ -22,6 +22,7 @@ export type TNotificationRecipient = {
   is_read: boolean;
   read_at?: Date | null;
   is_deleted?: boolean;
+  deleted_at?: Date | null;
 };
 
 export interface TNotificationRecipientDocument

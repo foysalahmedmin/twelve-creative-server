@@ -18,6 +18,7 @@ export type TUser = {
   status: TStatus;
   is_verified: boolean;
   is_deleted: boolean;
+  deleted_at?: Date | null;
 };
 
 export interface TUserDocument extends TUser, Document {

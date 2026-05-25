@@ -59,6 +59,7 @@ const notificationSchema = new Schema<TNotificationDocument>(
       default: false,
       select: false,
     },
+    deleted_at: { type: Date, default: null },
   },
   {
     timestamps: {
@@ -121,6 +122,7 @@ notificationSchema.statics.isCategoryExist = async function (_id: string) {
 // Instance methods
 notificationSchema.methods.softDelete = async function () {
   this.is_deleted = true;
+  this.deleted_at = new Date();
   return await this.save();
 };
 

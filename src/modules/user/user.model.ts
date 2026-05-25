@@ -54,6 +54,7 @@ const userSchema = new Schema<TUserDocument>(
     },
     is_verified: { type: Boolean, default: false },
     is_deleted: { type: Boolean, default: false, select: false },
+    deleted_at: { type: Date, default: null },
     token_version: { type: Number, default: 1, select: false },
   },
   {
@@ -162,6 +163,7 @@ userSchema.statics.isUserExistByEmail = async function (email: string) {
 // Instance methods
 userSchema.methods.softDelete = async function () {
   this.is_deleted = true;
+  this.deleted_at = new Date();
   return await this.save();
 };
 

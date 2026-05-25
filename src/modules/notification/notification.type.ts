@@ -16,6 +16,7 @@ export type TNotification = {
   expires_at?: Date;
   status?: TStatus;
   is_deleted?: boolean;
+  deleted_at?: Date | null;
 };
 
 export interface TNotificationDocument extends TNotification, Document {
