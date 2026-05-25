@@ -6,7 +6,6 @@ import session from 'express-session';
 import helmet from 'helmet';
 import path from 'path';
 import config from './config';
-import error from './middlewares/error.middleware';
 import log from './middlewares/log.middleware';
 import notfound from './middlewares/not-found.middleware';
 import { globalRateLimiter } from './middlewares/rate-limit.middleware';
@@ -54,7 +53,7 @@ app.use(
     //   ttl: 60 * 60 * 24 * 30,
     // }),
     cookie: {
-      secure: config.node_env === 'production',
+      secure: config.url?.startsWith('https'),
       httpOnly: true,
       maxAge: 1000 * 60 * 60 * 24 * 30,
     },
@@ -64,31 +63,22 @@ app.use(
 // Log request middleware
 app.use(log);
 
-// Static file serving for uploads
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
-
 // API routes
 app.use('/api', router);
+
+// Root endpoint
+app.get('/', (_req, res) => {
+  res.send('Welcome to TwelveCreative API');
+});
 
 // Health check endpoint for Vercel
 app.get('/health', (_req, res) => {
   res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Static file serving for frontend (SPA)
-app.use(express.static(path.join(__dirname, '../public/dist')));
+// Static file serving for uploads
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
-app.get(/.*/, (_req, res) => {
-  res.sendFile(path.join(__dirname, '../public/dist/index.html'));
-});
-
-// Fallback for SPA routing - serves index.html for all unmatched routes
-app.use((_req, res) => {
-  res.sendFile(path.join(__dirname, '../public/dist', 'index.html'));
-});
-
-// Error handling middleware
-app.use(error);
 app.use(notfound);
 
 export default app;
