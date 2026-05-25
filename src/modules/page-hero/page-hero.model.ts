@@ -38,6 +38,7 @@ const pageHeroSchema = new Schema<TPageHeroDocument>(
     label: { type: String, trim: true, maxlength: 80 },
     title: { type: String, trim: true, maxlength: 300 },
     description: { type: String, trim: true, maxlength: 600 },
+    thumbnail: { type: String, trim: true, maxlength: 2048 },
     video: { type: videoRefSchema },
     trust_label: { type: String, trim: true, maxlength: 100 },
     primary_cta: { type: ctaSchema },

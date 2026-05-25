@@ -32,6 +32,7 @@ export type TPageHero = {
   label?: string;
   title?: string;
   description?: string;
+  thumbnail?: string;
   video?: TVideoRef;
   trust_label?: string;
   primary_cta?: TCtaItem;
