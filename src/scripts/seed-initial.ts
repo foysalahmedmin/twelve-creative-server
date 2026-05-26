@@ -272,50 +272,8 @@ const SHOWCASE_VIDEOS = [
   },
 ];
 
-// Featured Projects — categorized tabbed gallery on the home page.
-// Categories are free-form strings; same category = same tab.
+// Featured Projects — 4 tabs matching the 4 industry verticals, 3 projects each.
 const FEATURED_PROJECTS = [
-  // Brand Films
-  {
-    title: 'Hudson Hospitality — Opening Night',
-    category: 'Brand Films',
-    aspect: 'video' as const,
-    thumbnail:
-      'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1200&h=675&fit=crop&auto=format',
-    video: { source: 'url' as const, value: SAMPLE_VIDEO },
-    order: 1,
-    is_active: true,
-  },
-  {
-    title: 'Casa del Mar — Brand Story',
-    category: 'Brand Films',
-    aspect: 'video' as const,
-    thumbnail:
-      'https://images.unsplash.com/photo-1559339352-11d035aa65de?w=1200&h=675&fit=crop&auto=format',
-    video: { source: 'url' as const, value: SAMPLE_VIDEO },
-    order: 2,
-    is_active: true,
-  },
-  {
-    title: 'Meridian Properties — The Build',
-    category: 'Brand Films',
-    aspect: 'video' as const,
-    thumbnail:
-      'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&h=675&fit=crop&auto=format',
-    video: { source: 'url' as const, value: SAMPLE_VIDEO },
-    order: 3,
-    is_active: true,
-  },
-  {
-    title: 'Vesta Group — Year in Review',
-    category: 'Brand Films',
-    aspect: 'video' as const,
-    thumbnail:
-      'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&h=675&fit=crop&auto=format',
-    video: { source: 'url' as const, value: SAMPLE_VIDEO },
-    order: 4,
-    is_active: true,
-  },
   // Hospitality
   {
     title: 'Chef Spotlight — Wine Dinner Series',
@@ -324,7 +282,7 @@ const FEATURED_PROJECTS = [
     thumbnail:
       'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1200&h=675&fit=crop&auto=format',
     video: { source: 'url' as const, value: SAMPLE_VIDEO },
-    order: 5,
+    order: 1,
     is_active: true,
   },
   {
@@ -332,9 +290,9 @@ const FEATURED_PROJECTS = [
     category: 'Hospitality',
     aspect: 'video' as const,
     thumbnail:
-      'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1200&h=675&fit=crop&auto=format',
+      'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&h=675&fit=crop&auto=format',
     video: { source: 'url' as const, value: SAMPLE_VIDEO },
-    order: 6,
+    order: 2,
     is_active: true,
   },
   {
@@ -344,7 +302,7 @@ const FEATURED_PROJECTS = [
     thumbnail:
       'https://images.unsplash.com/photo-1559339352-11d035aa65de?w=1200&h=675&fit=crop&auto=format',
     video: { source: 'url' as const, value: SAMPLE_VIDEO },
-    order: 7,
+    order: 3,
     is_active: true,
   },
   // Real Estate
@@ -355,7 +313,7 @@ const FEATURED_PROJECTS = [
     thumbnail:
       'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&h=675&fit=crop&auto=format',
     video: { source: 'url' as const, value: SAMPLE_VIDEO },
-    order: 8,
+    order: 4,
     is_active: true,
   },
   {
@@ -365,17 +323,17 @@ const FEATURED_PROJECTS = [
     thumbnail:
       'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=1200&h=675&fit=crop&auto=format',
     video: { source: 'url' as const, value: SAMPLE_VIDEO },
-    order: 9,
+    order: 5,
     is_active: true,
   },
   {
-    title: 'Obsidian — Property Tour',
+    title: 'Obsidian — Luxury Property Tour',
     category: 'Real Estate',
     aspect: 'video' as const,
     thumbnail:
       'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1200&h=675&fit=crop&auto=format',
     video: { source: 'url' as const, value: SAMPLE_VIDEO },
-    order: 10,
+    order: 6,
     is_active: true,
   },
   // Aviation
@@ -386,7 +344,7 @@ const FEATURED_PROJECTS = [
     thumbnail:
       'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=1200&h=675&fit=crop&auto=format',
     video: { source: 'url' as const, value: SAMPLE_VIDEO },
-    order: 11,
+    order: 7,
     is_active: true,
   },
   {
@@ -396,38 +354,48 @@ const FEATURED_PROJECTS = [
     thumbnail:
       'https://images.unsplash.com/photo-1540962351504-03099e0a754b?w=1200&h=675&fit=crop&auto=format',
     video: { source: 'url' as const, value: SAMPLE_VIDEO },
-    order: 12,
+    order: 8,
     is_active: true,
   },
-  // Founder Content
   {
-    title: 'Founder Talk — Carlos Doce',
-    category: 'Founder Content',
+    title: 'Northstar — Operations Behind the Scenes',
+    category: 'Aviation',
+    aspect: 'video' as const,
+    thumbnail:
+      'https://images.unsplash.com/photo-1556388158-158ea5ccacbd?w=1200&h=675&fit=crop&auto=format',
+    video: { source: 'url' as const, value: SAMPLE_VIDEO },
+    order: 9,
+    is_active: true,
+  },
+  // Professional Services
+  {
+    title: 'Founder Talk — Brightline Advisors',
+    category: 'Professional Services',
     aspect: 'video' as const,
     thumbnail:
       'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1200&h=675&fit=crop&auto=format',
     video: { source: 'url' as const, value: SAMPLE_VIDEO },
-    order: 13,
+    order: 10,
     is_active: true,
   },
   {
-    title: 'Operator Interview — Hospitality',
-    category: 'Founder Content',
+    title: 'Operator Interview — Forge Advisors',
+    category: 'Professional Services',
     aspect: 'video' as const,
     thumbnail:
       'https://images.unsplash.com/photo-1556157382-97eda2d62296?w=1200&h=675&fit=crop&auto=format',
     video: { source: 'url' as const, value: SAMPLE_VIDEO },
-    order: 14,
+    order: 11,
     is_active: true,
   },
   {
-    title: 'Behind the Build — Aviation',
-    category: 'Founder Content',
+    title: 'Monarch Consulting — Expertise on Camera',
+    category: 'Professional Services',
     aspect: 'video' as const,
     thumbnail:
       'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=1200&h=675&fit=crop&auto=format',
     video: { source: 'url' as const, value: SAMPLE_VIDEO },
-    order: 15,
+    order: 12,
     is_active: true,
   },
 ];
@@ -565,6 +533,8 @@ const INDUSTRIES = [
     ],
     order: 1,
     is_active: true,
+    tagline: 'Seats filled. Tables turned.',
+    thumbnail: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&h=675&fit=crop&auto=format',
   },
   {
     slug: 'real-estate',
@@ -585,6 +555,8 @@ const INDUSTRIES = [
     ],
     order: 2,
     is_active: true,
+    tagline: 'From listing to sellout.',
+    thumbnail: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&h=675&fit=crop&auto=format',
   },
   {
     slug: 'aviation',
@@ -605,6 +577,8 @@ const INDUSTRIES = [
     ],
     order: 3,
     is_active: true,
+    tagline: 'Trust first. Revenue follows.',
+    thumbnail: 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=1200&h=675&fit=crop&auto=format',
   },
   {
     slug: 'professional-services',
@@ -625,6 +599,8 @@ const INDUSTRIES = [
     ],
     order: 4,
     is_active: true,
+    tagline: 'Clarity converts.',
+    thumbnail: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200&h=675&fit=crop&auto=format',
   },
 ];
 

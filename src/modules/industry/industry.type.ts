@@ -11,6 +11,13 @@ export type TIndustryIconKey =
   | 'aviation'
   | 'professional-services';
 
+export type TIndustryVideoSource = 'youtube' | 'url' | 'upload';
+
+export type TIndustryVideoRef = {
+  source: TIndustryVideoSource;
+  value: string;
+};
+
 export type TIndustry = {
   _id?: Types.ObjectId | string;
   /**
@@ -32,6 +39,12 @@ export type TIndustry = {
   cta_label?: string;
   /** Optional CTA href override. Defaults to /industries#<slug>. */
   cta_href?: string;
+  /** Short tagline shown on the detail page hero badge. */
+  tagline?: string;
+  /** Optional thumbnail URL shown before video plays. */
+  thumbnail?: string;
+  /** Optional hero video for the detail page. */
+  video?: TIndustryVideoRef;
   order: number;
   is_active: boolean;
   is_deleted?: boolean;

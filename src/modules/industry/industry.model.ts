@@ -8,6 +8,18 @@ const ICON_KEYS = [
   'professional-services',
 ] as const;
 
+const industryVideoRefSchema = new Schema(
+  {
+    source: {
+      type: String,
+      enum: ['youtube', 'url', 'upload'],
+      required: true,
+    },
+    value: { type: String, required: true, trim: true },
+  },
+  { _id: false },
+);
+
 const industrySchema = new Schema<TIndustryDocument>(
   {
     slug: {
@@ -68,6 +80,19 @@ const industrySchema = new Schema<TIndustryDocument>(
       type: String,
       trim: true,
       maxlength: [500, 'CTA href cannot exceed 500 characters'],
+    },
+    tagline: {
+      type: String,
+      trim: true,
+      maxlength: [120, 'Tagline cannot exceed 120 characters'],
+    },
+    thumbnail: {
+      type: String,
+      trim: true,
+      maxlength: [2048, 'Thumbnail URL cannot exceed 2048 characters'],
+    },
+    video: {
+      type: industryVideoRefSchema,
     },
     order: { type: Number, default: 0 },
     is_active: { type: Boolean, default: true },

@@ -21,6 +21,13 @@ const iconEnum = z.enum([
   'professional-services',
 ]);
 
+const videoSourceEnum = z.enum(['youtube', 'url', 'upload']);
+const urlOrPath = z.string().trim().min(1).max(2048);
+const videoRefSchema = z.object({
+  source: videoSourceEnum,
+  value: urlOrPath,
+});
+
 const baseBody = z.object({
   slug: slugSchema,
   name: z.string().trim().min(2).max(80),
@@ -34,6 +41,9 @@ const baseBody = z.object({
     .optional(),
   cta_label: z.string().trim().max(60).optional(),
   cta_href: z.string().trim().max(500).optional(),
+  tagline: z.string().trim().max(120).optional(),
+  thumbnail: z.string().trim().max(2048).optional().nullable(),
+  video: videoRefSchema.optional().nullable(),
   order: z.coerce.number().int().nonnegative().optional(),
   is_active: z
     .preprocess((v) => (typeof v === 'string' ? v === 'true' : v), z.boolean())

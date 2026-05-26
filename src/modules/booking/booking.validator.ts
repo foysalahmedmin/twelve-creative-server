@@ -22,7 +22,6 @@ export const createBookingValidationSchema = z.object({
     phone: z.string().trim().max(40).optional(),
     company: z.string().trim().max(160).optional(),
     industry: z.string().trim().max(120).optional(),
-    timeline: z.string().trim().max(80).optional(),
     preferred_date: z.coerce.date().optional(),
     preferred_time: z.string().trim().max(40).optional(),
     message: z.string().trim().max(2000).optional(),
