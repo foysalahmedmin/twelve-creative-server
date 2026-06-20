@@ -29,6 +29,16 @@ const faqSectionSchema = new Schema(
   { _id: false },
 );
 
+const contentSectionSchema = new Schema(
+  {
+    title: { type: String, trim: true, maxlength: 200 },
+    subtitle: { type: String, trim: true, maxlength: 100 },
+    body: { type: String, trim: true, maxlength: 1000 },
+    image: { type: String, trim: true, maxlength: 2048 },
+  },
+  { _id: false },
+);
+
 const siteSettingSchema = new Schema<TSiteSettingDocument>(
   {
     contact_email: { type: String, trim: true, lowercase: true, maxlength: 200 },
@@ -42,6 +52,11 @@ const siteSettingSchema = new Schema<TSiteSettingDocument>(
       maxlength: 200,
     },
     faq_section: { type: faqSectionSchema, default: () => ({}) },
+    calendly_url: { type: String, trim: true, maxlength: 2048 },
+    process_thumbnail: { type: String, trim: true, maxlength: 2048 },
+    how_we_structure_image: { type: String, trim: true, maxlength: 2048 },
+    meeting_scene_image: { type: String, trim: true, maxlength: 2048 },
+    content_section: { type: contentSectionSchema, default: () => ({}) },
   },
   {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },

@@ -39,5 +39,18 @@ export const updateSiteSettingValidationSchema = z.object({
       })
       .partial()
       .optional(),
+    calendly_url: optionalUrl,
+    process_thumbnail: optionalUrl,
+    how_we_structure_image: optionalUrl,
+    meeting_scene_image: optionalUrl,
+    content_section: z
+      .object({
+        title: z.string().trim().max(200).optional(),
+        subtitle: z.string().trim().max(100).optional(),
+        body: z.string().trim().max(1000).optional(),
+        image: optionalUrl,
+      })
+      .partial()
+      .optional(),
   }),
 });

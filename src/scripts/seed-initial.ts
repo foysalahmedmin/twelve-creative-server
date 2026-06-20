@@ -1317,6 +1317,21 @@ const SITE_SETTING = {
     position: 'Founder, Twelve Creative',
     contact_link: '/contact',
   },
+  // C1: Calendly booking URL — replace with real Calendly link once provided by client
+  calendly_url: '',
+  // C4: Process section thumbnail — sticky left column in the Process section
+  process_thumbnail: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=768&h=898&fit=crop&auto=format',
+  // C5: "How we structure" section visual asset — shown in The Twelve Creative Difference section
+  how_we_structure_image: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1280&h=720&fit=crop&auto=format',
+  // C6: TC Meeting scene / founder photo — shown in the About page founder section
+  meeting_scene_image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&h=600&fit=crop&auto=format',
+  // C7: "Merging Art and Science" story section content
+  content_section: {
+    title: 'Merging Art and Science',
+    subtitle: 'Our Story',
+    body: 'Our journey of combining creative excellence with backend growth infrastructure.',
+    image: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=768&h=768&fit=crop&auto=format',
+  },
 };
 
 // ─── Runner ──────────────────────────────────────────────────────────────────

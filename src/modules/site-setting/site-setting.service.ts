@@ -26,6 +26,12 @@ export const updateSiteSetting = async (
       ...payload.faq_section,
     };
   }
+  if (payload.content_section) {
+    existing.content_section = {
+      ...(existing.content_section ?? {}),
+      ...payload.content_section,
+    };
+  }
   if (payload.contact_email !== undefined)
     existing.contact_email = payload.contact_email;
   if (payload.contact_phone !== undefined)
@@ -34,6 +40,14 @@ export const updateSiteSetting = async (
     existing.contact_address = payload.contact_address;
   if (payload.booking_notification_email !== undefined)
     existing.booking_notification_email = payload.booking_notification_email;
+  if (payload.calendly_url !== undefined)
+    existing.calendly_url = payload.calendly_url;
+  if (payload.process_thumbnail !== undefined)
+    existing.process_thumbnail = payload.process_thumbnail;
+  if (payload.how_we_structure_image !== undefined)
+    existing.how_we_structure_image = payload.how_we_structure_image;
+  if (payload.meeting_scene_image !== undefined)
+    existing.meeting_scene_image = payload.meeting_scene_image;
   await existing.save();
   return existing.toObject();
 };
