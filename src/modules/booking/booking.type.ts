@@ -6,6 +6,15 @@ export type TBookingStatus =
   | 'completed'
   | 'cancelled';
 
+export type TLeadSource =
+  | 'organic'
+  | 'meta_ad'
+  | 'google_ad'
+  | 'referral'
+  | 'direct'
+  | 'email'
+  | 'other';
+
 export type TBooking = {
   _id?: Types.ObjectId | string;
   name: string;
@@ -20,6 +29,7 @@ export type TBooking = {
   status: TBookingStatus;
   internal_note?: string;
   source: 'booking_form';
+  lead_source?: TLeadSource;
   is_deleted?: boolean;
   deleted_at?: Date;
 };

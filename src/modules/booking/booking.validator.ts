@@ -11,6 +11,16 @@ const statusEnum = z.enum([
   'cancelled',
 ]);
 
+const leadSourceEnum = z.enum([
+  'organic',
+  'meta_ad',
+  'google_ad',
+  'referral',
+  'direct',
+  'email',
+  'other',
+]);
+
 export const bookingIdSchema = z.object({
   params: z.object({ id: idSchema }),
 });
@@ -34,8 +44,13 @@ export const updateBookingValidationSchema = z.object({
     .object({
       status: statusEnum.optional(),
       internal_note: z.string().trim().max(2000).optional(),
+      lead_source: leadSourceEnum.optional().nullable(),
     })
-    .refine((data) => data.status !== undefined || data.internal_note !== undefined, {
-      message: 'Either status or internal_note is required',
-    }),
+    .refine(
+      (data) =>
+        data.status !== undefined ||
+        data.internal_note !== undefined ||
+        data.lead_source !== undefined,
+      { message: 'At least one field is required' },
+    ),
 });

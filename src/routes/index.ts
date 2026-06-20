@@ -10,6 +10,9 @@ import featuredProjectRoutes from '../modules/featured-project/featured-project.
 import fileRoutes from '../modules/file/file.route';
 import industryRoutes from '../modules/industry/industry.route';
 import pageHeroRoutes from '../modules/page-hero/page-hero.route';
+import ticketRoutes from '../modules/ticket/ticket.route';
+import taskRoutes from '../modules/task/task.route';
+import systemLogRoutes from '../modules/system-log/system-log.route';
 import insightRoutes from '../modules/insight/insight.route';
 import serviceRoutes from '../modules/service/service.route';
 import NotificationRecipientRoutes from '../modules/notification-recipient/notification-recipient.route';
@@ -107,6 +110,18 @@ const moduleRoutes = [
   {
     path: '/page-hero',
     route: pageHeroRoutes,
+  },
+  {
+    path: '/ticket',
+    route: ticketRoutes,
+  },
+  {
+    path: '/task',
+    route: taskRoutes,
+  },
+  {
+    path: '/system-log',
+    route: systemLogRoutes,
   },
 ];
 

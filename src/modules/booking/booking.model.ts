@@ -31,6 +31,10 @@ const bookingSchema = new Schema<TBookingDocument>(
     },
     internal_note: { type: String, trim: true, maxlength: 2000 },
     source: { type: String, enum: ['booking_form'], default: 'booking_form' },
+    lead_source: {
+      type: String,
+      enum: ['organic', 'meta_ad', 'google_ad', 'referral', 'direct', 'email', 'other'],
+    },
     is_deleted: { type: Boolean, default: false, select: false },
     deleted_at: { type: Date },
   },

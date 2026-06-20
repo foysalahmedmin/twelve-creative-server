@@ -2,6 +2,7 @@ import httpStatus from 'http-status';
 import catchAsync from '../../utils/catch-async';
 import sendResponse from '../../utils/send-response';
 import * as AuthServices from './auth.service';
+import { SystemLog } from '../system-log/system-log.model';
 
 const COOKIE_NAME = 'refresh_token';
 const COOKIE_MAX_AGE = 1000 * 60 * 60 * 24 * 365;
@@ -17,6 +18,8 @@ export const signin = catchAsync(async (req, res) => {
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
   });
+
+  SystemLog.log('info', 'Admin signed in', info?.email ?? req.body?.email);
 
   sendResponse(res, {
     status: httpStatus.OK,
