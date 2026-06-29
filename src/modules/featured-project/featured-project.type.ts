@@ -30,15 +30,11 @@ export type TFeaturedProject = {
   deleted_at?: Date;
 };
 
-export interface TFeaturedProjectDocument
-  extends TFeaturedProject,
-    Document {
+export interface TFeaturedProjectDocument extends TFeaturedProject, Document {
   _id: Types.ObjectId;
   softDelete(): Promise<TFeaturedProjectDocument | null>;
 }
 
 export type TFeaturedProjectModel = Model<TFeaturedProjectDocument> & {
-  isFeaturedProjectExist(
-    _id: string,
-  ): Promise<TFeaturedProjectDocument | null>;
+  isFeaturedProjectExist(_id: string): Promise<TFeaturedProjectDocument | null>;
 };
