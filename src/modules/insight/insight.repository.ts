@@ -17,7 +17,9 @@ export const findByIdLean = async (id: string): Promise<TInsight | null> => {
   return await Insight.findById(id).lean();
 };
 
-export const findBySlugLean = async (slug: string): Promise<TInsight | null> => {
+export const findBySlugLean = async (
+  slug: string,
+): Promise<TInsight | null> => {
   return await Insight.findOne({ slug, status: 'published' }).lean();
 };
 

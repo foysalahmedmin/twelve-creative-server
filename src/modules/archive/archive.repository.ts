@@ -20,7 +20,9 @@ export const findByIdLean = async (id: string): Promise<TPost | null> => {
   return await Archive.findById(id).lean();
 };
 
-export const findByIdWithDeleted = async (id: string): Promise<TPost | null> => {
+export const findByIdWithDeleted = async (
+  id: string,
+): Promise<TPost | null> => {
   return await Archive.findById(id).setOptions({ bypassDeleted: true }).lean();
 };
 
@@ -88,7 +90,9 @@ export const softDeleteById = async (id: string): Promise<void> => {
   });
 };
 
-export const restoreById = async (id: string): Promise<TPostDocument | null> => {
+export const restoreById = async (
+  id: string,
+): Promise<TPostDocument | null> => {
   return await Archive.findOneAndUpdate(
     { _id: id, is_deleted: true },
     { is_deleted: false, $unset: { deleted_at: 1 } },

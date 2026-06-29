@@ -12,7 +12,11 @@ export const categoryIdSchema = z.object({
 
 export const createCategoryValidationSchema = z.object({
   body: z.object({
-    name: z.string().trim().min(2, 'Name must be at least 2 characters').max(100),
+    name: z
+      .string()
+      .trim()
+      .min(2, 'Name must be at least 2 characters')
+      .max(100),
     description: z.string().trim().max(500).optional(),
     sequence: z.coerce.number().int().nonnegative().optional(),
     status: statusEnum.optional(),
@@ -30,7 +34,10 @@ export const createCategoryValidationSchema = z.object({
       .optional(),
     layout: z.string().optional(),
     is_featured: z
-      .preprocess((v) => (typeof v === 'string' ? v === 'true' : v), z.boolean())
+      .preprocess(
+        (v) => (typeof v === 'string' ? v === 'true' : v),
+        z.boolean(),
+      )
       .optional(),
   }),
 });
@@ -56,7 +63,10 @@ export const updateCategoryValidationSchema = z.object({
       .optional(),
     layout: z.string().optional(),
     is_featured: z
-      .preprocess((v) => (typeof v === 'string' ? v === 'true' : v), z.boolean())
+      .preprocess(
+        (v) => (typeof v === 'string' ? v === 'true' : v),
+        z.boolean(),
+      )
       .optional(),
   }),
 });

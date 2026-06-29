@@ -23,15 +23,20 @@ export const updateContactMessageValidationSchema = z.object({
   body: z
     .object({
       is_read: z
-        .preprocess((v) => (typeof v === 'string' ? v === 'true' : v), z.boolean())
+        .preprocess(
+          (v) => (typeof v === 'string' ? v === 'true' : v),
+          z.boolean(),
+        )
         .optional(),
       is_archived: z
-        .preprocess((v) => (typeof v === 'string' ? v === 'true' : v), z.boolean())
+        .preprocess(
+          (v) => (typeof v === 'string' ? v === 'true' : v),
+          z.boolean(),
+        )
         .optional(),
     })
     .refine(
-      (data) =>
-        data.is_read !== undefined || data.is_archived !== undefined,
+      (data) => data.is_read !== undefined || data.is_archived !== undefined,
       { message: 'Either is_read or is_archived is required' },
     ),
 });

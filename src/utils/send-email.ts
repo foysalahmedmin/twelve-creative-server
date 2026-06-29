@@ -10,7 +10,7 @@ export type EmailOptions = {
   html: string;
   attachments?: {
     filename: string;
-    content?: any;
+    content?: Buffer | string;
     path?: string;
     type?: string;
     cid?: string;
@@ -130,7 +130,7 @@ export const sendEmailSendgrid = async ({
 
         return {
           filename: att.filename,
-          content: content,
+          content: content ?? '',
           contentId: att.cid || att.filename,
           disposition: att?.disposition || 'attachment',
           type: att.type,
@@ -138,26 +138,21 @@ export const sendEmailSendgrid = async ({
       }),
     });
     console.log(`Email sent (SendGrid): ${info[0].headers['x-message-id']}`);
-  } catch (error: any) {
-    console.error('SendGrid Email Error:', error.response?.body || error);
+  } catch (error: unknown) {
+    const err = error as { response?: { body?: unknown } };
+    console.error('SendGrid Email Error:', err.response?.body || error);
     throw error;
   }
 };
 
 export const sendEmail = async (options: EmailOptions) => {
-  try {
-    if (config.email_provider === 'smtp') {
-      await sendEmailSMTP(options);
-    } else if (config.email_provider === 'resend') {
-      await sendEmailResend(options);
-    } else if (config.email_provider === 'sendgrid') {
-      await sendEmailSendgrid(options);
-    } else {
-      // Default to SMTP or log error if provider is unknown
-      await sendEmailSMTP(options);
-    }
-  } catch (error) {
-    // Optionally we can log here as well, but the specific functions already do
-    throw error;
+  if (config.email_provider === 'smtp') {
+    await sendEmailSMTP(options);
+  } else if (config.email_provider === 'resend') {
+    await sendEmailResend(options);
+  } else if (config.email_provider === 'sendgrid') {
+    await sendEmailSendgrid(options);
+  } else {
+    await sendEmailSMTP(options);
   }
 };

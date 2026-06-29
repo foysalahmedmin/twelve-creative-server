@@ -6,7 +6,7 @@ import * as TaskServices from './task.service';
 export const createTask = catchAsync(async (req, res) => {
   const result = await TaskServices.createTask({
     ...req.body,
-    created_by: (req as any).user?.email,
+    created_by: req.user?.email,
   });
   sendResponse(res, {
     status: httpStatus.CREATED,

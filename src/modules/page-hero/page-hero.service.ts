@@ -24,10 +24,10 @@ export const upsertPageHero = async (
   const update: Record<string, unknown> = {};
   if (Object.keys(set).length) update.$set = set;
   if (Object.keys(unset).length) update.$unset = unset;
-  const result = await PageHero.findOneAndUpdate(
-    { page },
-    update,
-    { upsert: true, new: true, lean: true },
-  );
+  const result = await PageHero.findOneAndUpdate({ page }, update, {
+    upsert: true,
+    new: true,
+    lean: true,
+  });
   return result!;
 };

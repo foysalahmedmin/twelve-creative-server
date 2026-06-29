@@ -8,11 +8,7 @@ const router = express.Router();
 
 router.get('/public', TeamMemberControllers.getPublicTeamMembers);
 
-router.get(
-  '/',
-  auth('admin', 'editor'),
-  TeamMemberControllers.getTeamMembers,
-);
+router.get('/', auth('admin', 'editor'), TeamMemberControllers.getTeamMembers);
 
 router.get(
   '/:id',

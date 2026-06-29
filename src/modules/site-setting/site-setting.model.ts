@@ -41,7 +41,12 @@ const contentSectionSchema = new Schema(
 
 const siteSettingSchema = new Schema<TSiteSettingDocument>(
   {
-    contact_email: { type: String, trim: true, lowercase: true, maxlength: 200 },
+    contact_email: {
+      type: String,
+      trim: true,
+      lowercase: true,
+      maxlength: 200,
+    },
     contact_phone: { type: String, trim: true, maxlength: 40 },
     contact_address: { type: String, trim: true, maxlength: 400 },
     social: { type: socialsSchema, default: () => ({}) },

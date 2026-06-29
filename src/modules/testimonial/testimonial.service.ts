@@ -67,9 +67,7 @@ export const deleteTestimonialPermanent = async (id: string): Promise<void> => {
   await TestimonialRepository.hardDeleteById(id);
 };
 
-export const restoreTestimonial = async (
-  id: string,
-): Promise<TTestimonial> => {
+export const restoreTestimonial = async (id: string): Promise<TTestimonial> => {
   const result = await TestimonialRepository.restoreById(id);
   if (!result) {
     throw new AppError(

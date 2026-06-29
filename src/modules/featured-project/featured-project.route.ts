@@ -31,7 +31,9 @@ router.post(
 router.post(
   '/reorder',
   auth('admin', 'editor'),
-  validation(FeaturedProjectValidations.reorderFeaturedProjectsValidationSchema),
+  validation(
+    FeaturedProjectValidations.reorderFeaturedProjectsValidationSchema,
+  ),
   FeaturedProjectControllers.reorderFeaturedProjects,
 );
 

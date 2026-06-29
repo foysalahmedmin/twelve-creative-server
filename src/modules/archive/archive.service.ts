@@ -19,7 +19,10 @@ export const createPost = async (data: Partial<TPost>): Promise<TPost> => {
 
 export const getPublicPosts = async (
   query: Record<string, unknown>,
-): Promise<{ data: TPost[]; meta: { total: number; page: number; limit: number } }> => {
+): Promise<{
+  data: TPost[];
+  meta: { total: number; page: number; limit: number };
+}> => {
   const cacheKey = generateCacheKey(CACHE_PREFIX, ['public', 'list', query]);
   return await withCache(cacheKey, CACHE_TTL, () =>
     ArchiveRepository.findPublicPaginated(query),
@@ -28,7 +31,10 @@ export const getPublicPosts = async (
 
 export const getPosts = async (
   query: Record<string, unknown>,
-): Promise<{ data: TPost[]; meta: { total: number; page: number; limit: number } }> => {
+): Promise<{
+  data: TPost[];
+  meta: { total: number; page: number; limit: number };
+}> => {
   const cacheKey = generateCacheKey(CACHE_PREFIX, ['list', query]);
   return await withCache(cacheKey, CACHE_TTL, () =>
     ArchiveRepository.findAdminPaginated(query),

@@ -7,9 +7,7 @@ export const create = async (data: Partial<TWork>): Promise<TWork> => {
   return result.toObject();
 };
 
-export const findById = async (
-  id: string,
-): Promise<TWorkDocument | null> => {
+export const findById = async (id: string): Promise<TWorkDocument | null> => {
   return await Work.findById(id);
 };
 

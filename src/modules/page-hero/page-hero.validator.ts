@@ -38,7 +38,10 @@ export const upsertPageHeroValidationSchema = z.object({
     primary_cta: ctaSchema,
     secondary_cta: ctaSchema,
     is_active: z
-      .preprocess((v) => (typeof v === 'string' ? v === 'true' : v), z.boolean())
+      .preprocess(
+        (v) => (typeof v === 'string' ? v === 'true' : v),
+        z.boolean(),
+      )
       .optional(),
   }),
 });

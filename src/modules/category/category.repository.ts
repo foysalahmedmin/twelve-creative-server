@@ -7,7 +7,9 @@ export const create = async (data: Partial<TCategory>): Promise<TCategory> => {
   return result.toObject();
 };
 
-export const findById = async (id: string): Promise<TCategoryDocument | null> => {
+export const findById = async (
+  id: string,
+): Promise<TCategoryDocument | null> => {
   return await Category.findById(id);
 };
 
@@ -15,7 +17,9 @@ export const findByIdLean = async (id: string): Promise<TCategory | null> => {
   return await Category.findById(id).lean();
 };
 
-export const findByIdWithDeleted = async (id: string): Promise<TCategory | null> => {
+export const findByIdWithDeleted = async (
+  id: string,
+): Promise<TCategory | null> => {
   return await Category.findById(id).setOptions({ bypassDeleted: true }).lean();
 };
 
@@ -25,7 +29,10 @@ export const findPublicPaginated = async (
   data: TCategory[];
   meta: { total: number; page: number; limit: number; total_pages: number };
 }> => {
-  const categoryQuery = new AppQueryFind(Category, { status: 'active', ...query })
+  const categoryQuery = new AppQueryFind(Category, {
+    status: 'active',
+    ...query,
+  })
     .search(['name'])
     .filter()
     .sort()
@@ -72,7 +79,9 @@ export const softDeleteById = async (id: string): Promise<void> => {
   });
 };
 
-export const restoreById = async (id: string): Promise<TCategoryDocument | null> => {
+export const restoreById = async (
+  id: string,
+): Promise<TCategoryDocument | null> => {
   return await Category.findOneAndUpdate(
     { _id: id, is_deleted: true },
     { is_deleted: false, $unset: { deleted_at: 1 } },

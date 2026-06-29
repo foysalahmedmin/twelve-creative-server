@@ -8,11 +8,7 @@ import * as UserValidations from './user.validator';
 const router = express.Router();
 
 // GET
-router.get(
-  '/self',
-  auth('admin', 'editor'),
-  UserControllers.getSelf,
-);
+router.get('/self', auth('admin', 'editor'), UserControllers.getSelf);
 
 router.get('/writers', UserControllers.getWritersUsers);
 

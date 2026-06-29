@@ -35,7 +35,9 @@ export const getFeaturedProjects = catchAsync(async (req, res) => {
 });
 
 export const getFeaturedProject = catchAsync(async (req, res) => {
-  const result = await FeaturedProjectServices.getFeaturedProject(req.params.id);
+  const result = await FeaturedProjectServices.getFeaturedProject(
+    req.params.id,
+  );
   sendResponse(res, {
     status: httpStatus.OK,
     success: true,

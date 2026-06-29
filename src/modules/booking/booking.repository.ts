@@ -2,9 +2,7 @@ import AppQueryFind from '../../builder/app-query-find';
 import { Booking } from './booking.model';
 import { TBooking, TBookingDocument } from './booking.type';
 
-export const create = async (
-  data: Partial<TBooking>,
-): Promise<TBooking> => {
+export const create = async (data: Partial<TBooking>): Promise<TBooking> => {
   const result = await Booking.create(data);
   return result.toObject();
 };
@@ -15,9 +13,7 @@ export const findById = async (
   return await Booking.findById(id);
 };
 
-export const findByIdLean = async (
-  id: string,
-): Promise<TBooking | null> => {
+export const findByIdLean = async (id: string): Promise<TBooking | null> => {
   return await Booking.findById(id).lean();
 };
 

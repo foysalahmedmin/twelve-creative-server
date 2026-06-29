@@ -22,7 +22,11 @@ export const findAll = async (
   if (query.search) filter.title = { $regex: query.search, $options: 'i' };
 
   const [data, total] = await Promise.all([
-    Task.find(filter).sort({ due_date: 1, created_at: -1 }).skip(skip).limit(limit).lean(),
+    Task.find(filter)
+      .sort({ due_date: 1, created_at: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean(),
     Task.countDocuments(filter),
   ]);
 

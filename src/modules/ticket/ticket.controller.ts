@@ -6,7 +6,7 @@ import * as TicketServices from './ticket.service';
 export const createTicket = catchAsync(async (req, res) => {
   const result = await TicketServices.createTicket({
     ...req.body,
-    created_by: (req as any).user?.email,
+    created_by: req.user?.email,
   });
   sendResponse(res, {
     status: httpStatus.CREATED,

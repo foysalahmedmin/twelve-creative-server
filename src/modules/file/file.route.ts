@@ -38,17 +38,9 @@ router.post(
 
 // ─── GET (List & Single) ─────────────────────────────────────────────────────
 
-router.get(
-  '/',
-  auth('admin', 'editor'),
-  FileControllers.getFiles,
-);
+router.get('/', auth('admin', 'editor'), FileControllers.getFiles);
 
-router.get(
-  '/self',
-  auth('admin', 'editor'),
-  FileControllers.getSelfFiles,
-);
+router.get('/self', auth('admin', 'editor'), FileControllers.getSelfFiles);
 
 router.get(
   '/:id',

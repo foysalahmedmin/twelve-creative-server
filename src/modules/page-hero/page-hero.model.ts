@@ -1,9 +1,5 @@
 import mongoose, { Schema } from 'mongoose';
-import {
-  PAGE_KEYS,
-  TPageHeroDocument,
-  TPageHeroModel,
-} from './page-hero.type';
+import { PAGE_KEYS, TPageHeroDocument, TPageHeroModel } from './page-hero.type';
 
 const videoRefSchema = new Schema(
   {

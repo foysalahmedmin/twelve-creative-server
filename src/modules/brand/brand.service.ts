@@ -3,9 +3,7 @@ import AppError from '../../builder/app-error';
 import * as BrandRepository from './brand.repository';
 import { TBrand } from './brand.type';
 
-export const createBrand = async (
-  data: Partial<TBrand>,
-): Promise<TBrand> => {
+export const createBrand = async (data: Partial<TBrand>): Promise<TBrand> => {
   return await BrandRepository.create(data);
 };
 

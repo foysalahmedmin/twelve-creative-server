@@ -15,5 +15,10 @@ export interface TSystemLogDocument extends TSystemLog, Document {
 }
 
 export type TSystemLogModel = Model<TSystemLogDocument> & {
-  log(level: TSystemLogLevel, message: string, actor?: string, meta?: Record<string, unknown>): Promise<void>;
+  log(
+    level: TSystemLogLevel,
+    message: string,
+    actor?: string,
+    meta?: Record<string, unknown>,
+  ): Promise<void>;
 };

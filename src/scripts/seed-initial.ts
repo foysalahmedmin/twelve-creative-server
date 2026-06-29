@@ -484,12 +484,7 @@ const SERVICES = [
     title: 'Ads & Distribution',
     description:
       'Creative only matters if it reaches the right people with the right intention. We make sure attention lands.',
-    highlights: [
-      'Meta ads',
-      'Retargeting',
-      'Email & SMS',
-      'Launch campaigns',
-    ],
+    highlights: ['Meta ads', 'Retargeting', 'Email & SMS', 'Launch campaigns'],
     image:
       'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=768&h=552&fit=crop&auto=format',
     icon: 'distribution' as const,
@@ -574,7 +569,8 @@ const INDUSTRIES = [
     order: 1,
     is_active: true,
     tagline: 'Seats filled. Tables turned.',
-    thumbnail: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&h=675&fit=crop&auto=format',
+    thumbnail:
+      'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&h=675&fit=crop&auto=format',
   },
   {
     slug: 'real-estate',
@@ -596,7 +592,8 @@ const INDUSTRIES = [
     order: 2,
     is_active: true,
     tagline: 'From listing to sellout.',
-    thumbnail: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&h=675&fit=crop&auto=format',
+    thumbnail:
+      'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&h=675&fit=crop&auto=format',
   },
   {
     slug: 'aviation',
@@ -618,7 +615,8 @@ const INDUSTRIES = [
     order: 3,
     is_active: true,
     tagline: 'Trust first. Revenue follows.',
-    thumbnail: 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=1200&h=675&fit=crop&auto=format',
+    thumbnail:
+      'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=1200&h=675&fit=crop&auto=format',
   },
   {
     slug: 'professional-services',
@@ -640,7 +638,8 @@ const INDUSTRIES = [
     order: 4,
     is_active: true,
     tagline: 'Clarity converts.',
-    thumbnail: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200&h=675&fit=crop&auto=format',
+    thumbnail:
+      'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200&h=675&fit=crop&auto=format',
   },
 ];
 
@@ -1003,7 +1002,7 @@ const WORKS = [
       },
     ],
     outcome_desc:
-      "Qualified calls increased 180% quarter over quarter while the founder spent less time on unqualified leads. Close rate on qualified opportunities improved by 22%.",
+      'Qualified calls increased 180% quarter over quarter while the founder spent less time on unqualified leads. Close rate on qualified opportunities improved by 22%.',
     outcome_video: { source: 'url' as const, value: SAMPLE_VIDEO },
     testimonial: {
       quote:
@@ -1023,7 +1022,8 @@ const WORKS = [
 const INSIGHTS = [
   {
     slug: 'why-most-marketing-fails-structure',
-    title: 'Why most marketing fails: a structure problem, not a content problem',
+    title:
+      'Why most marketing fails: a structure problem, not a content problem',
     excerpt:
       "The businesses we work with rarely have a content problem. They have a structure problem. Here's how to tell the difference — and what to do about it.",
     cover:
@@ -1105,7 +1105,7 @@ This order is boring. It also works.`,
     slug: 'creative-without-systems',
     title: "Creative without systems: why great content still doesn't convert",
     excerpt:
-      "Beautiful work is necessary but not sufficient. The systems behind it decide whether attention ever turns into revenue.",
+      'Beautiful work is necessary but not sufficient. The systems behind it decide whether attention ever turns into revenue.',
     cover:
       'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1280&h=720&fit=crop&auto=format',
     category: 'Systems',
@@ -1151,7 +1151,7 @@ If the brief is "we need to grow," start with the system. The content will work 
     slug: 'distribution-is-half-the-work',
     title: 'Distribution is half the work — and almost always under-invested',
     excerpt:
-      "Most teams spend 80% of their budget producing the asset and 20% getting it in front of people. That ratio is upside down.",
+      'Most teams spend 80% of their budget producing the asset and 20% getting it in front of people. That ratio is upside down.',
     cover:
       'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1280&h=720&fit=crop&auto=format',
     category: 'Distribution',
@@ -1196,9 +1196,10 @@ The fix isn't a bigger budget. It's a better split.`,
   },
   {
     slug: 'crm-is-marketing',
-    title: "CRM is a marketing function — most businesses don't treat it that way",
+    title:
+      "CRM is a marketing function — most businesses don't treat it that way",
     excerpt:
-      "The handoff between marketing and sales is where most leads die. The fix is treating CRM as marketing infrastructure, not a sales tool.",
+      'The handoff between marketing and sales is where most leads die. The fix is treating CRM as marketing infrastructure, not a sales tool.',
     cover:
       'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=1280&h=720&fit=crop&auto=format',
     category: 'Systems',
@@ -1259,7 +1260,8 @@ const PAGE_HEROES = [
   {
     page: 'about',
     label: 'About',
-    title: 'Built for businesses that need strategy and execution in the same room.',
+    title:
+      'Built for businesses that need strategy and execution in the same room.',
     description:
       'Twelve Creative was built from the belief that creative work should be connected to the business it serves. We exist to close the gap between strategy and execution.',
     is_active: true,
@@ -1275,7 +1277,8 @@ const PAGE_HEROES = [
   {
     page: 'industries',
     label: 'Industries',
-    title: 'Built for businesses where trust, presentation, and follow-up matter.',
+    title:
+      'Built for businesses where trust, presentation, and follow-up matter.',
     description:
       'Twelve Creative works across industries where the buying decision depends on credibility, timing, taste, and a clear path to action.',
     is_active: true,
@@ -1349,10 +1352,12 @@ const SITE_SETTING = {
     x: 'https://x.com/twelvecreative',
   },
   faq_section: {
-    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&auto=format',
+    image:
+      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&auto=format',
     image_alt: 'Carlos Doce — Founder of Twelve Creative',
     title: 'Have more questions?',
-    description: "Let's talk it out. Tell us where the business is now and what needs to move next. If the project is aligned, we'll schedule a conversation.",
+    description:
+      "Let's talk it out. Tell us where the business is now and what needs to move next. If the project is aligned, we'll schedule a conversation.",
     name: 'Carlos Doce',
     position: 'Founder, Twelve Creative',
     contact_link: '/contact',
@@ -1360,17 +1365,21 @@ const SITE_SETTING = {
   // C1: Calendly booking URL — replace with real Calendly link once provided by client
   calendly_url: '',
   // C4: Process section thumbnail — sticky left column in the Process section
-  process_thumbnail: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=768&h=898&fit=crop&auto=format',
+  process_thumbnail:
+    'https://images.unsplash.com/photo-1552664730-d307ca884978?w=768&h=898&fit=crop&auto=format',
   // C5: "How we structure" section visual asset — shown in The Twelve Creative Difference section
-  how_we_structure_image: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1280&h=720&fit=crop&auto=format',
+  how_we_structure_image:
+    'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1280&h=720&fit=crop&auto=format',
   // C6: TC Meeting scene / founder photo — shown in the About page founder section
-  meeting_scene_image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&h=600&fit=crop&auto=format',
+  meeting_scene_image:
+    'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&h=600&fit=crop&auto=format',
   // C7: "Merging Art and Science" story section content
   content_section: {
     title: 'Merging Art and Science',
     subtitle: 'Our Story',
     body: 'Our journey of combining creative excellence with backend growth infrastructure.',
-    image: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=768&h=768&fit=crop&auto=format',
+    image:
+      'https://images.unsplash.com/photo-1552664730-d307ca884978?w=768&h=768&fit=crop&auto=format',
   },
 };
 
@@ -1384,10 +1393,16 @@ interface SeedReport {
 
 async function seedModule<T>(
   name: string,
-  model: { countDocuments: (filter: object) => { exec: () => Promise<number> }; deleteMany: (filter: object) => Promise<unknown>; insertMany: (docs: T[]) => Promise<unknown[]> },
+  model: {
+    countDocuments: (filter: object) => { exec: () => Promise<number> };
+    deleteMany: (filter: object) => Promise<unknown>;
+    insertMany: (docs: T[]) => Promise<unknown[]>;
+  },
   docs: T[],
 ): Promise<SeedReport> {
-  const existing = await model.countDocuments({ is_deleted: { $ne: true } }).exec();
+  const existing = await model
+    .countDocuments({ is_deleted: { $ne: true } })
+    .exec();
 
   if (existing > 0 && !FORCE) {
     return { module: name, action: 'skipped', count: existing };
@@ -1463,11 +1478,7 @@ async function run(): Promise<void> {
       await seedModule('showcase-video', ShowcaseVideo, SHOWCASE_VIDEOS),
     );
     reports.push(
-      await seedModule(
-        'featured-project',
-        FeaturedProject,
-        FEATURED_PROJECTS,
-      ),
+      await seedModule('featured-project', FeaturedProject, FEATURED_PROJECTS),
     );
     reports.push(await seedModule('service', Service, SERVICES));
     reports.push(await seedModule('industry', Industry, INDUSTRIES));

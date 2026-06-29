@@ -11,7 +11,13 @@ const iconUpload = file({
   name: 'icon',
   folder: 'categories/icons',
   size: 5_000_000,
-  allowedTypes: ['image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'image/webp'],
+  allowedTypes: [
+    'image/jpeg',
+    'image/png',
+    'image/jpg',
+    'image/gif',
+    'image/webp',
+  ],
 });
 
 // GET

@@ -1,6 +1,9 @@
 import AppQueryFind from '../../builder/app-query-find';
 import { ContactMessage } from './contact-message.model';
-import { TContactMessage, TContactMessageDocument } from './contact-message.type';
+import {
+  TContactMessage,
+  TContactMessageDocument,
+} from './contact-message.type';
 
 export const create = async (
   data: Partial<TContactMessage>,

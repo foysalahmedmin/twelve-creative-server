@@ -12,7 +12,11 @@ export const getLogs = catchAsync(async (req, res) => {
   if (req.query.level) filter.level = req.query.level;
 
   const [data, total] = await Promise.all([
-    SystemLog.find(filter).sort({ created_at: -1 }).skip(skip).limit(limit).lean(),
+    SystemLog.find(filter)
+      .sort({ created_at: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean(),
     SystemLog.countDocuments(filter),
   ]);
 

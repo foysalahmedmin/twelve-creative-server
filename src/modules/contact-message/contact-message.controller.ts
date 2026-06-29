@@ -8,8 +8,7 @@ export const submitContactMessage = catchAsync(async (req, res) => {
   sendResponse(res, {
     status: httpStatus.CREATED,
     success: true,
-    message:
-      'Your message has been received. We will get back to you shortly.',
+    message: 'Your message has been received. We will get back to you shortly.',
     data: null,
   });
 });
@@ -26,9 +25,7 @@ export const getContactMessages = catchAsync(async (req, res) => {
 });
 
 export const getContactMessage = catchAsync(async (req, res) => {
-  const result = await ContactMessageServices.getContactMessage(
-    req.params.id,
-  );
+  const result = await ContactMessageServices.getContactMessage(req.params.id);
   sendResponse(res, {
     status: httpStatus.OK,
     success: true,

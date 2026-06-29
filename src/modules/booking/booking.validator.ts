@@ -4,12 +4,7 @@ const idSchema = z.string().refine((val) => /^[0-9a-fA-F]{24}$/.test(val), {
   message: 'Invalid ID format',
 });
 
-const statusEnum = z.enum([
-  'pending',
-  'in_progress',
-  'completed',
-  'cancelled',
-]);
+const statusEnum = z.enum(['pending', 'in_progress', 'completed', 'cancelled']);
 
 const leadSourceEnum = z.enum([
   'organic',

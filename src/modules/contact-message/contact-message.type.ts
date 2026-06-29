@@ -13,15 +13,11 @@ export type TContactMessage = {
   deleted_at?: Date;
 };
 
-export interface TContactMessageDocument
-  extends TContactMessage,
-    Document {
+export interface TContactMessageDocument extends TContactMessage, Document {
   _id: Types.ObjectId;
   softDelete(): Promise<TContactMessageDocument | null>;
 }
 
 export type TContactMessageModel = Model<TContactMessageDocument> & {
-  isContactMessageExist(
-    _id: string,
-  ): Promise<TContactMessageDocument | null>;
+  isContactMessageExist(_id: string): Promise<TContactMessageDocument | null>;
 };

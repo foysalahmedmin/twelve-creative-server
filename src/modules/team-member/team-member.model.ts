@@ -75,7 +75,7 @@ teamMemberSchema.methods.softDelete = async function () {
   return await this.save();
 };
 
-export const TeamMember = mongoose.model<
-  TTeamMemberDocument,
-  TTeamMemberModel
->('TeamMember', teamMemberSchema);
+export const TeamMember = mongoose.model<TTeamMemberDocument, TTeamMemberModel>(
+  'TeamMember',
+  teamMemberSchema,
+);

@@ -3,7 +3,9 @@ import AppError from '../../builder/app-error';
 import * as TicketRepository from './ticket.repository';
 import { TTicket } from './ticket.type';
 
-export const createTicket = async (data: Partial<TTicket>): Promise<TTicket> => {
+export const createTicket = async (
+  data: Partial<TTicket>,
+): Promise<TTicket> => {
   return await TicketRepository.create(data);
 };
 

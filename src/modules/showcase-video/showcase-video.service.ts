@@ -27,9 +27,7 @@ export const getShowcaseVideos = async (
   return await ShowcaseVideoRepository.findAdminPaginated(query);
 };
 
-export const getShowcaseVideo = async (
-  id: string,
-): Promise<TShowcaseVideo> => {
+export const getShowcaseVideo = async (id: string): Promise<TShowcaseVideo> => {
   const result = await ShowcaseVideoRepository.findByIdLean(id);
   if (!result) {
     throw new AppError(httpStatus.NOT_FOUND, 'Showcase video not found');

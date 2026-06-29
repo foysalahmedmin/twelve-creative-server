@@ -7,9 +7,7 @@ export const create = async (data: Partial<TBrand>): Promise<TBrand> => {
   return result.toObject();
 };
 
-export const findById = async (
-  id: string,
-): Promise<TBrandDocument | null> => {
+export const findById = async (id: string): Promise<TBrandDocument | null> => {
   return await Brand.findById(id);
 };
 

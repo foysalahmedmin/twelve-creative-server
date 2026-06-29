@@ -11,7 +11,11 @@ router.get('/public', TestimonialControllers.getPublicTestimonials);
 
 // ─── Admin ───────────────────────────────────────────────────────────────────
 
-router.get('/', auth('admin', 'editor'), TestimonialControllers.getTestimonials);
+router.get(
+  '/',
+  auth('admin', 'editor'),
+  TestimonialControllers.getTestimonials,
+);
 
 router.get(
   '/:id',

@@ -15,9 +15,7 @@ export const findById = async (
   return await TeamMember.findById(id);
 };
 
-export const findByIdLean = async (
-  id: string,
-): Promise<TTeamMember | null> => {
+export const findByIdLean = async (id: string): Promise<TTeamMember | null> => {
   return await TeamMember.findById(id).lean();
 };
 
