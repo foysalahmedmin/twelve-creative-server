@@ -272,7 +272,7 @@ const SHOWCASE_VIDEOS = [
   },
 ];
 
-// Featured Projects — 4 tabs matching the 4 industry verticals, 3 projects each.
+// Featured Projects — 4 tabs matching the 4 industry verticals, 4 projects each.
 const FEATURED_PROJECTS = [
   // Hospitality
   {
@@ -303,6 +303,16 @@ const FEATURED_PROJECTS = [
       'https://images.unsplash.com/photo-1559339352-11d035aa65de?w=1200&h=675&fit=crop&auto=format',
     video: { source: 'url' as const, value: SAMPLE_VIDEO },
     order: 3,
+    is_active: true,
+  },
+  {
+    title: 'Private Dining Experience — The Meridian',
+    category: 'Hospitality',
+    aspect: 'reel' as const,
+    thumbnail:
+      'https://images.unsplash.com/photo-1424847651672-bf20a4b0982b?w=675&h=1200&fit=crop&auto=format',
+    video: { source: 'url' as const, value: SAMPLE_VIDEO },
+    order: 4,
     is_active: true,
   },
   // Real Estate
@@ -336,6 +346,16 @@ const FEATURED_PROJECTS = [
     order: 6,
     is_active: true,
   },
+  {
+    title: 'Penthouse Launch — Horizon Living',
+    category: 'Real Estate',
+    aspect: 'reel' as const,
+    thumbnail:
+      'https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=675&h=1200&fit=crop&auto=format',
+    video: { source: 'url' as const, value: SAMPLE_VIDEO },
+    order: 7,
+    is_active: true,
+  },
   // Aviation
   {
     title: 'Velocity Aviation — Charter Film',
@@ -367,6 +387,16 @@ const FEATURED_PROJECTS = [
     order: 9,
     is_active: true,
   },
+  {
+    title: 'Elite Travel — Apex Air',
+    category: 'Aviation',
+    aspect: 'reel' as const,
+    thumbnail:
+      'https://images.unsplash.com/photo-1474302770737-173ee21bab63?w=675&h=1200&fit=crop&auto=format',
+    video: { source: 'url' as const, value: SAMPLE_VIDEO },
+    order: 10,
+    is_active: true,
+  },
   // Professional Services
   {
     title: 'Founder Talk — Brightline Advisors',
@@ -396,6 +426,16 @@ const FEATURED_PROJECTS = [
       'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=1200&h=675&fit=crop&auto=format',
     video: { source: 'url' as const, value: SAMPLE_VIDEO },
     order: 12,
+    is_active: true,
+  },
+  {
+    title: 'Strategy Session — Pinnacle Group',
+    category: 'Professional Services',
+    aspect: 'reel' as const,
+    thumbnail:
+      'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=675&h=1200&fit=crop&auto=format',
+    video: { source: 'url' as const, value: SAMPLE_VIDEO },
+    order: 13,
     is_active: true,
   },
 ];
