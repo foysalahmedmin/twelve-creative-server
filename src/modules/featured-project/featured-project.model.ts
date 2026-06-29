@@ -70,10 +70,7 @@ featuredProjectSchema.methods.toJSON = function () {
 };
 
 featuredProjectSchema.pre(/^find/, function (next) {
-  const query = this as unknown as Query<
-    TFeaturedProject,
-    TFeaturedProject
-  >;
+  const query = this as unknown as Query<TFeaturedProject, TFeaturedProject>;
   const opts = query.getOptions();
   if (!opts?.bypassDeleted && query.getQuery().is_deleted === undefined) {
     query.setQuery({ ...query.getQuery(), is_deleted: { $ne: true } });
