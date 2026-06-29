@@ -7,7 +7,7 @@ export type TVideoRef = {
   value: string;
 };
 
-export type TFeaturedAspect = 'reel' | 'video';
+export type TFeaturedAspect = 'reel' | 'landscape';
 
 export type TFeaturedProject = {
   _id?: Types.ObjectId | string;
@@ -18,7 +18,7 @@ export type TFeaturedProject = {
    */
   category: string;
   /**
-   * Visual aspect — `reel` (9:16 portrait) or `video` (16:9 landscape).
+   * Visual aspect — `reel` (9:16 portrait) or `landscape` (16:9).
    * Drives the public grid layout.
    */
   aspect: TFeaturedAspect;

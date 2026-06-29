@@ -35,8 +35,8 @@ const featuredProjectSchema = new Schema<TFeaturedProjectDocument>(
     },
     aspect: {
       type: String,
-      enum: ['reel', 'video'],
-      default: 'video',
+      enum: ['reel', 'landscape'],
+      default: 'landscape',
       required: true,
     },
     thumbnail: {

@@ -16,7 +16,7 @@ const videoRefSchema = z.object({
   value: urlOrPath,
 });
 
-const aspectEnum = z.enum(['reel', 'video']);
+const aspectEnum = z.enum(['reel', 'landscape']);
 
 const baseBody = z.object({
   title: z.string().trim().min(2).max(200),
