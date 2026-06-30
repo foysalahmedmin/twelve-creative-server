@@ -10,6 +10,7 @@
     "start:dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "seed:admin": "ts-node-dev --transpile-only src/scripts/seed-admin.ts",
     "seed:initial": "ts-node-dev --transpile-only src/scripts/seed-initial.ts",
+    "patch:industry-videos": "ts-node-dev --transpile-only src/scripts/add-industry-videos.ts",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "prettier": "prettier --ignore-path .gitignore --write \"./src/**/*.+(js|ts|json)\"",
