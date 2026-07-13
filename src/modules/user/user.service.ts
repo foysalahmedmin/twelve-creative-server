@@ -160,6 +160,17 @@ export const updateUsers = async (
 
   if (result.modifiedCount > 0) {
     await invalidateCacheByPattern(`${CACHE_PREFIX}:*`);
+
+    // Role/status changes must terminate live sessions: bump token_version and
+    // drop each user's auth-session cache so the middleware re-validates.
+    const affectsSession =
+      payload.role !== undefined || payload.status !== undefined;
+    if (affectsSession) {
+      await UserRepository.incrementTokenVersionMany(foundIds);
+      await Promise.all(
+        foundIds.map((id) => invalidateCache(`auth:user:${id}`)),
+      );
+    }
   }
 
   return { count: result.modifiedCount, not_found_ids: notFoundIds };
@@ -176,6 +187,9 @@ export const deleteUser = async (id: string): Promise<void> => {
   await user.softDelete();
   await invalidateCache(generateCacheKey(CACHE_PREFIX, ['id', id]));
   await invalidateCacheByPattern(`${CACHE_PREFIX}:admin:list:*`);
+  // Also drop the auth-session cache, otherwise the deleted user keeps access
+  // until the middleware's 30-minute `auth:user:*` cache expires.
+  await invalidateCache(`auth:user:${id}`);
 };
 
 export const deleteUsers = async (
@@ -190,6 +204,8 @@ export const deleteUsers = async (
 
   await UserRepository.softDeleteManyByIds(foundIds);
   await invalidateCacheByPattern(`${CACHE_PREFIX}:*`);
+  // Drop each deleted user's auth-session cache so access ends immediately.
+  await Promise.all(foundIds.map((id) => invalidateCache(`auth:user:${id}`)));
 
   return { count: foundIds.length, not_found_ids: notFoundIds };
 };

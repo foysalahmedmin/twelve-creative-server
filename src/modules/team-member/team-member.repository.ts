@@ -31,7 +31,11 @@ export const findAdminPaginated = async (
   data: TTeamMember[];
   meta: { total: number; page: number; limit: number; total_pages: number };
 }> => {
-  const q = new AppQueryFind(TeamMember, query)
+  const qp: Record<string, unknown> = { ...query };
+  if (qp.filter === 'active') qp.is_active = true;
+  else if (qp.filter === 'inactive') qp.is_active = false;
+
+  const q = new AppQueryFind(TeamMember, qp)
     .search(['name', 'role'])
     .filter()
     .sort()

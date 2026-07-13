@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { ErrorRequestHandler } from 'express';
 import { ZodError } from 'zod';
 import config from '../config/env';
@@ -48,13 +49,19 @@ const error: ErrorRequestHandler = (error, _req, res, _next) => {
       },
     ];
   } else if (error instanceof Error) {
-    message = error.message;
-    sources = [
-      {
-        path: '',
-        message: error?.message,
-      },
-    ];
+    // Unknown/unexpected error. Log it server-side but never leak the raw
+    // message (may contain internal details) to clients in production.
+    if (config.node_env === 'development') {
+      message = error.message;
+      sources = [
+        {
+          path: '',
+          message: error?.message,
+        },
+      ];
+    } else {
+      console.error('Unhandled error:', error);
+    }
   }
 
   res.status(status).json({
@@ -62,8 +69,8 @@ const error: ErrorRequestHandler = (error, _req, res, _next) => {
     status,
     message,
     sources,
-    error,
-    stack: config.node_env === 'development' ? error?.stack : null,
+    // Never expose the raw error object or stack outside development.
+    ...(config.node_env === 'development' && { error, stack: error?.stack }),
   });
   return;
 };

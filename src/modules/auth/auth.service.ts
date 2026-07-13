@@ -6,6 +6,7 @@
  * unit-testable by mocking the repository.
  */
 
+/* eslint-disable no-console */
 import bcrypt from 'bcrypt';
 import { OAuth2Client } from 'google-auth-library';
 import httpStatus from 'http-status';
@@ -118,20 +119,21 @@ export const googleLogin = async (idToken: string) => {
 export const signin = async (payload: TSignin) => {
   const user = await AuthRepository.findByEmailWithPassword(payload.email);
 
-  if (!user) {
-    throw new AppError(httpStatus.NOT_FOUND, 'User not found!');
+  // Unknown email and wrong password return the SAME generic response so an
+  // attacker cannot enumerate which emails have accounts. Verify the password
+  // before surfacing account-state errors (deleted/blocked) for the same reason.
+  if (
+    !user ||
+    !user.password ||
+    !(await bcrypt.compare(payload.password, user.password))
+  ) {
+    throw new AppError(httpStatus.UNAUTHORIZED, 'Invalid email or password!');
   }
   if (user.is_deleted) {
     throw new AppError(httpStatus.FORBIDDEN, 'User is deleted!');
   }
   if (user.status === 'blocked') {
     throw new AppError(httpStatus.FORBIDDEN, 'User is blocked!');
-  }
-  if (
-    !user.password ||
-    !(await bcrypt.compare(payload.password, user.password))
-  ) {
-    throw new AppError(httpStatus.FORBIDDEN, 'Password do not matched!');
   }
 
   const jwtPayload = buildJwtPayload(user);
@@ -268,14 +270,11 @@ export const changePassword = async (
 export const forgetPassword = async (payload: TForgetPassword) => {
   const user = await AuthRepository.findByEmailWithPassword(payload.email);
 
-  if (!user) {
-    throw new AppError(httpStatus.NOT_FOUND, 'User not found!');
-  }
-  if (user.is_deleted) {
-    throw new AppError(httpStatus.FORBIDDEN, 'User is deleted!');
-  }
-  if (user.status === 'blocked') {
-    throw new AppError(httpStatus.FORBIDDEN, 'User is blocked!');
+  // Do not reveal whether the email is registered / deleted / blocked — return
+  // the same generic success response in every case (anti-enumeration). Only
+  // actually send the reset email when the account is valid.
+  if (!user || user.is_deleted || user.status === 'blocked') {
+    return;
   }
 
   const jwtPayload: TJwtPayload = {
@@ -294,12 +293,20 @@ export const forgetPassword = async (payload: TForgetPassword) => {
   const link = `${config.reset_password_ui_link}?id=${user.email}&token=${resetToken}`;
   const content = `<a href="${link}">Click here to reset your password</a>`;
 
-  sendEmail({
-    to: user.email,
-    subject: 'Twelve Creative Password Change Link',
-    text: 'Reset your password within 10 minuets',
-    html: content,
-  });
+  // Fire-and-forget: a rejected email promise must never bubble to the global
+  // unhandledRejection handler, which shuts the whole server down.
+  void (async () => {
+    try {
+      await sendEmail({
+        to: user.email,
+        subject: 'Twelve Creative Password Change Link',
+        text: 'Reset your password within 10 minuets',
+        html: content,
+      });
+    } catch (err) {
+      console.warn('Password reset email failed:', err);
+    }
+  })();
 };
 
 // ─── Reset Password ───────────────────────────────────────────────────────────
@@ -371,12 +378,20 @@ export const emailVerificationSource = async (user: TJwtPayload) => {
   const link = `${config.email_verification_ui_link}?id=${user.email}&token=${resetToken}`;
   const content = `<a href="${link}">Click here to verify your email</a>`;
 
-  sendEmail({
-    to: user.email,
-    subject: 'Twelve Creative Email Verification Link',
-    text: 'Verify your email within 10 minuets',
-    html: content,
-  });
+  // Fire-and-forget: a rejected email promise must never bubble to the global
+  // unhandledRejection handler, which shuts the whole server down.
+  void (async () => {
+    try {
+      await sendEmail({
+        to: user.email,
+        subject: 'Twelve Creative Email Verification Link',
+        text: 'Verify your email within 10 minuets',
+        html: content,
+      });
+    } catch (err) {
+      console.warn('Email verification email failed:', err);
+    }
+  })();
 };
 
 // ─── Logout ───────────────────────────────────────────────────────────────────

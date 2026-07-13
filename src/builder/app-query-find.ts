@@ -35,9 +35,12 @@ class AppQueryFind<T> {
   search(applicableFields: (keyof T)[]): this {
     const searchValue = this.query_params.search;
     if (searchValue) {
+      // Escape regex metacharacters so a literal search like "[" or "(" cannot
+      // produce an invalid RegExp (Mongo would 500) or become a ReDoS vector.
+      const escaped = String(searchValue).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const searchConditions: FilterQuery<DocumentType<T>> = {
         $or: applicableFields.map((field) => ({
-          [field]: { $regex: searchValue, $options: 'i' },
+          [field]: { $regex: escaped, $options: 'i' },
         })) as FilterQuery<DocumentType<T>>[],
       };
       this.query_filter = { ...this.query_filter, ...searchConditions };
@@ -123,7 +126,9 @@ class AppQueryFind<T> {
   paginate(): this {
     const { page, limit } = this.query_params;
 
-    if (limit && page) {
+    // Paginate when EITHER page or limit is supplied — default the missing one
+    // instead of silently returning the full collection with a bogus meta.
+    if (limit || page) {
       this.page = Number(page) || 1;
       this.limit = Number(limit) || 10;
       const skip = (this.page - 1) * this.limit;
@@ -217,7 +222,8 @@ class AppQueryFind<T> {
         {} as Record<string, number>,
       ) || undefined;
 
-    const total_pages = Math.ceil(total / this.limit);
+    // Guard against limit === 0 (unpaginated request) → Infinity/NaN pages.
+    const total_pages = this.limit > 0 ? Math.ceil(total / this.limit) : 1;
 
     if (this.query_params.is_count_only) {
       return {

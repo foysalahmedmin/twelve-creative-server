@@ -36,7 +36,11 @@ export const findAdminPaginated = async (
   data: TFeaturedProject[];
   meta: { total: number; page: number; limit: number; total_pages: number };
 }> => {
-  const q = new AppQueryFind(FeaturedProject, query)
+  const qp: Record<string, unknown> = { ...query };
+  if (qp.filter === 'active') qp.is_active = true;
+  else if (qp.filter === 'inactive') qp.is_active = false;
+
+  const q = new AppQueryFind(FeaturedProject, qp)
     .search(['title', 'category'])
     .filter()
     .sort()

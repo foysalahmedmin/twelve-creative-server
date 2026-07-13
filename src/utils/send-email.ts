@@ -1,4 +1,5 @@
 import sgMail from '@sendgrid/mail';
+import { readFile } from 'fs/promises';
 import nodemailer from 'nodemailer';
 import { Resend } from 'resend';
 import config from '../config/env';
@@ -115,27 +116,40 @@ export const sendEmailSendgrid = async ({
   sgMail.setApiKey(config.sendgrid_api_key);
 
   try {
+    // SendGrid requires base64-encoded content and does not support
+    // path-based attachments, so resolve every attachment to base64 here.
+    const mappedAttachments = attachments
+      ? await Promise.all(
+          attachments.map(async (att) => {
+            let content: string;
+            if (Buffer.isBuffer(att.content)) {
+              content = att.content.toString('base64');
+            } else if (att.path) {
+              content = (await readFile(att.path)).toString('base64');
+            } else if (typeof att.content === 'string') {
+              content = Buffer.from(att.content, 'utf-8').toString('base64');
+            } else {
+              content = '';
+            }
+
+            return {
+              filename: att.filename,
+              content,
+              contentId: att.cid || att.filename,
+              disposition: att?.disposition || 'attachment',
+              type: att.type,
+            };
+          }),
+        )
+      : undefined;
+
     const info = await sgMail.send({
       from: config.sendgrid_email,
       to,
       subject,
       text,
       html,
-      attachments: attachments?.map((att) => {
-        // SendGrid requires base64 content
-        let content = att.content;
-        if (Buffer.isBuffer(content)) {
-          content = content.toString('base64');
-        }
-
-        return {
-          filename: att.filename,
-          content: content ?? '',
-          contentId: att.cid || att.filename,
-          disposition: att?.disposition || 'attachment',
-          type: att.type,
-        };
-      }),
+      attachments: mappedAttachments,
     });
     console.log(`Email sent (SendGrid): ${info[0].headers['x-message-id']}`);
   } catch (error: unknown) {

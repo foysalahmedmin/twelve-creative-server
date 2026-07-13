@@ -68,6 +68,12 @@ const auth = (...roles: (TRole | 'guest')[]) => {
 
       const user = await getUser(_id);
 
+      // Token may reference a user that has since been hard-deleted →
+      // getUser() returns null. Guard before dereferencing to avoid a 500.
+      if (!user) {
+        throw new AppError(httpStatus.UNAUTHORIZED, 'User not found');
+      }
+
       if (user.is_deleted) {
         throw new AppError(httpStatus.FORBIDDEN, 'User is deleted');
       }

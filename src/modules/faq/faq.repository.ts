@@ -27,7 +27,11 @@ export const findAdminPaginated = async (
   data: TFaq[];
   meta: { total: number; page: number; limit: number; total_pages: number };
 }> => {
-  const q = new AppQueryFind(Faq, query)
+  const qp: Record<string, unknown> = { ...query };
+  if (qp.filter === 'active') qp.is_active = true;
+  else if (qp.filter === 'inactive') qp.is_active = false;
+
+  const q = new AppQueryFind(Faq, qp)
     .search(['question', 'answer', 'group'])
     .filter()
     .sort()

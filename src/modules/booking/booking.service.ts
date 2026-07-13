@@ -114,7 +114,9 @@ export const deleteBooking = async (id: string): Promise<void> => {
 };
 
 export const deleteBookingPermanent = async (id: string): Promise<void> => {
-  const exists = await BookingRepository.findByIdLean(id);
+  // Permanent delete must find already soft-deleted bookings too, so bypass
+  // the soft-delete filter for the existence check.
+  const exists = await BookingRepository.findByIdWithDeleted(id);
   if (!exists) {
     throw new AppError(httpStatus.NOT_FOUND, 'Booking not found');
   }

@@ -35,7 +35,11 @@ export const findAdminPaginated = async (
   data: TInsight[];
   meta: { total: number; page: number; limit: number; total_pages: number };
 }> => {
-  const q = new AppQueryFind(Insight, query)
+  const qp: Record<string, unknown> = { ...query };
+  if (qp.filter === 'published') qp.status = 'published';
+  else if (qp.filter === 'draft') qp.status = 'draft';
+
+  const q = new AppQueryFind(Insight, qp)
     .search(['title', 'slug', 'excerpt', 'category'])
     .filter()
     .sort()

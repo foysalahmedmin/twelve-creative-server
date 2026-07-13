@@ -94,6 +94,13 @@ export const incrementTokenVersion = async (id: string): Promise<void> => {
   await User.findByIdAndUpdate(id, { $inc: { token_version: 1 } });
 };
 
+export const incrementTokenVersionMany = async (
+  ids: string[],
+): Promise<void> => {
+  if (!ids.length) return;
+  await User.updateMany({ _id: { $in: ids } }, { $inc: { token_version: 1 } });
+};
+
 export const updateIsVerifiedById = async (
   id: string,
 ): Promise<TUserDocument | null> => {

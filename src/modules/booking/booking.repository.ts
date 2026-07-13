@@ -17,6 +17,14 @@ export const findByIdLean = async (id: string): Promise<TBooking | null> => {
   return await Booking.findById(id).lean();
 };
 
+export const findByIdWithDeleted = async (
+  id: string,
+): Promise<TBooking | null> => {
+  return await Booking.findById(id)
+    .setOptions({ bypassDeleted: true })
+    .lean();
+};
+
 export const findAdminPaginated = async (
   query: Record<string, unknown>,
 ): Promise<{
