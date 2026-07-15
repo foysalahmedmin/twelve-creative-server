@@ -25,7 +25,6 @@ const industrySchema = new Schema<TIndustryDocument>(
     slug: {
       type: String,
       required: [true, 'Slug is required'],
-      unique: true,
       trim: true,
       lowercase: true,
       minlength: [2, 'Slug must be at least 2 characters'],
@@ -108,7 +107,10 @@ industrySchema.index(
   { slug: 1 },
   {
     unique: true,
-    partialFilterExpression: { is_deleted: { $ne: true } },
+    // MongoDB partial indexes do not support `$ne`. Every Industry created by
+    // this schema stores the default `false`, while soft-deleted rows store
+    // `true`, so equality gives us the intended reusable-slug behaviour.
+    partialFilterExpression: { is_deleted: false },
     name: 'unique_industry_slug_not_deleted',
   },
 );

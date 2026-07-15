@@ -19,7 +19,6 @@
  */
 
 /* eslint-disable no-console */
-import mongoose from 'mongoose';
 import { disconnectDB, initializeDB } from '../config/db';
 import { Brand } from '../modules/brand/brand.model';
 import { Faq } from '../modules/faq/faq.model';
@@ -33,6 +32,8 @@ import { SiteSetting } from '../modules/site-setting/site-setting.model';
 import { TeamMember } from '../modules/team-member/team-member.model';
 import { Testimonial } from '../modules/testimonial/testimonial.model';
 import { Work } from '../modules/work/work.model';
+import { resolveSeedIndustries } from './lib/resolve-industries';
+import { buildIndustryMediaDocuments } from './seeds/industry-media.seed';
 
 const FORCE = process.argv.includes('--force');
 
@@ -133,309 +134,6 @@ const TESTIMONIALS = [
     message:
       'What we needed was structure — clearer message, stronger website, working follow-up. They delivered all of it as one connected system.',
     order: 8,
-    is_active: true,
-  },
-];
-
-// ─── Showcase Videos (Visual Library) ────────────────────────────────────────
-// Showcase videos — split across two public surfaces by `aspect`:
-//   - `reel`      → Visual Library marquee (portrait 9:16)
-//   - `landscape` → Work Showcase thumbnail grid (16:9)
-const SHOWCASE_VIDEOS = [
-  // Reel videos (Visual Library)
-  {
-    video: { source: 'url' as const, value: SAMPLE_VIDEO },
-    thumbnail:
-      'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=512&h=912&fit=crop&auto=format',
-    alt: 'Hospitality brand film — restaurant interior',
-    aspect: 'reel' as const,
-    order: 1,
-    is_active: true,
-  },
-  {
-    video: { source: 'url' as const, value: SAMPLE_VIDEO },
-    thumbnail:
-      'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=512&h=912&fit=crop&auto=format',
-    alt: 'Real estate project reveal — luxury residential',
-    aspect: 'reel' as const,
-    order: 2,
-    is_active: true,
-  },
-  {
-    video: { source: 'url' as const, value: SAMPLE_VIDEO },
-    thumbnail:
-      'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=512&h=912&fit=crop&auto=format',
-    alt: 'Aviation charter — founder film',
-    aspect: 'reel' as const,
-    order: 3,
-    is_active: true,
-  },
-  {
-    video: { source: 'url' as const, value: SAMPLE_VIDEO },
-    thumbnail:
-      'https://images.unsplash.com/photo-1559339352-11d035aa65de?w=512&h=912&fit=crop&auto=format',
-    alt: 'Restaurant menu launch — campaign asset',
-    aspect: 'reel' as const,
-    order: 4,
-    is_active: true,
-  },
-  {
-    video: { source: 'url' as const, value: SAMPLE_VIDEO },
-    thumbnail:
-      'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=512&h=912&fit=crop&auto=format',
-    alt: 'Founder interview — professional services',
-    aspect: 'reel' as const,
-    order: 5,
-    is_active: true,
-  },
-  {
-    video: { source: 'url' as const, value: SAMPLE_VIDEO },
-    thumbnail:
-      'https://images.unsplash.com/photo-1540962351504-03099e0a754b?w=512&h=912&fit=crop&auto=format',
-    alt: 'Aviation hangar walkthrough — charter brand',
-    aspect: 'reel' as const,
-    order: 6,
-    is_active: true,
-  },
-  {
-    video: { source: 'url' as const, value: SAMPLE_VIDEO },
-    thumbnail:
-      'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=512&h=912&fit=crop&auto=format',
-    alt: 'Cocktail bar opening — hospitality teaser',
-    aspect: 'reel' as const,
-    order: 7,
-    is_active: true,
-  },
-  {
-    video: { source: 'url' as const, value: SAMPLE_VIDEO },
-    thumbnail:
-      'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=512&h=912&fit=crop&auto=format',
-    alt: 'Luxury property reveal — penthouse tour',
-    aspect: 'reel' as const,
-    order: 8,
-    is_active: true,
-  },
-  // Landscape videos (Work Showcase grid)
-  {
-    video: { source: 'url' as const, value: SAMPLE_VIDEO },
-    thumbnail:
-      'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1280&h=720&fit=crop&auto=format',
-    alt: 'Hudson Hospitality — opening night recap',
-    aspect: 'landscape' as const,
-    order: 9,
-    is_active: true,
-  },
-  {
-    video: { source: 'url' as const, value: SAMPLE_VIDEO },
-    thumbnail:
-      'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1280&h=720&fit=crop&auto=format',
-    alt: 'Meridian Properties — project reveal',
-    aspect: 'landscape' as const,
-    order: 10,
-    is_active: true,
-  },
-  {
-    video: { source: 'url' as const, value: SAMPLE_VIDEO },
-    thumbnail:
-      'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=1280&h=720&fit=crop&auto=format',
-    alt: 'Skyline Charter — founder interview',
-    aspect: 'landscape' as const,
-    order: 11,
-    is_active: true,
-  },
-  {
-    video: { source: 'url' as const, value: SAMPLE_VIDEO },
-    thumbnail:
-      'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1280&h=720&fit=crop&auto=format',
-    alt: 'Vesta Group — year in review',
-    aspect: 'landscape' as const,
-    order: 12,
-    is_active: true,
-  },
-  {
-    video: { source: 'url' as const, value: SAMPLE_VIDEO },
-    thumbnail:
-      'https://images.unsplash.com/photo-1559339352-11d035aa65de?w=1280&h=720&fit=crop&auto=format',
-    alt: 'Casa del Mar — brand story',
-    aspect: 'landscape' as const,
-    order: 13,
-    is_active: true,
-  },
-  {
-    video: { source: 'url' as const, value: SAMPLE_VIDEO },
-    thumbnail:
-      'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=1280&h=720&fit=crop&auto=format',
-    alt: 'Monarch Consulting — founder film',
-    aspect: 'landscape' as const,
-    order: 14,
-    is_active: true,
-  },
-];
-
-// Featured Projects — 4 tabs matching the 4 industry verticals, 4 projects each.
-const FEATURED_PROJECTS = [
-  // Hospitality
-  {
-    title: 'Chef Spotlight — Wine Dinner Series',
-    category: 'Hospitality',
-    aspect: 'reel' as const,
-    thumbnail:
-      'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1200&h=675&fit=crop&auto=format',
-    video: { source: 'url' as const, value: SAMPLE_VIDEO },
-    order: 1,
-    is_active: true,
-  },
-  {
-    title: 'Rooftop Opening — Hudson Hospitality',
-    category: 'Hospitality',
-    aspect: 'reel' as const,
-    thumbnail:
-      'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&h=675&fit=crop&auto=format',
-    video: { source: 'url' as const, value: SAMPLE_VIDEO },
-    order: 2,
-    is_active: true,
-  },
-  {
-    title: 'Menu Launch — Casa del Mar',
-    category: 'Hospitality',
-    aspect: 'reel' as const,
-    thumbnail:
-      'https://images.unsplash.com/photo-1559339352-11d035aa65de?w=1200&h=675&fit=crop&auto=format',
-    video: { source: 'url' as const, value: SAMPLE_VIDEO },
-    order: 3,
-    is_active: true,
-  },
-  {
-    title: 'Private Dining Experience — The Meridian',
-    category: 'Hospitality',
-    aspect: 'reel' as const,
-    thumbnail:
-      'https://images.unsplash.com/photo-1424847651672-bf20a4b0982b?w=675&h=1200&fit=crop&auto=format',
-    video: { source: 'url' as const, value: SAMPLE_VIDEO },
-    order: 4,
-    is_active: true,
-  },
-  // Real Estate
-  {
-    title: 'Meridian Tower — Sales Film',
-    category: 'Real Estate',
-    aspect: 'reel' as const,
-    thumbnail:
-      'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&h=675&fit=crop&auto=format',
-    video: { source: 'url' as const, value: SAMPLE_VIDEO },
-    order: 4,
-    is_active: true,
-  },
-  {
-    title: 'Atlas Developments — Project Reveal',
-    category: 'Real Estate',
-    aspect: 'reel' as const,
-    thumbnail:
-      'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=1200&h=675&fit=crop&auto=format',
-    video: { source: 'url' as const, value: SAMPLE_VIDEO },
-    order: 5,
-    is_active: true,
-  },
-  {
-    title: 'Obsidian — Luxury Property Tour',
-    category: 'Real Estate',
-    aspect: 'reel' as const,
-    thumbnail:
-      'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1200&h=675&fit=crop&auto=format',
-    video: { source: 'url' as const, value: SAMPLE_VIDEO },
-    order: 6,
-    is_active: true,
-  },
-  {
-    title: 'Penthouse Launch — Horizon Living',
-    category: 'Real Estate',
-    aspect: 'reel' as const,
-    thumbnail:
-      'https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=675&h=1200&fit=crop&auto=format',
-    video: { source: 'url' as const, value: SAMPLE_VIDEO },
-    order: 7,
-    is_active: true,
-  },
-  // Aviation
-  {
-    title: 'Velocity Aviation — Charter Film',
-    category: 'Aviation',
-    aspect: 'reel' as const,
-    thumbnail:
-      'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=1200&h=675&fit=crop&auto=format',
-    video: { source: 'url' as const, value: SAMPLE_VIDEO },
-    order: 7,
-    is_active: true,
-  },
-  {
-    title: 'Skyline Charter — Founder Story',
-    category: 'Aviation',
-    aspect: 'reel' as const,
-    thumbnail:
-      'https://images.unsplash.com/photo-1540962351504-03099e0a754b?w=1200&h=675&fit=crop&auto=format',
-    video: { source: 'url' as const, value: SAMPLE_VIDEO },
-    order: 8,
-    is_active: true,
-  },
-  {
-    title: 'Northstar — Operations Behind the Scenes',
-    category: 'Aviation',
-    aspect: 'reel' as const,
-    thumbnail:
-      'https://images.unsplash.com/photo-1556388158-158ea5ccacbd?w=1200&h=675&fit=crop&auto=format',
-    video: { source: 'url' as const, value: SAMPLE_VIDEO },
-    order: 9,
-    is_active: true,
-  },
-  {
-    title: 'Elite Travel — Apex Air',
-    category: 'Aviation',
-    aspect: 'reel' as const,
-    thumbnail:
-      'https://images.unsplash.com/photo-1474302770737-173ee21bab63?w=675&h=1200&fit=crop&auto=format',
-    video: { source: 'url' as const, value: SAMPLE_VIDEO },
-    order: 10,
-    is_active: true,
-  },
-  // Professional Services
-  {
-    title: 'Founder Talk — Brightline Advisors',
-    category: 'Professional Services',
-    aspect: 'reel' as const,
-    thumbnail:
-      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1200&h=675&fit=crop&auto=format',
-    video: { source: 'url' as const, value: SAMPLE_VIDEO },
-    order: 10,
-    is_active: true,
-  },
-  {
-    title: 'Operator Interview — Forge Advisors',
-    category: 'Professional Services',
-    aspect: 'reel' as const,
-    thumbnail:
-      'https://images.unsplash.com/photo-1556157382-97eda2d62296?w=1200&h=675&fit=crop&auto=format',
-    video: { source: 'url' as const, value: SAMPLE_VIDEO },
-    order: 11,
-    is_active: true,
-  },
-  {
-    title: 'Monarch Consulting — Expertise on Camera',
-    category: 'Professional Services',
-    aspect: 'reel' as const,
-    thumbnail:
-      'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=1200&h=675&fit=crop&auto=format',
-    video: { source: 'url' as const, value: SAMPLE_VIDEO },
-    order: 12,
-    is_active: true,
-  },
-  {
-    title: 'Strategy Session — Pinnacle Group',
-    category: 'Professional Services',
-    aspect: 'reel' as const,
-    thumbnail:
-      'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=675&h=1200&fit=crop&auto=format',
-    video: { source: 'url' as const, value: SAMPLE_VIDEO },
-    order: 13,
     is_active: true,
   },
 ];
@@ -1478,14 +1176,22 @@ async function run(): Promise<void> {
     }
 
     reports.push(await seedModule('testimonial', Testimonial, TESTIMONIALS));
-    reports.push(
-      await seedModule('showcase-video', ShowcaseVideo, SHOWCASE_VIDEOS),
-    );
-    reports.push(
-      await seedModule('featured-project', FeaturedProject, FEATURED_PROJECTS),
-    );
     reports.push(await seedModule('service', Service, SERVICES));
+
+    // Industries are the canonical parent for Featured Projects and Showcase
+    // Videos. Resolve their stable slugs only after the Industry seed has run,
+    // then build dependent documents with real ObjectId references.
     reports.push(await seedModule('industry', Industry, INDUSTRIES));
+    const industryIds = await resolveSeedIndustries();
+    const { featuredProjects, showcaseVideos } =
+      buildIndustryMediaDocuments(industryIds);
+    reports.push(
+      await seedModule('featured-project', FeaturedProject, featuredProjects),
+    );
+    reports.push(
+      await seedModule('showcase-video', ShowcaseVideo, showcaseVideos),
+    );
+
     reports.push(await seedModule('brand', Brand, BRANDS));
     reports.push(await seedModule('faq', Faq, FAQS));
     reports.push(await seedModule('team-member', TeamMember, TEAM));
@@ -1511,7 +1217,6 @@ async function run(): Promise<void> {
     process.exitCode = 1;
   } finally {
     await disconnectDB();
-    await mongoose.connection.close();
   }
 }
 

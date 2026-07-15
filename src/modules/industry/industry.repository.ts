@@ -1,6 +1,6 @@
 import AppQueryFind from '../../builder/app-query-find';
 import { Industry } from './industry.model';
-import { TIndustry, TIndustryDocument } from './industry.type';
+import { TIndustry, TIndustryDocument, TIndustryOption } from './industry.type';
 
 export const create = async (data: Partial<TIndustry>): Promise<TIndustry> => {
   const result = await Industry.create(data);
@@ -17,6 +17,12 @@ export const findByIdLean = async (id: string): Promise<TIndustry | null> => {
   return await Industry.findById(id).lean();
 };
 
+export const findByIdWithDeletedLean = async (
+  id: string,
+): Promise<TIndustry | null> => {
+  return await Industry.findById(id).setOptions({ bypassDeleted: true }).lean();
+};
+
 export const findBySlugLean = async (
   slug: string,
 ): Promise<TIndustry | null> => {
@@ -29,6 +35,25 @@ export const findPublic = async (): Promise<TIndustry[]> => {
     .lean();
 };
 
+export const findOptions = async (): Promise<TIndustryOption[]> => {
+  return await Industry.find()
+    .select('_id name slug order is_active')
+    .sort({ order: 1, name: 1 })
+    .lean();
+};
+
+export const findActiveIds = async (slug?: string): Promise<string[]> => {
+  const industries = await Industry.find({
+    is_active: true,
+    is_deleted: { $ne: true },
+    ...(slug ? { slug } : {}),
+  })
+    .select('_id')
+    .lean();
+
+  return industries.map((industry) => industry._id.toString());
+};
+
 export const findAdminPaginated = async (
   query: Record<string, unknown>,
 ): Promise<{
@@ -39,10 +64,12 @@ export const findAdminPaginated = async (
   if (qp.filter === 'active') qp.is_active = true;
   else if (qp.filter === 'inactive') qp.is_active = false;
 
+  if (!qp.sort) qp.sort = 'order';
+
   const q = new AppQueryFind(Industry, qp)
     .search(['name', 'slug', 'headline', 'description'])
-    .filter()
-    .sort()
+    .filter(['is_active'])
+    .sort(['order', 'name', 'slug', 'is_active'])
     .paginate()
     .fields()
     .tap((c) => c.lean());

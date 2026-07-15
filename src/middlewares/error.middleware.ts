@@ -68,6 +68,8 @@ const error: ErrorRequestHandler = (error, _req, res, _next) => {
     success: false,
     status,
     message,
+    errorSources: sources,
+    // Retained temporarily for backwards compatibility with existing clients.
     sources,
     // Never expose the raw error object or stack outside development.
     ...(config.node_env === 'development' && { error, stack: error?.stack }),

@@ -19,6 +19,7 @@ const videoRefSchema = z.object({
 const aspectEnum = z.enum(['reel', 'landscape']);
 
 const baseBody = z.object({
+  industry: idSchema,
   video: videoRefSchema,
   thumbnail: urlOrPath.optional(),
   alt: z.string().trim().min(2).max(180),
@@ -31,6 +32,32 @@ const baseBody = z.object({
 
 export const showcaseVideoIdSchema = z.object({
   params: z.object({ id: idSchema }),
+});
+
+export const publicShowcaseVideosQuerySchema = z.object({
+  query: z.object({
+    aspect: aspectEnum.optional(),
+    industry_slug: z
+      .string()
+      .trim()
+      .toLowerCase()
+      .min(2)
+      .max(80)
+      .regex(/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/)
+      .optional(),
+  }),
+});
+
+export const adminShowcaseVideosQuerySchema = z.object({
+  query: z.object({
+    search: z.string().trim().max(200).optional(),
+    page: z.coerce.number().int().positive().optional(),
+    limit: z.coerce.number().int().positive().max(100).optional(),
+    filter: z.enum(['active', 'inactive']).optional(),
+    industry: idSchema.optional(),
+    aspect: aspectEnum.optional(),
+    sort: z.string().trim().max(80).optional(),
+  }),
 });
 
 export const createShowcaseVideoValidationSchema = z.object({

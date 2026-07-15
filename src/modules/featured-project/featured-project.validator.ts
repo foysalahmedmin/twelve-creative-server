@@ -20,7 +20,7 @@ const aspectEnum = z.enum(['reel', 'landscape']);
 
 const baseBody = z.object({
   title: z.string().trim().min(2).max(200),
-  category: z.string().trim().min(2).max(80),
+  industry: idSchema,
   aspect: aspectEnum.optional(),
   thumbnail: urlOrPath,
   video: videoRefSchema,
@@ -32,6 +32,31 @@ const baseBody = z.object({
 
 export const featuredProjectIdSchema = z.object({
   params: z.object({ id: idSchema }),
+});
+
+export const publicFeaturedProjectsQuerySchema = z.object({
+  query: z.object({
+    industry_slug: z
+      .string()
+      .trim()
+      .toLowerCase()
+      .min(2)
+      .max(80)
+      .regex(/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/)
+      .optional(),
+  }),
+});
+
+export const adminFeaturedProjectsQuerySchema = z.object({
+  query: z.object({
+    search: z.string().trim().max(200).optional(),
+    page: z.coerce.number().int().positive().optional(),
+    limit: z.coerce.number().int().positive().max(100).optional(),
+    filter: z.enum(['active', 'inactive']).optional(),
+    industry: idSchema.optional(),
+    aspect: aspectEnum.optional(),
+    sort: z.string().trim().max(80).optional(),
+  }),
 });
 
 export const createFeaturedProjectValidationSchema = z.object({

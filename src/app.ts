@@ -6,6 +6,7 @@ import session from 'express-session';
 import helmet from 'helmet';
 import path from 'path';
 import config from './config';
+import error from './middlewares/error.middleware';
 import log from './middlewares/log.middleware';
 import notfound from './middlewares/not-found.middleware';
 import { globalRateLimiter } from './middlewares/rate-limit.middleware';
@@ -80,5 +81,6 @@ app.get('/health', (_req, res) => {
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 app.use(notfound);
+app.use(error);
 
 export default app;

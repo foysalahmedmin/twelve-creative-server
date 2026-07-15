@@ -1,8 +1,10 @@
 import httpStatus from 'http-status';
 import AppError from '../../builder/app-error';
+import * as FeaturedProjectRepository from '../featured-project/featured-project.repository';
+import * as ShowcaseVideoRepository from '../showcase-video/showcase-video.repository';
 import { Industry } from './industry.model';
 import * as IndustryRepository from './industry.repository';
-import { TIndustry } from './industry.type';
+import { TIndustry, TIndustryOption } from './industry.type';
 
 const ensureSlugUnique = async (
   slug: string,
@@ -13,6 +15,20 @@ const ensureSlugUnique = async (
     throw new AppError(
       httpStatus.CONFLICT,
       `An industry with slug "${slug}" already exists`,
+    );
+  }
+};
+
+const ensureIndustryHasNoReferences = async (id: string): Promise<void> => {
+  const [featuredProjects, showcaseVideos] = await Promise.all([
+    FeaturedProjectRepository.countByIndustry(id),
+    ShowcaseVideoRepository.countByIndustry(id),
+  ]);
+
+  if (featuredProjects > 0 || showcaseVideos > 0) {
+    throw new AppError(
+      httpStatus.CONFLICT,
+      `Industry is referenced by ${featuredProjects} featured project(s) and ${showcaseVideos} showcase video(s). Reassign or permanently delete those records first.`,
     );
   }
 };
@@ -29,6 +45,10 @@ export const getPublicIndustries = async (): Promise<{
 }> => {
   const data = await IndustryRepository.findPublic();
   return { data };
+};
+
+export const getIndustryOptions = async (): Promise<TIndustryOption[]> => {
+  return await IndustryRepository.findOptions();
 };
 
 export const getIndustries = async (
@@ -68,16 +88,22 @@ export const reorderIndustries = async (
 export const deleteIndustry = async (id: string): Promise<void> => {
   const industry = await IndustryRepository.findById(id);
   if (!industry) throw new AppError(httpStatus.NOT_FOUND, 'Industry not found');
+  await ensureIndustryHasNoReferences(id);
   await industry.softDelete();
 };
 
 export const deleteIndustryPermanent = async (id: string): Promise<void> => {
-  const exists = await IndustryRepository.findByIdLean(id);
+  const exists = await IndustryRepository.findByIdWithDeletedLean(id);
   if (!exists) throw new AppError(httpStatus.NOT_FOUND, 'Industry not found');
+  await ensureIndustryHasNoReferences(id);
   await IndustryRepository.hardDeleteById(id);
 };
 
 export const restoreIndustry = async (id: string): Promise<TIndustry> => {
+  const exists = await IndustryRepository.findByIdWithDeletedLean(id);
+  if (!exists) throw new AppError(httpStatus.NOT_FOUND, 'Industry not found');
+  await ensureSlugUnique(exists.slug, id);
+
   const result = await IndustryRepository.restoreById(id);
   if (!result) {
     throw new AppError(

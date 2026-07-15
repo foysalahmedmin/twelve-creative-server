@@ -1,4 +1,5 @@
 import { Document, Model, Types } from 'mongoose';
+import { TIndustrySummary } from '../industry/industry.type';
 
 export type TVideoSource = 'youtube' | 'url' | 'upload';
 
@@ -11,6 +12,8 @@ export type TShowcaseAspect = 'reel' | 'landscape';
 
 export type TShowcaseVideo = {
   _id?: Types.ObjectId | string;
+  /** Mandatory owning Industry. Populated on every API read. */
+  industry: Types.ObjectId | string;
   video: TVideoRef;
   thumbnail?: string; // optional URL — auto-derived for YouTube videos
   alt: string;
@@ -24,6 +27,10 @@ export type TShowcaseVideo = {
   is_active: boolean;
   is_deleted?: boolean;
   deleted_at?: Date;
+};
+
+export type TShowcaseVideoPopulated = Omit<TShowcaseVideo, 'industry'> & {
+  industry: TIndustrySummary;
 };
 
 export interface TShowcaseVideoDocument extends TShowcaseVideo, Document {

@@ -7,13 +7,18 @@ import * as ShowcaseVideoValidations from './showcase-video.validator';
 const router = express.Router();
 
 // ─── Public ──────────────────────────────────────────────────────────────────
-router.get('/public', ShowcaseVideoControllers.getPublicShowcaseVideos);
+router.get(
+  '/public',
+  validation(ShowcaseVideoValidations.publicShowcaseVideosQuerySchema),
+  ShowcaseVideoControllers.getPublicShowcaseVideos,
+);
 
 // ─── Admin ───────────────────────────────────────────────────────────────────
 
 router.get(
   '/',
   auth('admin', 'editor'),
+  validation(ShowcaseVideoValidations.adminShowcaseVideosQuerySchema),
   ShowcaseVideoControllers.getShowcaseVideos,
 );
 

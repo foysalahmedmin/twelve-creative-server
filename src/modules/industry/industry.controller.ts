@@ -34,6 +34,16 @@ export const getIndustries = catchAsync(async (req, res) => {
   });
 });
 
+export const getIndustryOptions = catchAsync(async (_req, res) => {
+  const result = await IndustryServices.getIndustryOptions();
+  sendResponse(res, {
+    status: httpStatus.OK,
+    success: true,
+    message: 'Industry options retrieved successfully',
+    data: result,
+  });
+});
+
 export const getIndustry = catchAsync(async (req, res) => {
   const result = await IndustryServices.getIndustry(req.params.id);
   sendResponse(res, {

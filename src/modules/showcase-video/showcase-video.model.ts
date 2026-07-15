@@ -19,6 +19,11 @@ const videoRefSchema = new Schema(
 
 const showcaseVideoSchema = new Schema<TShowcaseVideoDocument>(
   {
+    industry: {
+      type: Schema.Types.ObjectId,
+      ref: 'Industry',
+      required: [true, 'Industry is required'],
+    },
     video: {
       type: videoRefSchema,
       required: [true, 'Video is required'],
@@ -50,9 +55,13 @@ const showcaseVideoSchema = new Schema<TShowcaseVideoDocument>(
   },
 );
 
-showcaseVideoSchema.index({ is_active: 1 });
-showcaseVideoSchema.index({ aspect: 1 });
-showcaseVideoSchema.index({ order: 1 });
+showcaseVideoSchema.index({
+  industry: 1,
+  aspect: 1,
+  is_active: 1,
+  order: 1,
+});
+showcaseVideoSchema.index({ aspect: 1, is_active: 1, order: 1 });
 showcaseVideoSchema.index({ created_at: -1 });
 
 showcaseVideoSchema.methods.toJSON = function () {

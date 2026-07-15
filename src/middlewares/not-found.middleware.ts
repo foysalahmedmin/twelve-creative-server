@@ -5,6 +5,7 @@ const notfound: RequestHandler = (_req, res, _next) => {
     success: false,
     status: 404,
     message: 'API not found !!',
+    errorSources: [],
     sources: [],
     error: '',
     stack: '',

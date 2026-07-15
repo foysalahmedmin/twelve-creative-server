@@ -51,6 +51,20 @@ export type TIndustry = {
   deleted_at?: Date;
 };
 
+/**
+ * Compact Industry projection embedded in resources that belong to an
+ * Industry. Keeping this projection stable avoids leaking the full Industry
+ * document from populated API responses.
+ */
+export type TIndustrySummary = Pick<
+  TIndustry,
+  'name' | 'slug' | 'order' | 'is_active'
+> & {
+  _id: Types.ObjectId | string;
+};
+
+export type TIndustryOption = TIndustrySummary;
+
 export interface TIndustryDocument extends TIndustry, Document {
   _id: Types.ObjectId;
   softDelete(): Promise<TIndustryDocument | null>;

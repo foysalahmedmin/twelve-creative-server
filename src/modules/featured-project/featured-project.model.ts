@@ -26,12 +26,10 @@ const featuredProjectSchema = new Schema<TFeaturedProjectDocument>(
       minlength: [2, 'Title must be at least 2 characters'],
       maxlength: [200, 'Title cannot exceed 200 characters'],
     },
-    category: {
-      type: String,
-      required: [true, 'Category is required'],
-      trim: true,
-      minlength: [2, 'Category must be at least 2 characters'],
-      maxlength: [80, 'Category cannot exceed 80 characters'],
+    industry: {
+      type: Schema.Types.ObjectId,
+      ref: 'Industry',
+      required: [true, 'Industry is required'],
     },
     aspect: {
       type: String,
@@ -58,9 +56,7 @@ const featuredProjectSchema = new Schema<TFeaturedProjectDocument>(
   },
 );
 
-featuredProjectSchema.index({ is_active: 1 });
-featuredProjectSchema.index({ category: 1 });
-featuredProjectSchema.index({ order: 1 });
+featuredProjectSchema.index({ industry: 1, is_active: 1, order: 1 });
 featuredProjectSchema.index({ created_at: -1 });
 
 featuredProjectSchema.methods.toJSON = function () {

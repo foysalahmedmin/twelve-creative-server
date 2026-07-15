@@ -6,11 +6,16 @@ import * as FeaturedProjectValidations from './featured-project.validator';
 
 const router = express.Router();
 
-router.get('/public', FeaturedProjectControllers.getPublicFeaturedProjects);
+router.get(
+  '/public',
+  validation(FeaturedProjectValidations.publicFeaturedProjectsQuerySchema),
+  FeaturedProjectControllers.getPublicFeaturedProjects,
+);
 
 router.get(
   '/',
   auth('admin', 'editor'),
+  validation(FeaturedProjectValidations.adminFeaturedProjectsQuerySchema),
   FeaturedProjectControllers.getFeaturedProjects,
 );
 
@@ -35,6 +40,13 @@ router.post(
     FeaturedProjectValidations.reorderFeaturedProjectsValidationSchema,
   ),
   FeaturedProjectControllers.reorderFeaturedProjects,
+);
+
+router.post(
+  '/:id/restore',
+  auth('admin'),
+  validation(FeaturedProjectValidations.featuredProjectIdSchema),
+  FeaturedProjectControllers.restoreFeaturedProject,
 );
 
 router.patch(

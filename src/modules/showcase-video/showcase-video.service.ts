@@ -1,33 +1,77 @@
 import httpStatus from 'http-status';
 import AppError from '../../builder/app-error';
+import * as IndustryRepository from '../industry/industry.repository';
 import * as ShowcaseVideoRepository from './showcase-video.repository';
-import { TShowcaseVideo } from './showcase-video.type';
+import { TShowcaseVideo, TShowcaseVideoPopulated } from './showcase-video.type';
+
+const getIndustryId = (
+  industry: TShowcaseVideo['industry'] | undefined,
+): string => industry?.toString() ?? '';
+
+const ensureIndustryExists = async (
+  industry: TShowcaseVideo['industry'] | undefined,
+): Promise<string> => {
+  const industryId = getIndustryId(industry);
+  if (!industryId) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Industry is required');
+  }
+
+  const exists = await IndustryRepository.findByIdLean(industryId);
+  if (!exists) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Industry not found');
+  }
+
+  return industryId;
+};
+
+const ensureRenderableThumbnail = (
+  video: TShowcaseVideo['video'] | undefined,
+  thumbnail: string | undefined,
+): void => {
+  if (video?.source !== 'youtube' && !thumbnail?.trim()) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'Thumbnail is required for URL and uploaded showcase videos',
+    );
+  }
+};
 
 export const createShowcaseVideo = async (
   data: Partial<TShowcaseVideo>,
-): Promise<TShowcaseVideo> => {
-  return await ShowcaseVideoRepository.create(data);
+): Promise<TShowcaseVideoPopulated> => {
+  const industry = await ensureIndustryExists(data.industry);
+  ensureRenderableThumbnail(data.video, data.thumbnail);
+  const created = await ShowcaseVideoRepository.create({ ...data, industry });
+  return (await ShowcaseVideoRepository.findByIdLean(created._id.toString()))!;
 };
 
 export const getPublicShowcaseVideos = async (
-  aspect?: 'reel' | 'landscape',
+  query: {
+    aspect?: 'reel' | 'landscape';
+    industry_slug?: string;
+  } = {},
 ): Promise<{
-  data: TShowcaseVideo[];
+  data: TShowcaseVideoPopulated[];
 }> => {
-  const data = await ShowcaseVideoRepository.findPublic(aspect);
+  const data = await ShowcaseVideoRepository.findPublic({
+    aspect: query.aspect,
+    industry_slug: query.industry_slug?.trim().toLowerCase(),
+  });
   return { data };
 };
 
 export const getShowcaseVideos = async (
   query: Record<string, unknown>,
 ): Promise<{
-  data: TShowcaseVideo[];
+  data: TShowcaseVideoPopulated[];
   meta: { total: number; page: number; limit: number; total_pages: number };
 }> => {
   return await ShowcaseVideoRepository.findAdminPaginated(query);
 };
 
-export const getShowcaseVideo = async (id: string): Promise<TShowcaseVideo> => {
+export const getShowcaseVideo = async (
+  id: string,
+): Promise<TShowcaseVideoPopulated> => {
   const result = await ShowcaseVideoRepository.findByIdLean(id);
   if (!result) {
     throw new AppError(httpStatus.NOT_FOUND, 'Showcase video not found');
@@ -38,19 +82,58 @@ export const getShowcaseVideo = async (id: string): Promise<TShowcaseVideo> => {
 export const updateShowcaseVideo = async (
   id: string,
   payload: Partial<TShowcaseVideo>,
-): Promise<TShowcaseVideo> => {
+): Promise<TShowcaseVideoPopulated> => {
   const exists = await ShowcaseVideoRepository.findByIdLean(id);
   if (!exists) {
     throw new AppError(httpStatus.NOT_FOUND, 'Showcase video not found');
   }
-  const result = await ShowcaseVideoRepository.updateById(id, payload);
-  return result!;
+  const nextPayload = { ...payload };
+  if (payload.industry !== undefined) {
+    nextPayload.industry = await ensureIndustryExists(payload.industry);
+  }
+  ensureRenderableThumbnail(
+    payload.video ?? exists.video,
+    payload.thumbnail ?? exists.thumbnail,
+  );
+  await ShowcaseVideoRepository.updateById(id, nextPayload);
+  return (await ShowcaseVideoRepository.findByIdLean(id))!;
 };
 
 export const reorderShowcaseVideos = async (
   items: { _id: string; order: number }[],
 ): Promise<void> => {
-  await ShowcaseVideoRepository.updateOrder(items);
+  const ids = [...new Set(items.map((item) => item._id))];
+  if (ids.length !== items.length) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'Showcase video reorder items must be unique',
+    );
+  }
+
+  const records = await ShowcaseVideoRepository.findReorderRecords(ids);
+  if (records.length !== ids.length) {
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      'One or more showcase videos were not found',
+    );
+  }
+
+  const groups = new Set(
+    records.map((record) => `${record.industry.toString()}:${record.aspect}`),
+  );
+  if (groups.size !== 1) {
+    throw new AppError(
+      httpStatus.CONFLICT,
+      'Showcase videos can only be reordered within one industry and aspect',
+    );
+  }
+
+  const first = records[0];
+  await ShowcaseVideoRepository.updateOrder(
+    items,
+    first.industry.toString(),
+    first.aspect,
+  );
 };
 
 export const deleteShowcaseVideo = async (id: string): Promise<void> => {
@@ -73,13 +156,20 @@ export const deleteShowcaseVideoPermanent = async (
 
 export const restoreShowcaseVideo = async (
   id: string,
-): Promise<TShowcaseVideo> => {
-  const result = await ShowcaseVideoRepository.restoreById(id);
-  if (!result) {
+): Promise<TShowcaseVideoPopulated> => {
+  const exists = await ShowcaseVideoRepository.findByIdWithDeleted(id);
+  if (!exists) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Showcase video not found');
+  }
+  await ensureIndustryExists(exists.industry);
+  ensureRenderableThumbnail(exists.video, exists.thumbnail);
+
+  const restored = await ShowcaseVideoRepository.restoreById(id);
+  if (!restored) {
     throw new AppError(
       httpStatus.NOT_FOUND,
       'Showcase video not found or not deleted',
     );
   }
-  return result;
+  return (await ShowcaseVideoRepository.findByIdLean(id))!;
 };

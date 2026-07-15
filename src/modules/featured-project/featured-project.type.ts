@@ -1,4 +1,5 @@
 import { Document, Model, Types } from 'mongoose';
+import { TIndustrySummary } from '../industry/industry.type';
 
 export type TVideoSource = 'youtube' | 'url' | 'upload';
 
@@ -12,11 +13,8 @@ export type TFeaturedAspect = 'reel' | 'landscape';
 export type TFeaturedProject = {
   _id?: Types.ObjectId | string;
   title: string;
-  /**
-   * Free-form category, used to group projects under tabs on the public site.
-   * E.g. "Brand Films", "Hospitality", "Real Estate", "Aviation", "Founder Content".
-   */
-  category: string;
+  /** Mandatory owning Industry. Populated on every API read. */
+  industry: Types.ObjectId | string;
   /**
    * Visual aspect — `reel` (9:16 portrait) or `landscape` (16:9).
    * Drives the public grid layout.
@@ -28,6 +26,10 @@ export type TFeaturedProject = {
   is_active: boolean;
   is_deleted?: boolean;
   deleted_at?: Date;
+};
+
+export type TFeaturedProjectPopulated = Omit<TFeaturedProject, 'industry'> & {
+  industry: TIndustrySummary;
 };
 
 export interface TFeaturedProjectDocument extends TFeaturedProject, Document {

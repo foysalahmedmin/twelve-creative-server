@@ -8,6 +8,12 @@ const router = express.Router();
 
 router.get('/public', IndustryControllers.getPublicIndustries);
 
+router.get(
+  '/options',
+  auth('admin', 'editor'),
+  IndustryControllers.getIndustryOptions,
+);
+
 router.get('/', auth('admin', 'editor'), IndustryControllers.getIndustries);
 
 router.get(

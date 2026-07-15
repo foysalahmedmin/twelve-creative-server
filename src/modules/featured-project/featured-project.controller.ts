@@ -13,8 +13,14 @@ export const createFeaturedProject = catchAsync(async (req, res) => {
   });
 });
 
-export const getPublicFeaturedProjects = catchAsync(async (_req, res) => {
-  const result = await FeaturedProjectServices.getPublicFeaturedProjects();
+export const getPublicFeaturedProjects = catchAsync(async (req, res) => {
+  const industrySlug =
+    typeof req.query.industry_slug === 'string'
+      ? req.query.industry_slug
+      : undefined;
+  const result = await FeaturedProjectServices.getPublicFeaturedProjects({
+    industry_slug: industrySlug,
+  });
   sendResponse(res, {
     status: httpStatus.OK,
     success: true,
@@ -86,5 +92,17 @@ export const deleteFeaturedProjectPermanent = catchAsync(async (req, res) => {
     success: true,
     message: 'Featured project permanently deleted',
     data: null,
+  });
+});
+
+export const restoreFeaturedProject = catchAsync(async (req, res) => {
+  const result = await FeaturedProjectServices.restoreFeaturedProject(
+    req.params.id,
+  );
+  sendResponse(res, {
+    status: httpStatus.OK,
+    success: true,
+    message: 'Featured project restored successfully',
+    data: result,
   });
 });
