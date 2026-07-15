@@ -2,6 +2,7 @@ import { Types } from 'mongoose';
 import {
   buildIndustryMediaDocuments,
   FEATURED_PROJECT_SEEDS,
+  INDUSTRY_REEL_MEDIA_SEEDS,
   REQUIRED_INDUSTRY_SLUGS,
   SHOWCASE_VIDEO_SEEDS,
   type IndustrySeedSlug,
@@ -14,6 +15,21 @@ describe('industry media seed manifest', () => {
   it('defines the expected replacement counts', () => {
     expect(FEATURED_PROJECT_SEEDS).toHaveLength(16);
     expect(SHOWCASE_VIDEO_SEEDS).toHaveLength(14);
+  });
+
+  it('defines complete portrait reel media for every seeded Industry', () => {
+    expect(Object.keys(INDUSTRY_REEL_MEDIA_SEEDS).sort()).toEqual(
+      [...REQUIRED_INDUSTRY_SLUGS].sort(),
+    );
+
+    for (const slug of REQUIRED_INDUSTRY_SLUGS) {
+      const media = INDUSTRY_REEL_MEDIA_SEEDS[slug];
+      expect(media.reel_thumbnail).toContain('w=720&h=1280');
+      expect(media.reel_video).toMatchObject({
+        source: 'url',
+        value: expect.stringMatching(/^https:\/\//),
+      });
+    }
   });
 
   it('defines four Featured Projects per Industry with scoped unique order', () => {

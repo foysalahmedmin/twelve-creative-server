@@ -44,6 +44,8 @@ const baseBody = z.object({
   tagline: z.string().trim().max(120).optional(),
   thumbnail: z.string().trim().max(2048).optional().nullable(),
   video: videoRefSchema.optional().nullable(),
+  reel_thumbnail: z.string().trim().max(2048).optional().nullable(),
+  reel_video: videoRefSchema.optional().nullable(),
   order: z.coerce.number().int().nonnegative().optional(),
   is_active: z
     .preprocess((v) => (typeof v === 'string' ? v === 'true' : v), z.boolean())

@@ -42,9 +42,13 @@ export type TIndustry = {
   /** Short tagline shown on the detail page hero badge. */
   tagline?: string;
   /** Optional thumbnail URL shown before video plays. */
-  thumbnail?: string;
+  thumbnail?: string | null;
   /** Optional hero video for the detail page. */
-  video?: TIndustryVideoRef;
+  video?: TIndustryVideoRef | null;
+  /** Optional portrait thumbnail used by Industry reels on shared sections. */
+  reel_thumbnail?: string | null;
+  /** Optional portrait video used by the home and Core Verticals sections. */
+  reel_video?: TIndustryVideoRef | null;
   order: number;
   is_active: boolean;
   is_deleted?: boolean;

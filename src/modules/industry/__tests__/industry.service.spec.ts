@@ -14,6 +14,12 @@ import * as IndustryRepository from '../industry.repository';
 import * as IndustryService from '../industry.service';
 
 const INDUSTRY_ID = '507f1f77bcf86cd799439011';
+const reelThumbnail =
+  'https://images.example.com/hospitality-reel-thumbnail.jpg';
+const reelVideo = {
+  source: 'url' as const,
+  value: 'https://videos.example.com/hospitality-reel.mp4',
+};
 
 describe('IndustryService', () => {
   it('returns compact options from the repository', async () => {
@@ -89,6 +95,8 @@ const industry = {
   _id: INDUSTRY_ID,
   name: 'Hospitality',
   slug: 'hospitality',
+  reel_thumbnail: reelThumbnail,
+  reel_video: reelVideo,
   order: 0,
   is_active: true,
 };
@@ -106,6 +114,8 @@ describe('IndustryService complete contract', () => {
       IndustryService.createIndustry({
         name: industry.name,
         slug: industry.slug,
+        reel_thumbnail: reelThumbnail,
+        reel_video: reelVideo,
         is_active: true,
       }),
     ).resolves.toEqual(industry);
@@ -113,6 +123,8 @@ describe('IndustryService complete contract', () => {
     expect(IndustryRepository.create).toHaveBeenCalledWith({
       name: industry.name,
       slug: industry.slug,
+      reel_thumbnail: reelThumbnail,
+      reel_video: reelVideo,
       is_active: true,
     });
   });
@@ -217,6 +229,29 @@ describe('IndustryService complete contract', () => {
     expect(Industry.findOne).toHaveBeenCalledWith({ slug: nextSlug });
     expect(IndustryRepository.updateById).toHaveBeenCalledWith(INDUSTRY_ID, {
       slug: nextSlug,
+    });
+  });
+
+  it('forwards reel media updates and supports explicitly clearing them', async () => {
+    (IndustryRepository.findByIdLean as jest.Mock).mockResolvedValue(industry);
+    (IndustryRepository.updateById as jest.Mock).mockResolvedValue({
+      ...industry,
+      reel_thumbnail: null,
+      reel_video: null,
+    });
+
+    await expect(
+      IndustryService.updateIndustry(INDUSTRY_ID, {
+        reel_thumbnail: null,
+        reel_video: null,
+      }),
+    ).resolves.toMatchObject({
+      reel_thumbnail: null,
+      reel_video: null,
+    });
+    expect(IndustryRepository.updateById).toHaveBeenCalledWith(INDUSTRY_ID, {
+      reel_thumbnail: null,
+      reel_video: null,
     });
   });
 

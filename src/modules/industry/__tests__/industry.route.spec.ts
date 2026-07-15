@@ -47,10 +47,18 @@ app.use(
 const request = supertest(app);
 
 const id = '507f1f77bcf86cd799439011';
+const reelThumbnail =
+  'https://images.example.com/hospitality-reel-thumbnail.jpg';
+const reelVideo = {
+  source: 'url',
+  value: 'https://videos.example.com/hospitality-reel.mp4',
+};
 const industry = {
   _id: id,
   name: 'Hospitality',
   slug: 'hospitality',
+  reel_thumbnail: reelThumbnail,
+  reel_video: reelVideo,
   order: 0,
   is_active: true,
 };
@@ -112,6 +120,8 @@ describe('Industry routes', () => {
     const payload = {
       name: 'Hospitality',
       slug: 'hospitality',
+      reel_thumbnail: reelThumbnail,
+      reel_video: reelVideo,
       is_active: true,
     };
 
@@ -151,14 +161,42 @@ describe('Industry routes', () => {
     const updated = { ...industry, name: 'Luxury Hospitality' };
     (IndustryService.updateIndustry as jest.Mock).mockResolvedValue(updated);
 
-    const response = await request
-      .patch(`/api/industry/${id}`)
-      .send({ name: updated.name });
+    const response = await request.patch(`/api/industry/${id}`).send({
+      name: updated.name,
+      reel_thumbnail: reelThumbnail,
+      reel_video: reelVideo,
+    });
 
     expect(response.status).toBe(httpStatus.OK);
     expect(response.body.data.name).toBe(updated.name);
     expect(IndustryService.updateIndustry).toHaveBeenCalledWith(id, {
       name: updated.name,
+      reel_thumbnail: reelThumbnail,
+      reel_video: reelVideo,
+    });
+  });
+
+  it('PATCH /:id forwards null reel media so admins can clear it', async () => {
+    const updated = {
+      ...industry,
+      reel_thumbnail: null,
+      reel_video: null,
+    };
+    (IndustryService.updateIndustry as jest.Mock).mockResolvedValue(updated);
+
+    const response = await request.patch(`/api/industry/${id}`).send({
+      reel_thumbnail: null,
+      reel_video: null,
+    });
+
+    expect(response.status).toBe(httpStatus.OK);
+    expect(response.body.data).toMatchObject({
+      reel_thumbnail: null,
+      reel_video: null,
+    });
+    expect(IndustryService.updateIndustry).toHaveBeenCalledWith(id, {
+      reel_thumbnail: null,
+      reel_video: null,
     });
   });
 

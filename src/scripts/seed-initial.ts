@@ -33,7 +33,10 @@ import { TeamMember } from '../modules/team-member/team-member.model';
 import { Testimonial } from '../modules/testimonial/testimonial.model';
 import { Work } from '../modules/work/work.model';
 import { resolveSeedIndustries } from './lib/resolve-industries';
-import { buildIndustryMediaDocuments } from './seeds/industry-media.seed';
+import {
+  buildIndustryMediaDocuments,
+  INDUSTRY_REEL_MEDIA_SEEDS,
+} from './seeds/industry-media.seed';
 
 const FORCE = process.argv.includes('--force');
 
@@ -270,6 +273,7 @@ const INDUSTRIES = [
     thumbnail:
       'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&h=675&fit=crop&auto=format',
     video: { source: 'url' as const, value: SAMPLE_VIDEO },
+    ...INDUSTRY_REEL_MEDIA_SEEDS.hospitality,
   },
   {
     slug: 'real-estate',
@@ -294,6 +298,7 @@ const INDUSTRIES = [
     thumbnail:
       'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&h=675&fit=crop&auto=format',
     video: { source: 'url' as const, value: SAMPLE_VIDEO },
+    ...INDUSTRY_REEL_MEDIA_SEEDS['real-estate'],
   },
   {
     slug: 'aviation',
@@ -318,6 +323,7 @@ const INDUSTRIES = [
     thumbnail:
       'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=1200&h=675&fit=crop&auto=format',
     video: { source: 'url' as const, value: SAMPLE_VIDEO },
+    ...INDUSTRY_REEL_MEDIA_SEEDS.aviation,
   },
   {
     slug: 'professional-services',
@@ -342,6 +348,7 @@ const INDUSTRIES = [
     thumbnail:
       'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200&h=675&fit=crop&auto=format',
     video: { source: 'url' as const, value: SAMPLE_VIDEO },
+    ...INDUSTRY_REEL_MEDIA_SEEDS['professional-services'],
   },
 ];
 

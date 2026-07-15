@@ -1,45 +1,134 @@
 /**
- * One-off, idempotent patch: give the four seeded industries a promo video.
+ * One-off, idempotent patch: complete the media fields on seeded Industries.
  *
- * The industry seed historically shipped a `thumbnail` but no `video`, so the
- * public /industries listing falls back to the still image. This sets the
- * shared sample video on each seeded industry — but ONLY where `video` is
- * still missing, so any real video configured in the admin panel is preserved.
+ * Legacy documents can be missing the detail-page `video` and the dedicated
+ * `reel_thumbnail` / `reel_video` used on the home and Core Verticals
+ * sections. Null, blank, or incomplete values are treated as missing. Complete
+ * media configured in the admin panel is preserved by write-time conditions.
  *
- * Run:  npm run patch:industry-videos
+ * Run:  npm run patch:industry-media
  * Safe to run multiple times.
  */
 
+/* eslint-disable no-console */
+
 import { disconnectDB, initializeDB } from '../config/db';
 import { Industry } from '../modules/industry/industry.model';
+import {
+  hasCompleteVideoRef,
+  isNonEmptyString,
+} from './lib/industry-media-patch';
+import {
+  INDUSTRY_REEL_MEDIA_SEEDS,
+  REQUIRED_INDUSTRY_SLUGS,
+} from './seeds/industry-media.seed';
 
 const SAMPLE_VIDEO =
   'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
-
-const SLUGS = ['hospitality', 'real-estate', 'aviation', 'professional-services'];
+const VIDEO_SOURCES = ['youtube', 'url', 'upload'] as const;
 
 async function run(): Promise<void> {
   await initializeDB();
 
   try {
-    for (const slug of SLUGS) {
-      const res = await Industry.updateOne(
+    const existingIndustries = await Industry.find({
+      slug: { $in: REQUIRED_INDUSTRY_SLUGS },
+    })
+      .select('_id slug')
+      .lean();
+    const industryIdsBySlug = new Map(
+      existingIndustries.map((industry) => [industry.slug, industry._id]),
+    );
+    const missingSlugs = REQUIRED_INDUSTRY_SLUGS.filter(
+      (slug) => !industryIdsBySlug.has(slug),
+    );
+
+    if (missingSlugs.length) {
+      throw new Error(
+        `Industry media preflight failed; missing Industries: ${missingSlugs.join(', ')}`,
+      );
+    }
+
+    for (const slug of REQUIRED_INDUSTRY_SLUGS) {
+      const industryId = industryIdsBySlug.get(slug)!;
+      const activeIndustryFilter = {
+        _id: industryId,
+        is_deleted: { $ne: true },
+      };
+      const fields: string[] = [];
+
+      const heroVideoResult = await Industry.updateOne(
+        { ...activeIndustryFilter, video: null },
+        { $set: { video: { source: 'url', value: SAMPLE_VIDEO } } },
+      );
+      if (heroVideoResult.modifiedCount > 0) fields.push('video');
+
+      const reelThumbnailResult = await Industry.updateOne(
+        { ...activeIndustryFilter, reel_thumbnail: { $not: /\S/ } },
         {
-          slug,
-          $or: [{ video: { $exists: false } }, { video: null }],
-        },
-        {
-          $set: { video: { source: 'url', value: SAMPLE_VIDEO } },
+          $set: {
+            reel_thumbnail: INDUSTRY_REEL_MEDIA_SEEDS[slug].reel_thumbnail,
+          },
         },
       );
-      const status =
-        res.matchedCount === 0
-          ? 'skipped (already has a video or slug not found)'
-          : res.modifiedCount > 0
-            ? 'video added ✅'
-            : 'no change';
-      console.log(`  ${slug.padEnd(24)} ${status}`);
+      if (reelThumbnailResult.modifiedCount > 0) {
+        fields.push('reel_thumbnail');
+      }
+
+      const reelVideoResult = await Industry.updateOne(
+        {
+          ...activeIndustryFilter,
+          $or: [
+            { 'reel_video.source': { $nin: VIDEO_SOURCES } },
+            { 'reel_video.value': { $not: /\S/ } },
+          ],
+        },
+        {
+          $set: { reel_video: INDUSTRY_REEL_MEDIA_SEEDS[slug].reel_video },
+        },
+      );
+      if (reelVideoResult.modifiedCount > 0) {
+        fields.push('reel_video');
+      }
+
+      console.log(
+        fields.length
+          ? `  ${slug.padEnd(24)} added ${fields.join(', ')} ✅`
+          : `  ${slug.padEnd(24)} skipped (media already complete)`,
+      );
     }
+
+    const verifiedIndustries = await Industry.find({
+      slug: { $in: REQUIRED_INDUSTRY_SLUGS },
+    })
+      .select('slug reel_thumbnail reel_video')
+      .lean();
+    const industriesBySlug = new Map(
+      verifiedIndustries.map((industry) => [industry.slug, industry]),
+    );
+    const verificationErrors: string[] = [];
+
+    for (const slug of REQUIRED_INDUSTRY_SLUGS) {
+      const industry = industriesBySlug.get(slug);
+      if (!industry) {
+        verificationErrors.push(`${slug}: Industry not found`);
+        continue;
+      }
+      if (!isNonEmptyString(industry.reel_thumbnail)) {
+        verificationErrors.push(`${slug}: reel_thumbnail is missing`);
+      }
+      if (!hasCompleteVideoRef(industry.reel_video)) {
+        verificationErrors.push(`${slug}: reel_video is missing or incomplete`);
+      }
+    }
+
+    if (verificationErrors.length) {
+      throw new Error(
+        `Industry media verification failed:\n- ${verificationErrors.join('\n- ')}`,
+      );
+    }
+
+    console.log('  Verified reel media for all seeded Industries ✅');
     console.log('\n✨ Done.');
   } catch (err) {
     console.error('❌ Patch failed:', err);

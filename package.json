@@ -12,6 +12,7 @@
     "seed:initial": "ts-node-dev --transpile-only src/scripts/seed-initial.ts",
     "seed:industry-media:dev": "ts-node-dev --transpile-only src/scripts/reseed-industry-media.ts",
     "seed:industry-media": "node dist/scripts/reseed-industry-media.js",
+    "patch:industry-media": "ts-node-dev --transpile-only src/scripts/add-industry-videos.ts",
     "patch:industry-videos": "ts-node-dev --transpile-only src/scripts/add-industry-videos.ts",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",

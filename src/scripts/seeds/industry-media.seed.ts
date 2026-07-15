@@ -17,6 +17,11 @@ type VideoRef = {
   value: string;
 };
 
+export type IndustryReelMediaSeed = {
+  reel_thumbnail: string;
+  reel_video: VideoRef;
+};
+
 export type FeaturedProjectSeedDefinition = {
   industry_slug: IndustrySeedSlug;
   title: string;
@@ -41,6 +46,34 @@ const SAMPLE_VIDEO =
   'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
 
 const sampleVideo = (): VideoRef => ({ source: 'url', value: SAMPLE_VIDEO });
+
+/**
+ * Canonical reel media for the four launch Industries. Keeping this manifest
+ * beside the related media seed lets both the initial seed and the idempotent
+ * production patch use exactly the same values.
+ */
+export const INDUSTRY_REEL_MEDIA_SEEDS = {
+  hospitality: {
+    reel_thumbnail:
+      'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=720&h=1280&fit=crop&auto=format',
+    reel_video: sampleVideo(),
+  },
+  'real-estate': {
+    reel_thumbnail:
+      'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=720&h=1280&fit=crop&auto=format',
+    reel_video: sampleVideo(),
+  },
+  aviation: {
+    reel_thumbnail:
+      'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=720&h=1280&fit=crop&auto=format',
+    reel_video: sampleVideo(),
+  },
+  'professional-services': {
+    reel_thumbnail:
+      'https://images.unsplash.com/photo-1497366216548-37526070297c?w=720&h=1280&fit=crop&auto=format',
+    reel_video: sampleVideo(),
+  },
+} satisfies Record<IndustrySeedSlug, IndustryReelMediaSeed>;
 
 export const FEATURED_PROJECT_SEEDS: FeaturedProjectSeedDefinition[] = [
   {

@@ -93,6 +93,14 @@ const industrySchema = new Schema<TIndustryDocument>(
     video: {
       type: industryVideoRefSchema,
     },
+    reel_thumbnail: {
+      type: String,
+      trim: true,
+      maxlength: [2048, 'Reel thumbnail URL cannot exceed 2048 characters'],
+    },
+    reel_video: {
+      type: industryVideoRefSchema,
+    },
     order: { type: Number, default: 0 },
     is_active: { type: Boolean, default: true },
     is_deleted: { type: Boolean, default: false, select: false },
