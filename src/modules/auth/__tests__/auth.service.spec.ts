@@ -11,6 +11,16 @@ import httpStatus from 'http-status';
 // ── Mock repository before importing service ──────────────────────────────────
 jest.mock('../auth.repository');
 jest.mock('../../../utils/send-email', () => ({ sendEmail: jest.fn() }));
+jest.mock('../../../utils/cache.utils', () => ({
+  getCache: jest.fn(),
+  setCache: jest.fn().mockResolvedValue(undefined),
+  invalidateCache: jest.fn().mockResolvedValue(undefined),
+}));
+jest.mock('google-auth-library', () => ({
+  OAuth2Client: jest.fn().mockImplementation(() => ({
+    verifyIdToken: jest.fn(),
+  })),
+}));
 
 // ── Mock bcrypt ───────────────────────────────────────────────────────────────
 jest.mock('bcrypt', () => ({
@@ -43,6 +53,8 @@ jest.mock('../../../config', () => ({
 }));
 
 import bcrypt from 'bcrypt';
+import { OAuth2Client } from 'google-auth-library';
+import { invalidateCache, setCache } from '../../../utils/cache.utils';
 import * as AuthRepository from '../auth.repository';
 import * as AuthService from '../auth.service';
 import { verifyToken } from '../auth.util';
@@ -85,14 +97,17 @@ describe('AuthService.signin', () => {
     expect(result.info.email).toBe('john@example.com');
   });
 
-  it('should throw 404 when user not found', async () => {
+  it('should return the same 401 response when user is not found', async () => {
     (AuthRepository.findByEmailWithPassword as jest.Mock).mockResolvedValue(
       null,
     );
 
     await expect(
       AuthService.signin({ email: 'x@x.com', password: 'pass' }),
-    ).rejects.toMatchObject({ status: httpStatus.NOT_FOUND });
+    ).rejects.toMatchObject({
+      status: httpStatus.UNAUTHORIZED,
+      message: 'Invalid email or password!',
+    });
   });
 
   it('should throw 403 when user is deleted', async () => {
@@ -121,7 +136,7 @@ describe('AuthService.signin', () => {
     });
   });
 
-  it('should throw 403 when password does not match', async () => {
+  it('should return the same 401 response when password does not match', async () => {
     (AuthRepository.findByEmailWithPassword as jest.Mock).mockResolvedValue(
       mockUserDoc(),
     );
@@ -130,8 +145,8 @@ describe('AuthService.signin', () => {
     await expect(
       AuthService.signin({ email: 'john@example.com', password: 'wrong' }),
     ).rejects.toMatchObject({
-      status: httpStatus.FORBIDDEN,
-      message: 'Password do not matched!',
+      status: httpStatus.UNAUTHORIZED,
+      message: 'Invalid email or password!',
     });
   });
 });
@@ -247,7 +262,7 @@ describe('AuthService.changePassword', () => {
 
     expect(AuthRepository.updatePasswordByEmailAndRole).toHaveBeenCalledWith(
       'john@example.com',
-      'user',
+      'editor',
       'hashed_password',
     );
     expect(result).toBeDefined();
@@ -287,14 +302,16 @@ describe('AuthService.forgetPassword', () => {
     );
   });
 
-  it('should throw 404 when user not found', async () => {
+  it('should resolve silently when user is not found to prevent enumeration', async () => {
     (AuthRepository.findByEmailWithPassword as jest.Mock).mockResolvedValue(
       null,
     );
 
     await expect(
       AuthService.forgetPassword({ email: 'ghost@example.com' }),
-    ).rejects.toMatchObject({ status: httpStatus.NOT_FOUND });
+    ).resolves.toBeUndefined();
+    const { sendEmail } = jest.requireMock('../../../utils/send-email');
+    expect(sendEmail).not.toHaveBeenCalled();
   });
 });
 
@@ -394,5 +411,178 @@ describe('AuthService.emailVerification', () => {
     await expect(AuthService.emailVerification('token')).rejects.toMatchObject({
       status: httpStatus.NOT_FOUND,
     });
+  });
+});
+
+describe('AuthService.googleLogin', () => {
+  const googleClient = (OAuth2Client as unknown as jest.Mock).mock.results[0]
+    .value as { verifyIdToken: jest.Mock };
+  const getGoogleClient = () => googleClient;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('links Google auth to an existing user and returns a token pair', async () => {
+    const user = mockUserDoc();
+    getGoogleClient().verifyIdToken.mockResolvedValue({
+      getPayload: () => ({
+        sub: 'google-123',
+        email: user.email,
+        name: user.name,
+        picture: 'avatar.jpg',
+      }),
+    });
+    (AuthRepository.findByEmailWithPassword as jest.Mock).mockResolvedValue(
+      user,
+    );
+    (AuthRepository.saveDocument as jest.Mock).mockResolvedValue(user);
+
+    const result = await AuthService.googleLogin('valid-google-token');
+
+    expect(user.google_id).toBe('google-123');
+    expect(user.auth_source).toBe('google');
+    expect(AuthRepository.saveDocument).toHaveBeenCalledWith(user);
+    expect(result).toMatchObject({
+      access_token: 'mock_token',
+      refresh_token: 'mock_token',
+      info: { email: user.email, role: 'editor' },
+    });
+  });
+
+  it('creates an editor when no Google-linked user exists', async () => {
+    const created = mockUserDoc({
+      google_id: 'google-123',
+      auth_source: 'google',
+      is_verified: true,
+    });
+    getGoogleClient().verifyIdToken.mockResolvedValue({
+      getPayload: () => ({
+        sub: 'google-123',
+        email: 'john@example.com',
+        name: 'John Doe',
+        picture: 'avatar.jpg',
+      }),
+    });
+    (AuthRepository.findByEmailWithPassword as jest.Mock).mockResolvedValue(
+      null,
+    );
+    (AuthRepository.findByGoogleIdWithPassword as jest.Mock).mockResolvedValue(
+      null,
+    );
+    (AuthRepository.createUser as jest.Mock).mockResolvedValue(created);
+
+    await AuthService.googleLogin('valid-google-token');
+
+    expect(AuthRepository.createUser).toHaveBeenCalledWith({
+      name: 'John Doe',
+      email: 'john@example.com',
+      google_id: 'google-123',
+      auth_source: 'google',
+      image: 'avatar.jpg',
+      role: 'editor',
+      is_verified: true,
+    });
+  });
+
+  it('rejects a Google response with no payload', async () => {
+    getGoogleClient().verifyIdToken.mockResolvedValue({
+      getPayload: () => undefined,
+    });
+
+    await expect(
+      AuthService.googleLogin('invalid-google-token'),
+    ).rejects.toMatchObject({
+      status: httpStatus.BAD_REQUEST,
+      message: 'Invalid google token',
+    });
+  });
+
+  it('rejects a Google payload without required profile fields', async () => {
+    getGoogleClient().verifyIdToken.mockResolvedValue({
+      getPayload: () => ({ sub: 'google-123', email: undefined, name: 'John' }),
+    });
+
+    await expect(
+      AuthService.googleLogin('incomplete-google-token'),
+    ).rejects.toMatchObject({
+      status: httpStatus.BAD_REQUEST,
+      message: 'Email and name are required from Google',
+    });
+  });
+
+  it('rejects a blocked existing Google user', async () => {
+    getGoogleClient().verifyIdToken.mockResolvedValue({
+      getPayload: () => ({
+        sub: 'google-123',
+        email: 'john@example.com',
+        name: 'John Doe',
+      }),
+    });
+    (AuthRepository.findByEmailWithPassword as jest.Mock).mockResolvedValue(
+      mockUserDoc({ status: 'blocked' }),
+    );
+
+    await expect(
+      AuthService.googleLogin('valid-google-token'),
+    ).rejects.toMatchObject({
+      status: httpStatus.FORBIDDEN,
+      message: 'User is blocked!',
+    });
+  });
+});
+
+describe('AuthService session logout', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('blacklists a valid refresh token for its remaining lifetime', async () => {
+    const nowSeconds = Math.floor(Date.now() / 1000);
+    (verifyToken as jest.Mock).mockReturnValue({ exp: nowSeconds + 120 });
+
+    await AuthService.logout('refresh-token');
+
+    expect(setCache).toHaveBeenCalledWith(
+      'auth:blacklist:refresh-token',
+      '1',
+      expect.any(Number),
+    );
+    const ttl = (setCache as jest.Mock).mock.calls[0][2];
+    expect(ttl).toBeGreaterThanOrEqual(119);
+    expect(ttl).toBeLessThanOrEqual(120);
+  });
+
+  it('does not blacklist an already expired token', async () => {
+    (verifyToken as jest.Mock).mockReturnValue({
+      exp: Math.floor(Date.now() / 1000) - 1,
+    });
+
+    await expect(AuthService.logout('expired-token')).resolves.toBeUndefined();
+    expect(setCache).not.toHaveBeenCalled();
+  });
+
+  it('treats an invalid token as an idempotent logout', async () => {
+    (verifyToken as jest.Mock).mockImplementation(() => {
+      throw new Error('invalid token');
+    });
+
+    await expect(AuthService.logout('invalid-token')).resolves.toBeUndefined();
+    expect(setCache).not.toHaveBeenCalled();
+  });
+
+  it('increments token version and invalidates auth cache for all-session logout', async () => {
+    (AuthRepository.incrementTokenVersion as jest.Mock).mockResolvedValue(
+      undefined,
+    );
+
+    await AuthService.logoutAllSessions('507f1f77bcf86cd799439011');
+
+    expect(AuthRepository.incrementTokenVersion).toHaveBeenCalledWith(
+      '507f1f77bcf86cd799439011',
+    );
+    expect(invalidateCache).toHaveBeenCalledWith(
+      'auth:user:507f1f77bcf86cd799439011',
+    );
   });
 });

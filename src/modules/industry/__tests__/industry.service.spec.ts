@@ -9,6 +9,7 @@ jest.mock('../industry.model', () => ({
 
 import * as FeaturedProjectRepository from '../../featured-project/featured-project.repository';
 import * as ShowcaseVideoRepository from '../../showcase-video/showcase-video.repository';
+import { Industry } from '../industry.model';
 import * as IndustryRepository from '../industry.repository';
 import * as IndustryService from '../industry.service';
 
@@ -81,5 +82,250 @@ describe('IndustryService', () => {
     await IndustryService.deleteIndustryPermanent(INDUSTRY_ID);
 
     expect(IndustryRepository.hardDeleteById).toHaveBeenCalledWith(INDUSTRY_ID);
+  });
+});
+
+const industry = {
+  _id: INDUSTRY_ID,
+  name: 'Hospitality',
+  slug: 'hospitality',
+  order: 0,
+  is_active: true,
+};
+
+describe('IndustryService complete contract', () => {
+  beforeEach(() => {
+    jest.resetAllMocks();
+  });
+
+  it('creates an industry after checking slug uniqueness', async () => {
+    (Industry.findOne as jest.Mock).mockResolvedValue(null);
+    (IndustryRepository.create as jest.Mock).mockResolvedValue(industry);
+
+    await expect(
+      IndustryService.createIndustry({
+        name: industry.name,
+        slug: industry.slug,
+        is_active: true,
+      }),
+    ).resolves.toEqual(industry);
+    expect(Industry.findOne).toHaveBeenCalledWith({ slug: industry.slug });
+    expect(IndustryRepository.create).toHaveBeenCalledWith({
+      name: industry.name,
+      slug: industry.slug,
+      is_active: true,
+    });
+  });
+
+  it('rejects creation when another industry owns the slug', async () => {
+    (Industry.findOne as jest.Mock).mockResolvedValue({
+      _id: { toString: () => '507f1f77bcf86cd799439099' },
+    });
+
+    await expect(
+      IndustryService.createIndustry({
+        name: industry.name,
+        slug: industry.slug,
+      }),
+    ).rejects.toMatchObject({
+      status: httpStatus.CONFLICT,
+      message: expect.stringContaining(industry.slug),
+    });
+    expect(IndustryRepository.create).not.toHaveBeenCalled();
+  });
+
+  it('creates without a slug uniqueness query when slug is omitted', async () => {
+    (IndustryRepository.create as jest.Mock).mockResolvedValue(industry);
+
+    await IndustryService.createIndustry({ name: industry.name });
+
+    expect(Industry.findOne).not.toHaveBeenCalled();
+    expect(IndustryRepository.create).toHaveBeenCalledWith({
+      name: industry.name,
+    });
+  });
+
+  it('returns public industries', async () => {
+    (IndustryRepository.findPublic as jest.Mock).mockResolvedValue([industry]);
+
+    await expect(IndustryService.getPublicIndustries()).resolves.toEqual({
+      data: [industry],
+    });
+  });
+
+  it('returns the paginated admin collection', async () => {
+    const page = {
+      data: [industry],
+      meta: { total: 1, page: 1, limit: 10, total_pages: 1 },
+    };
+    (IndustryRepository.findAdminPaginated as jest.Mock).mockResolvedValue(
+      page,
+    );
+
+    await expect(
+      IndustryService.getIndustries({ search: 'hospitality' }),
+    ).resolves.toEqual(page);
+    expect(IndustryRepository.findAdminPaginated).toHaveBeenCalledWith({
+      search: 'hospitality',
+    });
+  });
+
+  it('gets an industry by id', async () => {
+    (IndustryRepository.findByIdLean as jest.Mock).mockResolvedValue(industry);
+
+    await expect(IndustryService.getIndustry(INDUSTRY_ID)).resolves.toEqual(
+      industry,
+    );
+  });
+
+  it('throws 404 when getting a missing industry', async () => {
+    (IndustryRepository.findByIdLean as jest.Mock).mockResolvedValue(null);
+
+    await expect(
+      IndustryService.getIndustry(INDUSTRY_ID),
+    ).rejects.toMatchObject({
+      status: httpStatus.NOT_FOUND,
+      message: 'Industry not found',
+    });
+  });
+
+  it('updates an existing industry without rechecking an unchanged slug', async () => {
+    const updated = { ...industry, name: 'Luxury Hospitality' };
+    (IndustryRepository.findByIdLean as jest.Mock).mockResolvedValue(industry);
+    (IndustryRepository.updateById as jest.Mock).mockResolvedValue(updated);
+
+    await expect(
+      IndustryService.updateIndustry(INDUSTRY_ID, {
+        name: updated.name,
+        slug: industry.slug,
+      }),
+    ).resolves.toEqual(updated);
+    expect(Industry.findOne).not.toHaveBeenCalled();
+  });
+
+  it('checks uniqueness before changing an industry slug', async () => {
+    const nextSlug = 'luxury-hospitality';
+    (IndustryRepository.findByIdLean as jest.Mock).mockResolvedValue(industry);
+    (Industry.findOne as jest.Mock).mockResolvedValue(null);
+    (IndustryRepository.updateById as jest.Mock).mockResolvedValue({
+      ...industry,
+      slug: nextSlug,
+    });
+
+    await IndustryService.updateIndustry(INDUSTRY_ID, { slug: nextSlug });
+
+    expect(Industry.findOne).toHaveBeenCalledWith({ slug: nextSlug });
+    expect(IndustryRepository.updateById).toHaveBeenCalledWith(INDUSTRY_ID, {
+      slug: nextSlug,
+    });
+  });
+
+  it('does not update a missing industry', async () => {
+    (IndustryRepository.findByIdLean as jest.Mock).mockResolvedValue(null);
+
+    await expect(
+      IndustryService.updateIndustry(INDUSTRY_ID, { name: 'Missing' }),
+    ).rejects.toMatchObject({ status: httpStatus.NOT_FOUND });
+    expect(IndustryRepository.updateById).not.toHaveBeenCalled();
+  });
+
+  it('reorders industries through the repository', async () => {
+    const items = [{ _id: INDUSTRY_ID, order: 2 }];
+    (IndustryRepository.updateOrder as jest.Mock).mockResolvedValue(undefined);
+
+    await expect(
+      IndustryService.reorderIndustries(items),
+    ).resolves.toBeUndefined();
+    expect(IndustryRepository.updateOrder).toHaveBeenCalledWith(items);
+  });
+
+  it('throws 404 before soft deletion when the industry is missing', async () => {
+    (IndustryRepository.findById as jest.Mock).mockResolvedValue(null);
+
+    await expect(
+      IndustryService.deleteIndustry(INDUSTRY_ID),
+    ).rejects.toMatchObject({ status: httpStatus.NOT_FOUND });
+    expect(FeaturedProjectRepository.countByIndustry).not.toHaveBeenCalled();
+  });
+
+  it('throws 404 before permanent deletion when the industry is missing', async () => {
+    (IndustryRepository.findByIdWithDeletedLean as jest.Mock).mockResolvedValue(
+      null,
+    );
+
+    await expect(
+      IndustryService.deleteIndustryPermanent(INDUSTRY_ID),
+    ).rejects.toMatchObject({ status: httpStatus.NOT_FOUND });
+    expect(IndustryRepository.hardDeleteById).not.toHaveBeenCalled();
+  });
+
+  it('blocks permanent deletion while media references the industry', async () => {
+    (IndustryRepository.findByIdWithDeletedLean as jest.Mock).mockResolvedValue(
+      industry,
+    );
+    (FeaturedProjectRepository.countByIndustry as jest.Mock).mockResolvedValue(
+      0,
+    );
+    (ShowcaseVideoRepository.countByIndustry as jest.Mock).mockResolvedValue(1);
+
+    await expect(
+      IndustryService.deleteIndustryPermanent(INDUSTRY_ID),
+    ).rejects.toMatchObject({ status: httpStatus.CONFLICT });
+    expect(IndustryRepository.hardDeleteById).not.toHaveBeenCalled();
+  });
+
+  it('restores a deleted industry when its slug remains unique', async () => {
+    (IndustryRepository.findByIdWithDeletedLean as jest.Mock).mockResolvedValue(
+      industry,
+    );
+    (Industry.findOne as jest.Mock).mockResolvedValue({
+      _id: { toString: () => INDUSTRY_ID },
+    });
+    (IndustryRepository.restoreById as jest.Mock).mockResolvedValue(industry);
+
+    await expect(IndustryService.restoreIndustry(INDUSTRY_ID)).resolves.toEqual(
+      industry,
+    );
+    expect(IndustryRepository.restoreById).toHaveBeenCalledWith(INDUSTRY_ID);
+  });
+
+  it('rejects restore when the deleted industry cannot be found', async () => {
+    (IndustryRepository.findByIdWithDeletedLean as jest.Mock).mockResolvedValue(
+      null,
+    );
+
+    await expect(
+      IndustryService.restoreIndustry(INDUSTRY_ID),
+    ).rejects.toMatchObject({ status: httpStatus.NOT_FOUND });
+    expect(Industry.findOne).not.toHaveBeenCalled();
+  });
+
+  it('rejects restore when another industry now owns the slug', async () => {
+    (IndustryRepository.findByIdWithDeletedLean as jest.Mock).mockResolvedValue(
+      industry,
+    );
+    (Industry.findOne as jest.Mock).mockResolvedValue({
+      _id: { toString: () => '507f1f77bcf86cd799439099' },
+    });
+
+    await expect(
+      IndustryService.restoreIndustry(INDUSTRY_ID),
+    ).rejects.toMatchObject({ status: httpStatus.CONFLICT });
+    expect(IndustryRepository.restoreById).not.toHaveBeenCalled();
+  });
+
+  it('rejects restore when the repository reports a non-deleted record', async () => {
+    (IndustryRepository.findByIdWithDeletedLean as jest.Mock).mockResolvedValue(
+      industry,
+    );
+    (Industry.findOne as jest.Mock).mockResolvedValue(null);
+    (IndustryRepository.restoreById as jest.Mock).mockResolvedValue(null);
+
+    await expect(
+      IndustryService.restoreIndustry(INDUSTRY_ID),
+    ).rejects.toMatchObject({
+      status: httpStatus.NOT_FOUND,
+      message: 'Industry not found or not deleted',
+    });
   });
 });

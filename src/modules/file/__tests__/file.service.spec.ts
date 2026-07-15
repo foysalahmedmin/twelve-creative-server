@@ -7,11 +7,21 @@
 import httpStatus from 'http-status';
 
 // ── Mock the entire repository before importing the service ──────────────────
+jest.mock('@google-cloud/storage', () => ({
+  Storage: jest.fn().mockImplementation(() => ({
+    bucket: jest.fn().mockImplementation(() => ({
+      file: jest.fn().mockImplementation(() => ({
+        delete: jest.fn().mockResolvedValue(undefined),
+      })),
+    })),
+  })),
+}));
 jest.mock('../file.repository');
 jest.mock('../../../utils/delete-files', () => ({
   deleteFiles: jest.fn().mockResolvedValue(undefined),
 }));
 
+import { Storage } from '@google-cloud/storage';
 import * as FileRepository from '../file.repository';
 import * as FileService from '../file.service';
 import { TFile } from '../file.type';
@@ -147,5 +157,249 @@ describe('FileService.deleteFilePermanent', () => {
 
     expect(deleteFiles).toHaveBeenCalledWith(file.metadata?.path);
     expect(FileRepository.hardDeleteById).toHaveBeenCalledWith('id');
+  });
+});
+
+describe('FileService complete contract', () => {
+  const storageClient = (Storage as unknown as jest.Mock).mock.results[0].value;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('rejects a missing local upload', async () => {
+    await expect(
+      FileService.createLocalFile(
+        { _id: 'user-id' } as any,
+        undefined as unknown as Express.Multer.File,
+        {},
+      ),
+    ).rejects.toMatchObject({
+      status: httpStatus.BAD_REQUEST,
+      message: 'No file uploaded',
+    });
+  });
+
+  it('rejects a local upload with an unsupported MIME type', async () => {
+    const uploaded = {
+      filename: 'payload.exe',
+      originalname: 'payload.exe',
+      path: 'uploads/payload.exe',
+      mimetype: 'application/x-msdownload',
+      size: 100,
+    } as Express.Multer.File;
+
+    await expect(
+      FileService.createLocalFile({ _id: 'user-id' } as any, uploaded, {}),
+    ).rejects.toMatchObject({
+      status: httpStatus.BAD_REQUEST,
+      message: expect.stringContaining('application/x-msdownload'),
+    });
+    expect(FileRepository.create).not.toHaveBeenCalled();
+  });
+
+  it('rejects an empty cloud upload result', async () => {
+    await expect(
+      FileService.createCloudFiles({ _id: 'user-id' } as any, [], {}),
+    ).rejects.toMatchObject({
+      status: httpStatus.BAD_REQUEST,
+      message: 'No storage results found',
+    });
+  });
+
+  it('rejects a cloud batch when any MIME type is unsupported', async () => {
+    const results = [
+      {
+        filename: 'payload.exe',
+        originalName: 'payload.exe',
+        publicUrl: 'https://storage/payload.exe',
+        mimetype: 'application/x-msdownload',
+        size: 100,
+        bucket: 'bucket',
+      },
+    ] as any;
+
+    await expect(
+      FileService.createCloudFiles({ _id: 'user-id' } as any, results, {}),
+    ).rejects.toMatchObject({ status: httpStatus.BAD_REQUEST });
+    expect(FileRepository.createMany).not.toHaveBeenCalled();
+  });
+
+  it.each(['type', 'file_type'])(
+    'maps the %s list filter to metadata.file_type',
+    async (key) => {
+      (FileRepository.findPaginated as jest.Mock).mockResolvedValue({
+        data: [mockLocalFile()],
+        meta: { total: 1, page: 1, limit: 10 },
+      });
+      const query: Record<string, unknown> = { [key]: 'image', page: 1 };
+
+      await FileService.getFiles(query);
+
+      expect(FileRepository.findPaginated).toHaveBeenCalledWith({
+        'metadata.file_type': 'image',
+        page: 1,
+      });
+    },
+  );
+
+  it('returns the authenticated user files with an author filter', async () => {
+    (FileRepository.findPaginated as jest.Mock).mockResolvedValue({
+      data: [mockLocalFile()],
+      meta: { total: 1, page: 1, limit: 10 },
+    });
+
+    await FileService.getSelfFiles({ _id: 'user-id' } as any, {
+      file_type: 'image',
+    });
+
+    expect(FileRepository.findPaginated).toHaveBeenCalledWith(
+      { 'metadata.file_type': 'image' },
+      { author: 'user-id' },
+    );
+  });
+
+  it('updates metadata for an existing file', async () => {
+    const updated = { ...mockLocalFile(), name: 'Updated name' };
+    (FileRepository.findByIdLean as jest.Mock).mockResolvedValue(
+      mockLocalFile(),
+    );
+    (FileRepository.updateById as jest.Mock).mockResolvedValue(updated);
+
+    await expect(
+      FileService.updateFile('file-id', { name: 'Updated name' }),
+    ).resolves.toEqual(updated);
+    expect(FileRepository.updateById).toHaveBeenCalledWith('file-id', {
+      name: 'Updated name',
+    });
+  });
+
+  it('does not update a missing file', async () => {
+    (FileRepository.findByIdLean as jest.Mock).mockResolvedValue(null);
+
+    await expect(
+      FileService.updateFile('missing', { name: 'Updated name' }),
+    ).rejects.toMatchObject({ status: httpStatus.NOT_FOUND });
+    expect(FileRepository.updateById).not.toHaveBeenCalled();
+  });
+
+  it('bulk-updates found files and reports missing ids', async () => {
+    (FileRepository.findManyByIds as jest.Mock).mockResolvedValue([
+      { ...mockLocalFile(), _id: { toString: () => 'found' } },
+    ]);
+    (FileRepository.updateManyByIds as jest.Mock).mockResolvedValue({
+      modifiedCount: 1,
+    });
+
+    await expect(
+      FileService.updateFiles(['found', 'missing'], { status: 'inactive' }),
+    ).resolves.toEqual({ count: 1, not_found_ids: ['missing'] });
+    expect(FileRepository.updateManyByIds).toHaveBeenCalledWith(['found'], {
+      status: 'inactive',
+    });
+  });
+
+  it('soft-deletes an existing file', async () => {
+    const softDelete = jest.fn().mockResolvedValue(undefined);
+    (FileRepository.findById as jest.Mock).mockResolvedValue({ softDelete });
+
+    await expect(FileService.deleteFile('file-id')).resolves.toBeUndefined();
+    expect(softDelete).toHaveBeenCalledWith();
+  });
+
+  it('does not soft-delete a missing file', async () => {
+    (FileRepository.findById as jest.Mock).mockResolvedValue(null);
+
+    await expect(FileService.deleteFile('missing')).rejects.toMatchObject({
+      status: httpStatus.NOT_FOUND,
+    });
+  });
+
+  it('bulk soft-deletes found files and reports missing ids', async () => {
+    (FileRepository.findManyByIds as jest.Mock).mockResolvedValue([
+      { ...mockLocalFile(), _id: { toString: () => 'found' } },
+    ]);
+
+    await expect(
+      FileService.deleteFiles(['found', 'missing']),
+    ).resolves.toEqual({ count: 1, not_found_ids: ['missing'] });
+    expect(FileRepository.softDeleteManyByIds).toHaveBeenCalledWith(['found']);
+  });
+
+  it('does not permanently delete a missing file', async () => {
+    (FileRepository.findByIdWithDeleted as jest.Mock).mockResolvedValue(null);
+
+    await expect(
+      FileService.deleteFilePermanent('missing'),
+    ).rejects.toMatchObject({ status: httpStatus.NOT_FOUND });
+    expect(FileRepository.hardDeleteById).not.toHaveBeenCalled();
+  });
+
+  it('deletes a GCS object before permanently deleting its record', async () => {
+    const cloud = mockCloudFile();
+    (FileRepository.findByIdWithDeleted as jest.Mock).mockResolvedValue(cloud);
+
+    await FileService.deleteFilePermanent('cloud-id');
+
+    expect(storageClient.bucket).toHaveBeenCalledWith('test-bucket');
+    const bucket = storageClient.bucket.mock.results[0].value;
+    expect(bucket.file).toHaveBeenCalledWith(cloud.filename);
+    expect(bucket.file.mock.results[0].value.delete).toHaveBeenCalledWith();
+    expect(FileRepository.hardDeleteById).toHaveBeenCalledWith('cloud-id');
+  });
+
+  it('bulk permanently deletes physical files and reports missing ids', async () => {
+    const local = { ...mockLocalFile(), _id: { toString: () => 'local' } };
+    const cloud = { ...mockCloudFile(), _id: { toString: () => 'cloud' } };
+    (FileRepository.findManyDeletedByIds as jest.Mock).mockResolvedValue([
+      local,
+      cloud,
+    ]);
+    const { deleteFiles } = jest.requireMock('../../../utils/delete-files');
+
+    await expect(
+      FileService.deleteFilesPermanent(['local', 'cloud', 'missing']),
+    ).resolves.toEqual({ count: 2, not_found_ids: ['missing'] });
+    expect(deleteFiles).toHaveBeenCalledWith(local.metadata!.path);
+    expect(FileRepository.hardDeleteManyByIds).toHaveBeenCalledWith([
+      'local',
+      'cloud',
+    ]);
+  });
+
+  it('restores one deleted file', async () => {
+    (FileRepository.restoreById as jest.Mock).mockResolvedValue(
+      mockLocalFile(),
+    );
+
+    await expect(FileService.restoreFile('file-id')).resolves.toEqual(
+      mockLocalFile(),
+    );
+  });
+
+  it('throws 404 when one file cannot be restored', async () => {
+    (FileRepository.restoreById as jest.Mock).mockResolvedValue(null);
+
+    await expect(FileService.restoreFile('missing')).rejects.toMatchObject({
+      status: httpStatus.NOT_FOUND,
+      message: 'File not found or not deleted',
+    });
+  });
+
+  it('bulk-restores files and reports ids that remain missing', async () => {
+    (FileRepository.restoreManyByIds as jest.Mock).mockResolvedValue({
+      modifiedCount: 1,
+    });
+    (FileRepository.findManyByIds as jest.Mock).mockResolvedValue([
+      { ...mockLocalFile(), _id: { toString: () => 'restored' } },
+    ]);
+
+    await expect(
+      FileService.restoreFiles(['restored', 'missing']),
+    ).resolves.toEqual({ count: 1, not_found_ids: ['missing'] });
+    expect(FileRepository.restoreManyByIds).toHaveBeenCalledWith([
+      'restored',
+      'missing',
+    ]);
   });
 });

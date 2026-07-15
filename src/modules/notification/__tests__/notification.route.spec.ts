@@ -135,4 +135,125 @@ describe('Notification Routes', () => {
       );
     });
   });
+
+  describe('bulk, permanent-delete, and restore routes', () => {
+    it('PATCH /bulk separates ids from the status payload', async () => {
+      (NotificationService.updateNotifications as jest.Mock).mockResolvedValue({
+        count: 1,
+        not_found_ids: ['missing'],
+      });
+
+      const res = await request.patch('/api/notification/bulk').send({
+        ids: [mockId, 'missing'],
+        status: 'inactive',
+      });
+
+      expect(res.status).toBe(httpStatus.OK);
+      expect(res.body.data).toEqual({ count: 1, not_found_ids: ['missing'] });
+      expect(NotificationService.updateNotifications).toHaveBeenCalledWith(
+        [mockId, 'missing'],
+        { status: 'inactive' },
+      );
+    });
+
+    it('DELETE /bulk/permanent permanently deletes notifications', async () => {
+      (
+        NotificationService.deleteNotificationsPermanent as jest.Mock
+      ).mockResolvedValue({
+        count: 1,
+        not_found_ids: ['missing'],
+      });
+
+      const res = await request
+        .delete('/api/notification/bulk/permanent')
+        .send({ ids: [mockId, 'missing'] });
+
+      expect(res.status).toBe(httpStatus.OK);
+      expect(res.body.data).toEqual({ not_found_ids: ['missing'] });
+      expect(
+        NotificationService.deleteNotificationsPermanent,
+      ).toHaveBeenCalledWith([mockId, 'missing']);
+    });
+
+    it('DELETE /bulk soft-deletes notifications', async () => {
+      (NotificationService.deleteNotifications as jest.Mock).mockResolvedValue({
+        count: 1,
+        not_found_ids: [],
+      });
+
+      const res = await request
+        .delete('/api/notification/bulk')
+        .send({ ids: [mockId] });
+
+      expect(res.status).toBe(httpStatus.OK);
+      expect(res.body.data).toEqual({ not_found_ids: [] });
+      expect(NotificationService.deleteNotifications).toHaveBeenCalledWith([
+        mockId,
+      ]);
+    });
+
+    it('DELETE /:id/permanent permanently deletes one notification', async () => {
+      (
+        NotificationService.deleteNotificationPermanent as jest.Mock
+      ).mockResolvedValue(undefined);
+
+      const res = await request.delete(`/api/notification/${mockId}/permanent`);
+
+      expect(res.status).toBe(httpStatus.OK);
+      expect(res.body.data).toBeNull();
+      expect(
+        NotificationService.deleteNotificationPermanent,
+      ).toHaveBeenCalledWith(mockId);
+    });
+
+    it('POST /bulk/restore restores notifications', async () => {
+      (NotificationService.restoreNotifications as jest.Mock).mockResolvedValue(
+        {
+          count: 1,
+          not_found_ids: ['missing'],
+        },
+      );
+
+      const res = await request
+        .post('/api/notification/bulk/restore')
+        .send({ ids: [mockId, 'missing'] });
+
+      expect(res.status).toBe(httpStatus.OK);
+      expect(res.body.data).toEqual({ not_found_ids: ['missing'] });
+      expect(NotificationService.restoreNotifications).toHaveBeenCalledWith([
+        mockId,
+        'missing',
+      ]);
+    });
+
+    it('POST /:id/restore restores one notification', async () => {
+      const restored = { _id: mockId, title: 'Restored notification' };
+      (NotificationService.restoreNotification as jest.Mock).mockResolvedValue(
+        restored,
+      );
+
+      const res = await request.post(`/api/notification/${mockId}/restore`);
+
+      expect(res.status).toBe(httpStatus.OK);
+      expect(res.body.data).toEqual(restored);
+      expect(NotificationService.restoreNotification).toHaveBeenCalledWith(
+        mockId,
+      );
+    });
+
+    it('passes service errors to the route error handler', async () => {
+      (NotificationService.getNotification as jest.Mock).mockRejectedValue({
+        status: httpStatus.NOT_FOUND,
+        message: 'Notification not found',
+      });
+
+      const res = await request.get(`/api/notification/${mockId}`);
+
+      expect(res.status).toBe(httpStatus.NOT_FOUND);
+      expect(res.body).toMatchObject({
+        success: false,
+        message: 'Notification not found',
+      });
+    });
+  });
 });

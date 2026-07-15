@@ -50,7 +50,7 @@ router.patch(
   validation(
     NotificationRecipientValidations.updateSelfNotificationRecipientsValidationSchema,
   ),
-  NotificationRecipientControllers.updateNotificationRecipients,
+  NotificationRecipientControllers.updateSelfNotificationRecipients,
 );
 
 router.patch(

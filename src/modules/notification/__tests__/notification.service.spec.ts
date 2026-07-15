@@ -1,189 +1,241 @@
 import httpStatus from 'http-status';
-import mongoose from 'mongoose';
-import AppError from '../../../builder/app-error';
-import * as NotificationService from '../notification.service';
-import { TNotification } from '../notification.type';
 
-// Mock models used directly in the service
-jest.mock('../notification.model', () => ({
-  Notification: {
-    create: jest.fn(),
-    findById: jest
-      .fn()
-      .mockReturnValue({ lean: jest.fn().mockResolvedValue(null) }),
-    findByIdAndUpdate: jest.fn(),
-    find: jest.fn(),
-    updateMany: jest.fn(),
-    deleteMany: jest.fn(),
-    findOneAndUpdate: jest.fn(),
-  },
-}));
-jest.mock('../../user-profile/user-profile.model', () => ({
-  UserProfile: {
-    findOne: jest
-      .fn()
-      .mockReturnValue({ lean: jest.fn().mockResolvedValue(null) }),
-  },
-}));
-jest.mock('../../notification-recipient/notification-recipient.model', () => ({
-  NotificationRecipient: {
-    insertMany: jest.fn(),
-    find: jest.fn(),
-    create: jest.fn(),
-    findOne: jest.fn(),
-  },
-}));
-jest.mock('../../news/news.model', () => ({
-  News: { findById: jest.fn() },
-}));
-jest.mock('../../user/user.model', () => ({
-  User: { findById: jest.fn(), find: jest.fn() },
-}));
-jest.mock('../../../config/socket', () => ({
-  emitToUser: jest.fn(),
-}));
+jest.mock('../notification.repository');
 jest.mock('../../../utils/cache.utils', () => ({
-  generateCacheKey: jest.fn(),
-  invalidateCacheByPattern: jest.fn(),
-  withCache: jest.fn((_key: string, _ttl: number, cb: () => Promise<unknown>) =>
-    cb(),
+  generateCacheKey: jest.fn(
+    (prefix: string, parts: unknown[]) => `${prefix}:${JSON.stringify(parts)}`,
+  ),
+  invalidateCacheByPattern: jest.fn().mockResolvedValue(undefined),
+  withCache: jest.fn(
+    (_key: string, _ttl: number, callback: () => Promise<unknown>) =>
+      callback(),
   ),
 }));
-// Mock AppQueryFind used in getNotifications
-jest.mock('../../../builder/app-query-find', () => {
-  return jest.fn().mockImplementation(() => ({
-    search: jest.fn().mockReturnThis(),
-    filter: jest.fn().mockReturnThis(),
-    sort: jest.fn().mockReturnThis(),
-    paginate: jest.fn().mockReturnThis(),
-    fields: jest.fn().mockReturnThis(),
-    tap: jest.fn().mockReturnThis(),
-    execute: jest.fn().mockResolvedValue({
-      data: [],
-      meta: { total: 0, page: 1, limit: 10 },
-    }),
-  }));
-});
 
-import { Notification } from '../notification.model';
+import { invalidateCacheByPattern } from '../../../utils/cache.utils';
+import * as NotificationRepository from '../notification.repository';
+import * as NotificationService from '../notification.service';
 
-describe('Notification Service', () => {
-  const mockId = new mongoose.Types.ObjectId().toString();
-  const mockSenderId = new mongoose.Types.ObjectId();
+const id = '507f1f77bcf86cd799439011';
+const notification = {
+  _id: id,
+  title: 'New booking',
+  message: 'A booking request arrived',
+  type: 'booking' as const,
+  priority: 'medium' as const,
+  channels: ['web' as const],
+  status: 'active' as const,
+  is_deleted: false,
+};
 
-  const mockNotification: TNotification = {
-    title: 'Test Notification',
-    message: 'Test message',
-    type: 'booking',
-    priority: 'medium',
-    channels: ['web'],
-    sender: mockSenderId,
-    is_deleted: false,
-  };
-
-  const mockNotificationDoc = {
-    ...mockNotification,
-    _id: new mongoose.Types.ObjectId(),
-    toObject: () => mockNotification,
-    softDelete: jest.fn().mockResolvedValue(undefined),
-  };
-
-  afterEach(() => {
+describe('NotificationService', () => {
+  beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  describe('createNotification', () => {
-    it('should create a notification', async () => {
-      (Notification.create as jest.Mock).mockResolvedValue(mockNotificationDoc);
+  it('creates a notification and invalidates list/detail caches', async () => {
+    (NotificationRepository.create as jest.Mock).mockResolvedValue(
+      notification,
+    );
 
-      const result =
-        await NotificationService.createNotification(mockNotification);
+    await expect(
+      NotificationService.createNotification(notification as any),
+    ).resolves.toEqual(notification);
+    expect(NotificationRepository.create).toHaveBeenCalledWith(notification);
+    expect(invalidateCacheByPattern).toHaveBeenCalledWith('notification:*');
+  });
 
-      expect(Notification.create).toHaveBeenCalledWith(mockNotification);
-      expect(result).toEqual(mockNotification);
+  it('gets a notification by id through the cache wrapper', async () => {
+    (NotificationRepository.findByIdLean as jest.Mock).mockResolvedValue(
+      notification,
+    );
+
+    await expect(NotificationService.getNotification(id)).resolves.toEqual(
+      notification,
+    );
+    expect(NotificationRepository.findByIdLean).toHaveBeenCalledWith(id);
+  });
+
+  it('throws 404 when a notification is not found', async () => {
+    (NotificationRepository.findByIdLean as jest.Mock).mockResolvedValue(null);
+
+    await expect(NotificationService.getNotification(id)).rejects.toMatchObject(
+      {
+        status: httpStatus.NOT_FOUND,
+        message: 'Notification not found',
+      },
+    );
+  });
+
+  it('returns paginated notifications through the cache wrapper', async () => {
+    const page = {
+      data: [notification],
+      meta: { total: 1, page: 1, limit: 10 },
+    };
+    (NotificationRepository.findPaginated as jest.Mock).mockResolvedValue(page);
+
+    await expect(
+      NotificationService.getNotifications({ type: 'booking' }),
+    ).resolves.toEqual(page);
+    expect(NotificationRepository.findPaginated).toHaveBeenCalledWith({
+      type: 'booking',
     });
   });
 
-  describe('getNotification', () => {
-    it('should return a notification by id', async () => {
-      (Notification.findById as jest.Mock).mockReturnValue({
-        lean: jest.fn().mockResolvedValue(mockNotificationDoc),
-      });
+  it('updates an existing notification and invalidates caches', async () => {
+    const updated = { ...notification, title: 'Updated title' };
+    (NotificationRepository.findByIdLean as jest.Mock).mockResolvedValue(
+      notification,
+    );
+    (NotificationRepository.updateById as jest.Mock).mockResolvedValue(updated);
 
-      const result = await NotificationService.getNotification(mockId);
+    await expect(
+      NotificationService.updateNotification(id, { title: updated.title }),
+    ).resolves.toEqual(updated);
+    expect(NotificationRepository.updateById).toHaveBeenCalledWith(id, {
+      title: updated.title,
+    });
+    expect(invalidateCacheByPattern).toHaveBeenCalledWith('notification:*');
+  });
 
-      expect(Notification.findById).toHaveBeenCalledWith(mockId);
-      expect(result).toBeDefined();
+  it('does not update a missing notification', async () => {
+    (NotificationRepository.findByIdLean as jest.Mock).mockResolvedValue(null);
+
+    await expect(
+      NotificationService.updateNotification(id, { title: 'Missing' }),
+    ).rejects.toMatchObject({ status: httpStatus.NOT_FOUND });
+    expect(NotificationRepository.updateById).not.toHaveBeenCalled();
+  });
+
+  it('bulk-updates found notifications and reports missing ids', async () => {
+    (NotificationRepository.findManyByIds as jest.Mock).mockResolvedValue([
+      { ...notification, _id: { toString: () => 'found' } },
+    ]);
+    (NotificationRepository.updateManyByIds as jest.Mock).mockResolvedValue({
+      modifiedCount: 1,
     });
 
-    it('should throw error if notification not found', async () => {
-      (Notification.findById as jest.Mock).mockReturnValue({
-        lean: jest.fn().mockResolvedValue(null),
-      });
+    await expect(
+      NotificationService.updateNotifications(['found', 'missing'], {
+        status: 'inactive',
+      }),
+    ).resolves.toEqual({ count: 1, not_found_ids: ['missing'] });
+    expect(NotificationRepository.updateManyByIds).toHaveBeenCalledWith(
+      ['found'],
+      { status: 'inactive' },
+    );
+  });
 
-      await expect(NotificationService.getNotification(mockId)).rejects.toThrow(
-        new AppError(httpStatus.NOT_FOUND, 'Notification not found'),
-      );
+  it('soft-deletes an existing notification and invalidates caches', async () => {
+    const softDelete = jest.fn().mockResolvedValue(undefined);
+    (NotificationRepository.findById as jest.Mock).mockResolvedValue({
+      softDelete,
+    });
+
+    await expect(
+      NotificationService.deleteNotification(id),
+    ).resolves.toBeUndefined();
+    expect(softDelete).toHaveBeenCalledWith();
+    expect(invalidateCacheByPattern).toHaveBeenCalledWith('notification:*');
+  });
+
+  it('does not soft-delete a missing notification', async () => {
+    (NotificationRepository.findById as jest.Mock).mockResolvedValue(null);
+
+    await expect(
+      NotificationService.deleteNotification(id),
+    ).rejects.toMatchObject({
+      status: httpStatus.NOT_FOUND,
     });
   });
 
-  describe('getNotifications', () => {
-    it('should return paginated notifications', async () => {
-      const result = await NotificationService.getNotifications({});
+  it('permanently deletes an existing notification using the bypass lookup', async () => {
+    (NotificationRepository.findByIdWithBypass as jest.Mock).mockResolvedValue(
+      notification,
+    );
 
-      expect(result).toHaveProperty('data');
-      expect(result).toHaveProperty('meta');
+    await expect(
+      NotificationService.deleteNotificationPermanent(id),
+    ).resolves.toBeUndefined();
+    expect(NotificationRepository.hardDeleteById).toHaveBeenCalledWith(id);
+  });
+
+  it('does not permanently delete a missing notification', async () => {
+    (NotificationRepository.findByIdWithBypass as jest.Mock).mockResolvedValue(
+      null,
+    );
+
+    await expect(
+      NotificationService.deleteNotificationPermanent(id),
+    ).rejects.toMatchObject({ status: httpStatus.NOT_FOUND });
+    expect(NotificationRepository.hardDeleteById).not.toHaveBeenCalled();
+  });
+
+  it('bulk soft-deletes found notifications and reports missing ids', async () => {
+    (NotificationRepository.findManyByIds as jest.Mock).mockResolvedValue([
+      { ...notification, _id: { toString: () => 'found' } },
+    ]);
+
+    await expect(
+      NotificationService.deleteNotifications(['found', 'missing']),
+    ).resolves.toEqual({ count: 1, not_found_ids: ['missing'] });
+    expect(NotificationRepository.softDeleteManyByIds).toHaveBeenCalledWith([
+      'found',
+    ]);
+  });
+
+  it('bulk permanently deletes only deleted records and reports missing ids', async () => {
+    (NotificationRepository.findManyByIdsBypass as jest.Mock).mockResolvedValue(
+      [{ ...notification, _id: { toString: () => 'deleted' } }],
+    );
+
+    await expect(
+      NotificationService.deleteNotificationsPermanent(['deleted', 'missing']),
+    ).resolves.toEqual({ count: 1, not_found_ids: ['missing'] });
+    expect(NotificationRepository.findManyByIdsBypass).toHaveBeenCalledWith(
+      ['deleted', 'missing'],
+      { is_deleted: true },
+    );
+    expect(NotificationRepository.hardDeleteManyByIds).toHaveBeenCalledWith([
+      'deleted',
+    ]);
+  });
+
+  it('restores one deleted notification', async () => {
+    (NotificationRepository.restoreById as jest.Mock).mockResolvedValue(
+      notification,
+    );
+
+    await expect(NotificationService.restoreNotification(id)).resolves.toEqual(
+      notification,
+    );
+  });
+
+  it('throws 404 when one notification cannot be restored', async () => {
+    (NotificationRepository.restoreById as jest.Mock).mockResolvedValue(null);
+
+    await expect(
+      NotificationService.restoreNotification(id),
+    ).rejects.toMatchObject({
+      status: httpStatus.NOT_FOUND,
+      message: 'Notification not found or not deleted',
     });
   });
 
-  describe('updateNotification', () => {
-    it('should update a notification', async () => {
-      (Notification.findById as jest.Mock).mockReturnValue({
-        lean: jest.fn().mockResolvedValue(mockNotification),
-      });
-      (Notification.findByIdAndUpdate as jest.Mock).mockResolvedValue(
-        mockNotificationDoc,
-      );
-
-      const result = await NotificationService.updateNotification(mockId, {
-        title: 'Updated Title',
-      });
-
-      expect(result).toBeDefined();
+  it('bulk-restores notifications and reports ids that remain missing', async () => {
+    (NotificationRepository.restoreManyByIds as jest.Mock).mockResolvedValue({
+      modifiedCount: 1,
     });
+    (NotificationRepository.findManyByIds as jest.Mock).mockResolvedValue([
+      { ...notification, _id: { toString: () => 'restored' } },
+    ]);
 
-    it('should throw error if notification not found on update', async () => {
-      (Notification.findById as jest.Mock).mockReturnValue({
-        lean: jest.fn().mockResolvedValue(null),
-      });
-
-      await expect(
-        NotificationService.updateNotification(mockId, { title: 'Updated' }),
-      ).rejects.toThrow(
-        new AppError(httpStatus.NOT_FOUND, 'Notification not found'),
-      );
-    });
-  });
-
-  describe('deleteNotification', () => {
-    it('should soft delete a notification', async () => {
-      (Notification.findById as jest.Mock).mockResolvedValue(
-        mockNotificationDoc,
-      );
-
-      await NotificationService.deleteNotification(mockId);
-
-      expect(mockNotificationDoc.softDelete).toHaveBeenCalled();
-    });
-
-    it('should throw error if notification not found', async () => {
-      (Notification.findById as jest.Mock).mockResolvedValue(null);
-
-      await expect(
-        NotificationService.deleteNotification(mockId),
-      ).rejects.toThrow(
-        new AppError(httpStatus.NOT_FOUND, 'Notification not found'),
-      );
-    });
+    await expect(
+      NotificationService.restoreNotifications(['restored', 'missing']),
+    ).resolves.toEqual({ count: 1, not_found_ids: ['missing'] });
+    expect(NotificationRepository.restoreManyByIds).toHaveBeenCalledWith([
+      'restored',
+      'missing',
+    ]);
   });
 });

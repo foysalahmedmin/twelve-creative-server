@@ -12,6 +12,9 @@ import supertest from 'supertest';
 
 // ── Mock service BEFORE importing routes ─────────────────────────────────────
 jest.mock('../auth.service');
+jest.mock('../../system-log/system-log.model', () => ({
+  SystemLog: { log: jest.fn() },
+}));
 
 // ── Stub rate limiter ─────────────────────────────────────────────────────────
 jest.mock('../../../middlewares/rate-limit.middleware', () => ({
@@ -140,31 +143,31 @@ describe('POST /api/auth/signin', () => {
     expect(AuthService.signin).toHaveBeenCalled();
   });
 
-  it('should return 404 when user not found', async () => {
+  it('should return the generic 401 response when credentials are invalid', async () => {
     (AuthService.signin as jest.Mock).mockRejectedValue({
-      status: httpStatus.NOT_FOUND,
-      message: 'User not found!',
+      status: httpStatus.UNAUTHORIZED,
+      message: 'Invalid email or password!',
     });
 
     const res = await request
       .post('/api/auth/signin')
       .send({ email: 'ghost@example.com', password: 'pass' });
 
-    expect(res.status).toBe(httpStatus.NOT_FOUND);
+    expect(res.status).toBe(httpStatus.UNAUTHORIZED);
     expect(res.body.success).toBe(false);
   });
 
-  it('should return 403 when password is wrong', async () => {
+  it('should not distinguish a wrong password from an unknown email', async () => {
     (AuthService.signin as jest.Mock).mockRejectedValue({
-      status: httpStatus.FORBIDDEN,
-      message: 'Password do not matched!',
+      status: httpStatus.UNAUTHORIZED,
+      message: 'Invalid email or password!',
     });
 
     const res = await request
       .post('/api/auth/signin')
       .send({ email: 'john@example.com', password: 'wrong' });
 
-    expect(res.status).toBe(httpStatus.FORBIDDEN);
+    expect(res.status).toBe(httpStatus.UNAUTHORIZED);
   });
 });
 
@@ -282,17 +285,15 @@ describe('POST /api/auth/forget-password', () => {
     expect(AuthService.forgetPassword).toHaveBeenCalled();
   });
 
-  it('should return 404 when user not found', async () => {
-    (AuthService.forgetPassword as jest.Mock).mockRejectedValue({
-      status: httpStatus.NOT_FOUND,
-      message: 'User not found!',
-    });
+  it('should return the same 200 response when user is not found', async () => {
+    (AuthService.forgetPassword as jest.Mock).mockResolvedValue(undefined);
 
     const res = await request
       .post('/api/auth/forget-password')
       .send({ email: 'ghost@example.com' });
 
-    expect(res.status).toBe(httpStatus.NOT_FOUND);
+    expect(res.status).toBe(httpStatus.OK);
+    expect(res.body.success).toBe(true);
   });
 });
 
@@ -408,5 +409,57 @@ describe('POST /api/auth/google-login', () => {
       .send({ id_token: 'bad_token' });
 
     expect(res.status).toBe(httpStatus.BAD_REQUEST);
+  });
+});
+
+// ─── POST /api/auth/logout ───────────────────────────────────────────────────
+
+describe('POST /api/auth/logout', () => {
+  it('should revoke a body refresh token and clear the cookie', async () => {
+    (AuthService.logout as jest.Mock).mockResolvedValue(undefined);
+
+    const res = await request
+      .post('/api/auth/logout')
+      .send({ refresh_token: 'refresh-token' });
+
+    expect(res.status).toBe(httpStatus.OK);
+    expect(res.body).toMatchObject({ success: true, data: null });
+    expect(res.headers['set-cookie']?.[0]).toContain('refresh_token=;');
+    expect(AuthService.logout).toHaveBeenCalledWith('refresh-token');
+  });
+
+  it('should remain idempotent when no refresh token is provided', async () => {
+    const res = await request.post('/api/auth/logout').send({});
+
+    expect(res.status).toBe(httpStatus.OK);
+    expect(AuthService.logout).not.toHaveBeenCalled();
+  });
+});
+
+// ─── POST /api/auth/logout-all ───────────────────────────────────────────────
+
+describe('POST /api/auth/logout-all', () => {
+  it('should invalidate every session for the authenticated user', async () => {
+    (AuthService.logoutAllSessions as jest.Mock).mockResolvedValue(undefined);
+
+    const res = await request.post('/api/auth/logout-all');
+
+    expect(res.status).toBe(httpStatus.OK);
+    expect(res.body).toMatchObject({ success: true, data: null });
+    expect(AuthService.logoutAllSessions).toHaveBeenCalledWith(
+      '507f1f77bcf86cd799439011',
+    );
+  });
+
+  it('should pass session invalidation failures to the error handler', async () => {
+    (AuthService.logoutAllSessions as jest.Mock).mockRejectedValue({
+      status: httpStatus.INTERNAL_SERVER_ERROR,
+      message: 'Could not invalidate sessions',
+    });
+
+    const res = await request.post('/api/auth/logout-all');
+
+    expect(res.status).toBe(httpStatus.INTERNAL_SERVER_ERROR);
+    expect(res.body.success).toBe(false);
   });
 });
