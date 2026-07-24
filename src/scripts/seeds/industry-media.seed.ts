@@ -325,7 +325,7 @@ export const SHOWCASE_VIDEO_SEEDS: ShowcaseVideoSeedDefinition[] = [
     thumbnail:
       'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1280&h=720&fit=crop&auto=format',
     alt: 'Hudson Hospitality — opening night recap',
-    aspect: 'reel',
+    aspect: 'landscape',
     order: 1,
     is_active: true,
   },
@@ -335,7 +335,7 @@ export const SHOWCASE_VIDEO_SEEDS: ShowcaseVideoSeedDefinition[] = [
     thumbnail:
       'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1280&h=720&fit=crop&auto=format',
     alt: 'Meridian Properties — project reveal',
-    aspect: 'reel',
+    aspect: 'landscape',
     order: 1,
     is_active: true,
   },
@@ -345,7 +345,7 @@ export const SHOWCASE_VIDEO_SEEDS: ShowcaseVideoSeedDefinition[] = [
     thumbnail:
       'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=1280&h=720&fit=crop&auto=format',
     alt: 'Skyline Charter — founder interview',
-    aspect: 'reel',
+    aspect: 'landscape',
     order: 1,
     is_active: true,
   },
@@ -355,7 +355,7 @@ export const SHOWCASE_VIDEO_SEEDS: ShowcaseVideoSeedDefinition[] = [
     thumbnail:
       'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1280&h=720&fit=crop&auto=format',
     alt: 'Vesta Group — year in review',
-    aspect: 'reel',
+    aspect: 'landscape',
     order: 2,
     is_active: true,
   },
@@ -365,7 +365,7 @@ export const SHOWCASE_VIDEO_SEEDS: ShowcaseVideoSeedDefinition[] = [
     thumbnail:
       'https://images.unsplash.com/photo-1559339352-11d035aa65de?w=1280&h=720&fit=crop&auto=format',
     alt: 'Casa del Mar — brand story',
-    aspect: 'reel',
+    aspect: 'landscape',
     order: 3,
     is_active: true,
   },
@@ -375,7 +375,7 @@ export const SHOWCASE_VIDEO_SEEDS: ShowcaseVideoSeedDefinition[] = [
     thumbnail:
       'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=1280&h=720&fit=crop&auto=format',
     alt: 'Monarch Consulting — founder film',
-    aspect: 'reel',
+    aspect: 'landscape',
     order: 1,
     is_active: true,
   },

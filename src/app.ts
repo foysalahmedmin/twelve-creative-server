@@ -6,15 +6,22 @@ import session from 'express-session';
 import helmet from 'helmet';
 import path from 'path';
 import config from './config';
+import { configureTrustProxy } from './config/trust-proxy';
 import error from './middlewares/error.middleware';
 import log from './middlewares/log.middleware';
 import notfound from './middlewares/not-found.middleware';
 import { globalRateLimiter } from './middlewares/rate-limit.middleware';
 import sanitize from './middlewares/sanitize.middleware';
+import { livenessHandler, readinessHandler } from './routes/health.route';
 import router from './routes';
 
 dotenv.config();
 const app: Application = express();
+
+// The production topology has exactly one reverse-proxy hop (Nginx). Keep the
+// application port private so forwarded client IPs/protocols can only come
+// through that trusted hop.
+configureTrustProxy(app);
 
 // CORS must be first so preflight OPTIONS requests are handled before any other middleware
 app.use(
@@ -33,10 +40,13 @@ app.use(
 
 app.use(helmet());
 
+// Probes bypass application throttling so an unhealthy or heavily loaded
+// instance reports its real state instead of an unrelated 429 response.
+app.get('/health', livenessHandler);
+app.get('/ready', readinessHandler);
+
 // Apply global rate limiting
 app.use(globalRateLimiter);
-
-app.set('trust proxy', true);
 
 app.use(express.json({ limit: '1mb' }));
 
@@ -70,11 +80,6 @@ app.use('/api', router);
 // Root endpoint
 app.get('/', (_req, res) => {
   res.send('Welcome to TwelveCreative API');
-});
-
-// Health check endpoint for Vercel
-app.get('/health', (_req, res) => {
-  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 // Static file serving for uploads

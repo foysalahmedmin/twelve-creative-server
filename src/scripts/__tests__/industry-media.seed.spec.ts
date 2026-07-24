@@ -51,6 +51,30 @@ describe('industry media seed manifest', () => {
     expect(new Set(keys).size).toBe(keys.length);
   });
 
+  it('defines the intended Showcase aspect distribution per Industry', () => {
+    const distribution = Object.fromEntries(
+      REQUIRED_INDUSTRY_SLUGS.map((slug) => [
+        slug,
+        {
+          reel: SHOWCASE_VIDEO_SEEDS.filter(
+            (video) => video.industry_slug === slug && video.aspect === 'reel',
+          ).length,
+          landscape: SHOWCASE_VIDEO_SEEDS.filter(
+            (video) =>
+              video.industry_slug === slug && video.aspect === 'landscape',
+          ).length,
+        },
+      ]),
+    );
+
+    expect(distribution).toEqual({
+      hospitality: { reel: 3, landscape: 3 },
+      'real-estate': { reel: 2, landscape: 1 },
+      aviation: { reel: 2, landscape: 1 },
+      'professional-services': { reel: 1, landscape: 1 },
+    });
+  });
+
   it('replaces seed-only slugs with BSON Industry references', () => {
     const ids = buildIndustryIds();
     const { featuredProjects, showcaseVideos } =

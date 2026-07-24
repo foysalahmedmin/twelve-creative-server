@@ -15,7 +15,6 @@ const serviceSchema = new Schema<TServiceDocument>(
     slug: {
       type: String,
       required: [true, 'Slug is required'],
-      unique: true,
       trim: true,
       lowercase: true,
       minlength: [2, 'Slug must be at least 2 characters'],
@@ -73,7 +72,7 @@ serviceSchema.index(
   { slug: 1 },
   {
     unique: true,
-    partialFilterExpression: { is_deleted: { $ne: true } },
+    partialFilterExpression: { is_deleted: false },
     name: 'unique_service_slug_not_deleted',
   },
 );

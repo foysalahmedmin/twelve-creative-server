@@ -7,6 +7,7 @@
 import express from 'express';
 import httpStatus from 'http-status';
 import supertest from 'supertest';
+import config from '../../../config/env';
 
 // ── Mock service and middlewares BEFORE importing routes ─────────────────────
 jest.mock('../file.service');
@@ -65,17 +66,34 @@ const request = supertest(app);
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
 describe('POST /api/file (Local Upload)', () => {
-  it('should return 201 when local upload succeeds', async () => {
+  it('uses the public HTTPS base URL behind an internal production proxy', async () => {
     (FileService.createLocalFile as jest.Mock).mockResolvedValue({
       _id: '1',
       filename: 'test.jpg',
     });
 
-    const res = await request.post('/api/file');
+    const originalNodeEnv = config.node_env;
+    const originalUrl = config.url;
+    config.node_env = 'production';
+    config.url = 'https://api.twelvecreative.com/';
+
+    const res = await (async () => {
+      try {
+        return await request.post('/api/file');
+      } finally {
+        config.node_env = originalNodeEnv;
+        config.url = originalUrl;
+      }
+    })();
 
     expect(res.status).toBe(httpStatus.CREATED);
     expect(res.body.message).toContain('local storage');
-    expect(FileService.createLocalFile).toHaveBeenCalled();
+    expect(FileService.createLocalFile).toHaveBeenCalledWith(
+      expect.objectContaining({ _id: 'user123' }),
+      expect.objectContaining({ path: 'uploads/test.jpg' }),
+      undefined,
+      'https://api.twelvecreative.com',
+    );
   });
 });
 

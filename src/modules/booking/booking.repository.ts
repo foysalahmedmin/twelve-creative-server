@@ -20,9 +20,7 @@ export const findByIdLean = async (id: string): Promise<TBooking | null> => {
 export const findByIdWithDeleted = async (
   id: string,
 ): Promise<TBooking | null> => {
-  return await Booking.findById(id)
-    .setOptions({ bypassDeleted: true })
-    .lean();
+  return await Booking.findById(id).setOptions({ bypassDeleted: true }).lean();
 };
 
 export const findAdminPaginated = async (

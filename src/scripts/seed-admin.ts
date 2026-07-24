@@ -13,6 +13,7 @@
 
 /* eslint-disable no-console */
 import mongoose from 'mongoose';
+import { z } from 'zod';
 import { disconnectDB, initializeDB } from '../config/db';
 import { User } from '../modules/user/user.model';
 
@@ -28,8 +29,15 @@ const run = async (): Promise<void> => {
     process.exit(1);
   }
 
-  if (password.length < 6) {
-    console.error('❌ ADMIN_SEED_PASSWORD must be at least 6 characters.');
+  if (!z.string().email().safeParse(email).success) {
+    console.error('❌ ADMIN_SEED_EMAIL must be a valid email address.');
+    process.exit(1);
+  }
+
+  if (password.length < 12 || password.length > 100) {
+    console.error(
+      '❌ ADMIN_SEED_PASSWORD must be between 12 and 100 characters.',
+    );
     process.exit(1);
   }
 

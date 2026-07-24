@@ -88,7 +88,11 @@ describe('FileService.createLocalFile', () => {
       'http://localhost:5000',
     );
 
-    expect(FileRepository.create).toHaveBeenCalled();
+    expect(FileRepository.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: 'http://localhost:5000/uploads/files/test-image-123.jpg',
+      }),
+    );
     expect(result.provider).toBe('local');
     expect(result.metadata?.path).toBe('uploads/files/test-image-123.jpg');
   });

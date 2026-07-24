@@ -6,7 +6,6 @@ const insightSchema = new Schema<TInsightDocument>(
     slug: {
       type: String,
       required: [true, 'Slug is required'],
-      unique: true,
       trim: true,
       lowercase: true,
       minlength: 2,
@@ -58,7 +57,7 @@ insightSchema.index(
   { slug: 1 },
   {
     unique: true,
-    partialFilterExpression: { is_deleted: { $ne: true } },
+    partialFilterExpression: { is_deleted: false },
     name: 'unique_insight_slug_not_deleted',
   },
 );

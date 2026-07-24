@@ -37,7 +37,10 @@ class AppQueryFind<T> {
     if (searchValue) {
       // Escape regex metacharacters so a literal search like "[" or "(" cannot
       // produce an invalid RegExp (Mongo would 500) or become a ReDoS vector.
-      const escaped = String(searchValue).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const escaped = String(searchValue).replace(
+        /[.*+?^${}()|[\]\\]/g,
+        '\\$&',
+      );
       const searchConditions: FilterQuery<DocumentType<T>> = {
         $or: applicableFields.map((field) => ({
           [field]: { $regex: escaped, $options: 'i' },

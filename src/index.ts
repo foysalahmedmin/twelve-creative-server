@@ -54,8 +54,11 @@ const main = async (): Promise<void> => {
       );
     }
 
-    server.listen(config.port, () => {
-      console.log(`🚀 Worker ${process.pid} listening on port ${config.port}`);
+    const port = Number(config.port || 5000);
+    server.listen(port, config.host, () => {
+      console.log(
+        `🚀 Worker ${process.pid} listening on ${config.host}:${port}`,
+      );
     });
 
     // Initialize background jobs

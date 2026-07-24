@@ -4,6 +4,7 @@ import { TStorageResult } from '../../middlewares/storage.middleware';
 import catchAsync from '../../utils/catch-async';
 import sendResponse from '../../utils/send-response';
 import * as FileServices from './file.service';
+import { resolveFileBaseUrl } from './file.url';
 
 // ─── Create ───────────────────────────────────────────────────────────────────
 
@@ -11,7 +12,7 @@ export const createLocalFile = catchAsync(async (req, res) => {
   const files = req.files as Record<string, Express.Multer.File[]>;
   const file = files?.file?.[0];
 
-  const baseUrl = req.protocol + '://' + req.get('host');
+  const baseUrl = resolveFileBaseUrl(req);
   const result = await FileServices.createLocalFile(
     req.user!,
     file,

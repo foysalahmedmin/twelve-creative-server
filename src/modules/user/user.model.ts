@@ -19,7 +19,6 @@ const userSchema = new Schema<TUserDocument>(
       type: String,
       required: true,
       lowercase: true,
-      unique: true,
       trim: true,
     },
     password: {
@@ -111,7 +110,7 @@ userSchema.pre('save', async function (next) {
   }
 
   // Reset is_verified on email change
-  if (this.isModified('email')) {
+  if (!this.isNew && this.isModified('email')) {
     this.is_verified = false;
   }
 

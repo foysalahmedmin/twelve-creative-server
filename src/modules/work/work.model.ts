@@ -75,7 +75,6 @@ const workSchema = new Schema<TWorkDocument>(
     slug: {
       type: String,
       required: [true, 'Slug is required'],
-      unique: true,
       trim: true,
       lowercase: true,
       minlength: 2,
@@ -139,7 +138,7 @@ workSchema.index(
   { slug: 1 },
   {
     unique: true,
-    partialFilterExpression: { is_deleted: { $ne: true } },
+    partialFilterExpression: { is_deleted: false },
     name: 'unique_slug_not_deleted',
   },
 );

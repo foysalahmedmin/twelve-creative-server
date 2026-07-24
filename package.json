@@ -3,6 +3,19 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "packageManager": "pnpm@10.33.2",
+  "engines": {
+    "node": ">=24.0.0 <25",
+    "pnpm": "10.33.2"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@swc/core",
+      "bcrypt",
+      "esbuild",
+      "unrs-resolver"
+    ]
+  },
   "scripts": {
     "build": "tsc",
     "dev": "npm run start:dev",

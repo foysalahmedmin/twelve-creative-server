@@ -1,29 +1,15 @@
 import { createClient, RedisClientOptions } from 'redis';
 import config from './env';
+import { buildRedisOptions } from './redis-options';
 
-const host = config.redis_host || 'localhost';
-const port = Number(config.redis_port || '6379');
-
-// Redis client options with timeout and retry settings
-const redisOptions: RedisClientOptions = {
-  socket: {
-    host: host,
-    port: port,
-    connectTimeout: 5000, // 5 seconds timeout
-    reconnectStrategy: (retries: number) => {
-      console.log(`🔄 Redis reconnection attempt: ${retries}`);
-      if (retries > 0) {
-        console.error('❌ Max Redis reconnection attempts reached');
-        return false; // Stop retrying
-      }
-      return Math.min(retries * 100, 3000); // Exponential backoff, max 3s
-    },
-  },
-};
-
-if (config.redis_password) {
-  redisOptions.password = config.redis_password;
-}
+// A complete URL takes precedence over split host/port settings. This keeps
+// container and managed-Redis deployments aligned with REDIS_URL semantics.
+const redisOptions: RedisClientOptions = buildRedisOptions({
+  host: config.redis_host,
+  port: config.redis_port,
+  password: config.redis_password,
+  url: config.redis_url,
+});
 
 // Create clients with improved error handling
 const cacheClient = createClient(redisOptions);

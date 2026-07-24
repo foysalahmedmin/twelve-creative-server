@@ -8,6 +8,7 @@ dotenv.config({ path: path.join(process.cwd(), '.env') });
 const config = {
   // 🌐 Server Configuration
   node_env: process.env.NODE_ENV as string,
+  host: (process.env.HOST as string) || '127.0.0.1',
   port: process.env.PORT as string,
   url:
     (process.env.URL as string) ||
@@ -81,9 +82,6 @@ const config = {
   // 📧 Email Configuration
   email: process.env.EMAIL as string,
   email_provider: process.env.EMAIL_PROVIDER as string,
-
-  auth_user_email: process.env.AUTH_USER_EMAIL as string,
-  auth_user_email_password: process.env.AUTH_USER_EMAIL_PASSWORD as string,
 
   smtp_host: process.env.SMTP_HOST as string,
   smtp_port: process.env.SMTP_PORT as string,

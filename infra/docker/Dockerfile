@@ -19,12 +19,12 @@ RUN apt-get update && apt-get install -y \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Node.js 18 LTS
-RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
+# Install the production Node.js major declared by package.json
+RUN curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
     && apt-get install -y nodejs
 
-# Install pnpm globally
-RUN corepack enable && corepack prepare pnpm@latest --activate
+# Install the exact package-manager version declared by package.json
+RUN corepack enable && corepack prepare pnpm@10.33.2 --activate
 
 # Add non-root user
 RUN groupadd -r appuser && useradd -r -g appuser -s /bin/bash -d /app appuser
@@ -70,7 +70,7 @@ ENV HUSKY=0
 
 # Copy package files and install all deps (needed for build)
 COPY package.json pnpm-lock.yaml* ./
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --frozen-lockfile --prod=false
 
 # Copy app files and build
 COPY . .

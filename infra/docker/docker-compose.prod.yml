@@ -11,24 +11,26 @@ services:
   app:
     build:
       context: ../../
-      dockerfile: Dockerfile
+      dockerfile: infra/docker/Dockerfile
       target: production
     container_name: zaaz-server-prod
     restart: always
     ports:
-      - '${APP_PORT:-5000}:5000'
+      - '127.0.0.1:${APP_PORT:-5000}:5000'
     env_file:
       - ../../.env.production
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=${DATABASE_URL}
-      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
       - REDIS_ENABLED=true
       - RABBITMQ_URL=amqp://${RABBITMQ_USER}:${RABBITMQ_PASS}@rabbitmq:5672
       - RABBITMQ_ENABLED=${RABBITMQ_ENABLED:-false}
       - KAFKA_BROKERS=kafka:9093
       - KAFKA_ENABLED=${KAFKA_ENABLED:-false}
       - CLUSTER_ENABLED=true
+      - HOST=0.0.0.0
       - PORT=5000
     depends_on:
       redis:
@@ -38,6 +40,7 @@ services:
     volumes:
       - ../../logs:/app/logs:rw
       - ../../public:/app/public:ro
+      - uploads_data:/app/uploads
     deploy:
       resources:
         limits:
@@ -299,6 +302,9 @@ networks:
     name: zaaz-prod-network
 
 volumes:
+  uploads_data:
+    driver: local
+    name: zaaz-app-uploads
   redis_data:
     driver: local
     name: zaaz-redis-prod-data
@@ -311,5 +317,3 @@ volumes:
   kafka_data:
     driver: local
     name: zaaz-kafka-prod-data
-
-
