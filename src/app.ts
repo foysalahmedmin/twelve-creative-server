@@ -1,4 +1,5 @@
 import cookieParser from 'cookie-parser';
+import MongoStore from 'connect-mongo';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import express, { Application } from 'express';
@@ -56,16 +57,23 @@ app.use(cookieParser());
 
 app.use(
   session({
+    name: 'tc.sid',
     secret: config.session_secret,
     resave: false,
     saveUninitialized: false,
-    // store: MongoStore.create({
-    //   mongoUrl: config.database_url,
-    //   ttl: 60 * 60 * 24 * 30,
-    // }),
+    ...(config.node_env === 'production' && {
+      proxy: true,
+      store: MongoStore.create({
+        mongoUrl: config.database_url,
+        ttl: 60 * 60 * 24 * 30,
+        touchAfter: 24 * 60 * 60,
+        autoRemove: 'native',
+      }),
+    }),
     cookie: {
-      secure: config.url?.startsWith('https'),
+      secure: config.node_env === 'production',
       httpOnly: true,
+      sameSite: 'lax',
       maxAge: 1000 * 60 * 60 * 24 * 30,
     },
   }),
