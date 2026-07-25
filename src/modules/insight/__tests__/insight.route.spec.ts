@@ -97,7 +97,9 @@ describe('Insight routes', () => {
       insight,
     );
 
-    const response = await request.get(`/api/insight/public/${insight.slug}`);
+    const response = await request.get(
+      `/api/insight/public/${insight.slug.toUpperCase()}`,
+    );
 
     expect(response.status).toBe(httpStatus.OK);
     expect(response.body.data).toEqual(insight);

@@ -22,6 +22,8 @@ export type TPost = {
   is_featured?: boolean;
   is_deleted: boolean;
   deleted_at?: Date;
+  created_at?: Date;
+  updated_at?: Date;
 };
 
 export interface TPostDocument extends TPost, Document {

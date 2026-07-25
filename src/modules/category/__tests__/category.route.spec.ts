@@ -38,18 +38,6 @@ jest.mock('../../../middlewares/file.middleware', () =>
       },
   ),
 );
-jest.mock('../../../middlewares/validation.middleware', () =>
-  jest.fn(
-    () =>
-      (
-        _req: express.Request,
-        _res: express.Response,
-        next: express.NextFunction,
-      ) =>
-        next(),
-  ),
-);
-
 import categoryRoutes from '../category.route';
 import * as CategoryService from '../category.service';
 
@@ -72,12 +60,12 @@ const buildApp = () => {
   app.use('/api/category', categoryRoutes);
   app.use(
     (
-      err: { status?: number; message?: string },
+      err: { status?: number; message?: string; name?: string },
       _req: express.Request,
       res: express.Response,
       _next: express.NextFunction,
     ) => {
-      res.status(err.status || 500).json({
+      res.status(err.name === 'ZodError' ? 400 : err.status || 500).json({
         success: false,
         message: err.message || 'Internal Server Error',
       });
@@ -103,6 +91,46 @@ describe('Category routes', () => {
     expect(response.body.meta).toEqual(page.meta);
     expect(CategoryService.getPublicCategories).toHaveBeenCalledWith(
       expect.objectContaining({ page: '1' }),
+    );
+  });
+
+  it.each([
+    'page=0',
+    'page=10001',
+    'limit=0',
+    'limit=101',
+    'search=',
+    `search=${'a'.repeat(201)}`,
+    'sort=status',
+    'is_featured=1',
+    'status=inactive',
+    'is_deleted=true',
+    'fields=%2Bis_deleted',
+  ])('GET /public rejects unsafe query: %s', async (query) => {
+    const response = await request.get(`/api/category/public?${query}`);
+
+    expect(response.status).toBe(httpStatus.BAD_REQUEST);
+    expect(CategoryService.getPublicCategories).not.toHaveBeenCalled();
+  });
+
+  it('GET /public accepts bounded filters and sort fields', async () => {
+    (CategoryService.getPublicCategories as jest.Mock).mockResolvedValue(page);
+
+    const response = await request.get(
+      '/api/category/public?page=2&limit=25&search=brand&sort=sequence,-name&is_featured=true&layout=default&tags=strategy',
+    );
+
+    expect(response.status).toBe(httpStatus.OK);
+    expect(CategoryService.getPublicCategories).toHaveBeenCalledWith(
+      expect.objectContaining({
+        page: '2',
+        limit: '25',
+        search: 'brand',
+        sort: 'sequence,-name',
+        is_featured: 'true',
+        layout: 'default',
+        tags: 'strategy',
+      }),
     );
   });
 

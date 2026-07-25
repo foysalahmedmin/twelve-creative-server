@@ -5,31 +5,16 @@ import { Types } from 'mongoose';
 import path from 'node:path';
 import config from '../../config/env';
 import AppError from '../../builder/app-error';
+import {
+  getCanonicalUploadExtension,
+  isSupportedLocalUploadMime,
+} from '../../constants/upload-policy';
 import { TStorageResult } from '../../middlewares/storage.middleware';
 import { TJwtPayload } from '../../types/jsonwebtoken.type';
 import { deleteFiles as deleteFilesFromDisk } from '../../utils/delete-files';
 import * as FileRepository from './file.repository';
 import { TFile, TFileInput } from './file.type';
 import { getExtensionFromFilename, getFileTypeFromMime } from './file.util';
-
-const ALLOWED_MIME_TYPES = new Set([
-  'image/jpeg',
-  'image/jpg',
-  'image/png',
-  'image/gif',
-  'image/webp',
-  'image/svg+xml',
-  'video/mp4',
-  'video/webm',
-  'video/ogg',
-  'audio/mpeg',
-  'audio/ogg',
-  'audio/wav',
-  'application/pdf',
-  'application/msword',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'text/plain',
-]);
 
 // Initialize GCS client
 const storageClient = new Storage({
@@ -40,6 +25,28 @@ const storageClient = new Storage({
     projectId: config.gcp.project_id,
   }),
 });
+
+const cleanupCloudResults = async (
+  results: readonly TStorageResult[],
+): Promise<void> => {
+  await Promise.all(
+    results.map(async (result) => {
+      try {
+        await storageClient
+          .bucket(result.bucket)
+          .file(result.filename)
+          .delete();
+      } catch (cleanupError: unknown) {
+        if ((cleanupError as { code?: number }).code !== 404) {
+          console.error(
+            `Failed to clean rejected GCS upload (${result.bucket}/${result.filename}):`,
+            (cleanupError as Error).message,
+          );
+        }
+      }
+    }),
+  );
+};
 
 // ─── Create (Local) ─────────────────────────────────────────────────────────
 
@@ -53,39 +60,61 @@ export const createLocalFile = async (
     throw new AppError(httpStatus.BAD_REQUEST, 'No file uploaded');
   }
 
-  if (!ALLOWED_MIME_TYPES.has(file.mimetype)) {
-    throw new AppError(
-      httpStatus.BAD_REQUEST,
-      `File type "${file.mimetype}" is not allowed`,
-    );
+  try {
+    const canonicalExtension = getCanonicalUploadExtension(file.mimetype);
+    if (!canonicalExtension) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        `File type "${file.mimetype}" is not allowed`,
+      );
+    }
+
+    const storedExtension = getExtensionFromFilename(file.filename);
+    if (storedExtension !== canonicalExtension) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        'Stored file extension does not match its MIME type',
+      );
+    }
+
+    const filePath = file.path.replace(/\\/g, '/');
+    const fileType = getFileTypeFromMime(file.mimetype, canonicalExtension);
+
+    const fileData: Partial<TFile> = {
+      name: payload.name || file.originalname,
+      originalname: file.originalname,
+      filename: file.filename,
+      url: `${baseUrl}/${filePath}`,
+      mimetype: file.mimetype,
+      size: file.size,
+      author: user._id as unknown as Types.ObjectId,
+      provider: 'local',
+      category: payload.category,
+      description: payload.description,
+      caption: payload.caption,
+      status: payload.status || 'active',
+      is_deleted: false,
+      metadata: {
+        path: filePath,
+        extension: canonicalExtension,
+        file_type: fileType,
+      },
+    };
+
+    return await FileRepository.create(fileData);
+  } catch (error) {
+    // Multer has already written the file at this point. Any validation or DB
+    // failure must remove it so rejected requests cannot accumulate orphans.
+    try {
+      await deleteFilesFromDisk(file.path);
+    } catch (cleanupError) {
+      console.error(
+        `Failed to clean rejected upload: ${file.path}`,
+        cleanupError,
+      );
+    }
+    throw error;
   }
-
-  const filePath = file.path.replace(/\\/g, '/');
-  const extension = getExtensionFromFilename(file.filename);
-  const fileType = getFileTypeFromMime(file.mimetype, extension);
-
-  const fileData: Partial<TFile> = {
-    name: payload.name || file.originalname,
-    originalname: file.originalname,
-    filename: file.filename,
-    url: `${baseUrl}/${filePath}`,
-    mimetype: file.mimetype,
-    size: file.size,
-    author: user._id as unknown as Types.ObjectId,
-    provider: 'local',
-    category: payload.category,
-    description: payload.description,
-    caption: payload.caption,
-    status: payload.status || 'active',
-    is_deleted: false,
-    metadata: {
-      path: filePath,
-      extension,
-      file_type: fileType,
-    },
-  };
-
-  return await FileRepository.create(fileData);
 };
 
 // ─── Create (Cloud/GCS) ──────────────────────────────────────────────────────
@@ -99,41 +128,57 @@ export const createCloudFiles = async (
     throw new AppError(httpStatus.BAD_REQUEST, 'No storage results found');
   }
 
-  const invalidMime = results.find((r) => !ALLOWED_MIME_TYPES.has(r.mimetype));
-  if (invalidMime) {
-    throw new AppError(
-      httpStatus.BAD_REQUEST,
-      `File type "${invalidMime.mimetype}" is not allowed`,
+  try {
+    const invalidMime = results.find(
+      (result) => !isSupportedLocalUploadMime(result.mimetype),
     );
+    if (invalidMime) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        `File type "${invalidMime.mimetype}" is not allowed`,
+      );
+    }
+
+    const storagesData: Partial<TFile>[] = results.map((result) => {
+      const extension = getCanonicalUploadExtension(result.mimetype)!;
+      if (getExtensionFromFilename(result.filename) !== extension) {
+        throw new AppError(
+          httpStatus.BAD_REQUEST,
+          'Stored file extension does not match its MIME type',
+        );
+      }
+      const fileType = getFileTypeFromMime(result.mimetype, extension);
+
+      return {
+        name: payload.name || result.originalName,
+        originalname: result.originalName,
+        filename: result.filename,
+        url: result.publicUrl || '',
+        mimetype: result.mimetype,
+        size: result.size,
+        author: user._id as unknown as Types.ObjectId,
+        provider: 'gcs',
+        category: payload.category,
+        description: payload.description,
+        caption: payload.caption,
+        status: payload.status || 'active',
+        is_deleted: false,
+        metadata: {
+          bucket: result.bucket,
+          extension,
+          file_type: fileType,
+        },
+      };
+    });
+
+    return await FileRepository.createMany(storagesData);
+  } catch (error) {
+    // The middleware has already persisted these objects in GCS. Compensate
+    // for validation or database failures so rejected requests leave neither
+    // database records nor public orphan objects.
+    await cleanupCloudResults(results);
+    throw error;
   }
-
-  const storagesData: Partial<TFile>[] = results.map((result) => {
-    const extension = getExtensionFromFilename(result.filename);
-    const fileType = getFileTypeFromMime(result.mimetype, extension);
-
-    return {
-      name: payload.name || result.originalName,
-      originalname: result.originalName,
-      filename: result.filename,
-      url: result.publicUrl || '',
-      mimetype: result.mimetype,
-      size: result.size,
-      author: user._id as unknown as Types.ObjectId,
-      provider: 'gcs',
-      category: payload.category,
-      description: payload.description,
-      caption: payload.caption,
-      status: payload.status || 'active',
-      is_deleted: false,
-      metadata: {
-        bucket: result.bucket,
-        extension,
-        file_type: fileType,
-      },
-    };
-  });
-
-  return await FileRepository.createMany(storagesData);
 };
 
 // ─── Get Single ───────────────────────────────────────────────────────────────

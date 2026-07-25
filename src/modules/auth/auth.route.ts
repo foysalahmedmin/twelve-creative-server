@@ -27,6 +27,7 @@ router.post(
 
 router.post(
   '/signup',
+  auth('admin'),
   file({
     name: 'image',
     folder: '/users',

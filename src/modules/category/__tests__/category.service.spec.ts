@@ -170,6 +170,9 @@ describe('CategoryService', () => {
     await CategoryService.deleteCategoryPermanent(CATEGORY_ID);
 
     expect(CategoryRepository.hardDeleteById).toHaveBeenCalledWith(CATEGORY_ID);
+    expect(CacheUtils.invalidateCacheByPattern).toHaveBeenCalledWith(
+      'category:*',
+    );
   });
 
   it('rejects permanent deletion when the category does not exist', async () => {
@@ -182,6 +185,7 @@ describe('CategoryService', () => {
     ).rejects.toMatchObject({ status: httpStatus.NOT_FOUND });
 
     expect(CategoryRepository.hardDeleteById).not.toHaveBeenCalled();
+    expect(CacheUtils.invalidateCacheByPattern).not.toHaveBeenCalled();
   });
 
   it('restores a deleted category and invalidates category caches', async () => {

@@ -73,6 +73,7 @@ export const deleteCategoryPermanent = async (id: string): Promise<void> => {
   const category = await CategoryRepository.findByIdWithDeleted(id);
   if (!category) throw new AppError(httpStatus.NOT_FOUND, 'Category not found');
   await CategoryRepository.hardDeleteById(id);
+  await invalidateCacheByPattern(`${CACHE_PREFIX}:*`);
 };
 
 export const restoreCategory = async (id: string): Promise<TCategory> => {

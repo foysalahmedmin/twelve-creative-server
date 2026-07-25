@@ -16,7 +16,7 @@ export const createFeaturedProject = catchAsync(async (req, res) => {
 export const getPublicFeaturedProjects = catchAsync(async (req, res) => {
   const industrySlug =
     typeof req.query.industry_slug === 'string'
-      ? req.query.industry_slug
+      ? req.query.industry_slug.trim().toLowerCase()
       : undefined;
   const result = await FeaturedProjectServices.getPublicFeaturedProjects({
     industry_slug: industrySlug,

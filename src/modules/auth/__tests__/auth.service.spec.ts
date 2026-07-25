@@ -421,14 +421,21 @@ describe('AuthService.googleLogin', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    (AuthRepository.findByGoogleIdWithPassword as jest.Mock).mockResolvedValue(
+      null,
+    );
+    (AuthRepository.findByEmailWithPassword as jest.Mock).mockResolvedValue(
+      null,
+    );
   });
 
-  it('links Google auth to an existing user and returns a token pair', async () => {
+  it('links a verified Google identity to an unlinked provisioned user', async () => {
     const user = mockUserDoc();
     getGoogleClient().verifyIdToken.mockResolvedValue({
       getPayload: () => ({
         sub: 'google-123',
         email: user.email,
+        email_verified: true,
         name: user.name,
         picture: 'avatar.jpg',
       }),
@@ -440,6 +447,12 @@ describe('AuthService.googleLogin', () => {
 
     const result = await AuthService.googleLogin('valid-google-token');
 
+    expect(AuthRepository.findByGoogleIdWithPassword).toHaveBeenCalledWith(
+      'google-123',
+    );
+    expect(AuthRepository.findByEmailWithPassword).toHaveBeenCalledWith(
+      user.email,
+    );
     expect(user.google_id).toBe('google-123');
     expect(user.auth_source).toBe('google');
     expect(AuthRepository.saveDocument).toHaveBeenCalledWith(user);
@@ -450,16 +463,85 @@ describe('AuthService.googleLogin', () => {
     });
   });
 
-  it('creates an editor when no Google-linked user exists', async () => {
-    const created = mockUserDoc({
-      google_id: 'google-123',
-      auth_source: 'google',
-      is_verified: true,
-    });
+  it('rejects an unverified Google email before account lookup', async () => {
     getGoogleClient().verifyIdToken.mockResolvedValue({
       getPayload: () => ({
         sub: 'google-123',
         email: 'john@example.com',
+        email_verified: false,
+        name: 'John Doe',
+      }),
+    });
+
+    await expect(
+      AuthService.googleLogin('unverified-google-token'),
+    ).rejects.toMatchObject({
+      status: httpStatus.FORBIDDEN,
+      message: 'Google email address is not verified.',
+    });
+
+    expect(AuthRepository.findByGoogleIdWithPassword).not.toHaveBeenCalled();
+    expect(AuthRepository.findByEmailWithPassword).not.toHaveBeenCalled();
+  });
+
+  it('rejects a different Google ID bound to the provisioned email', async () => {
+    const user = mockUserDoc({
+      google_id: 'already-linked-google-id',
+      auth_source: 'google',
+    });
+    getGoogleClient().verifyIdToken.mockResolvedValue({
+      getPayload: () => ({
+        sub: 'different-google-id',
+        email: user.email,
+        email_verified: true,
+        name: user.name,
+      }),
+    });
+    (AuthRepository.findByEmailWithPassword as jest.Mock).mockResolvedValue(
+      user,
+    );
+
+    await expect(
+      AuthService.googleLogin('mismatched-google-token'),
+    ).rejects.toMatchObject({
+      status: httpStatus.FORBIDDEN,
+      message: 'This Google account does not match the provisioned user.',
+    });
+
+    expect(AuthRepository.saveDocument).not.toHaveBeenCalled();
+  });
+
+  it('uses an existing Google-ID binding without falling back to email', async () => {
+    const googleUser = mockUserDoc({
+      email: 'original@example.com',
+      google_id: 'google-123',
+      auth_source: 'google',
+    });
+    getGoogleClient().verifyIdToken.mockResolvedValue({
+      getPayload: () => ({
+        sub: 'google-123',
+        email: 'new-google-email@example.com',
+        email_verified: true,
+        name: 'John Doe',
+      }),
+    });
+    (AuthRepository.findByGoogleIdWithPassword as jest.Mock).mockResolvedValue(
+      googleUser,
+    );
+
+    const result = await AuthService.googleLogin('existing-google-token');
+
+    expect(AuthRepository.findByEmailWithPassword).not.toHaveBeenCalled();
+    expect(AuthRepository.saveDocument).not.toHaveBeenCalled();
+    expect(result.info.email).toBe('original@example.com');
+  });
+
+  it('rejects a valid Google identity that has not been provisioned', async () => {
+    getGoogleClient().verifyIdToken.mockResolvedValue({
+      getPayload: () => ({
+        sub: 'google-123',
+        email: 'john@example.com',
+        email_verified: true,
         name: 'John Doe',
         picture: 'avatar.jpg',
       }),
@@ -470,19 +552,15 @@ describe('AuthService.googleLogin', () => {
     (AuthRepository.findByGoogleIdWithPassword as jest.Mock).mockResolvedValue(
       null,
     );
-    (AuthRepository.createUser as jest.Mock).mockResolvedValue(created);
 
-    await AuthService.googleLogin('valid-google-token');
-
-    expect(AuthRepository.createUser).toHaveBeenCalledWith({
-      name: 'John Doe',
-      email: 'john@example.com',
-      google_id: 'google-123',
-      auth_source: 'google',
-      image: 'avatar.jpg',
-      role: 'editor',
-      is_verified: true,
+    await expect(
+      AuthService.googleLogin('valid-google-token'),
+    ).rejects.toMatchObject({
+      status: httpStatus.FORBIDDEN,
+      message: 'This Google account is not authorized.',
     });
+
+    expect(AuthRepository.createUser).not.toHaveBeenCalled();
   });
 
   it('rejects a Google response with no payload', async () => {
@@ -507,7 +585,7 @@ describe('AuthService.googleLogin', () => {
       AuthService.googleLogin('incomplete-google-token'),
     ).rejects.toMatchObject({
       status: httpStatus.BAD_REQUEST,
-      message: 'Email and name are required from Google',
+      message: 'Google account ID, email and name are required',
     });
   });
 
@@ -516,11 +594,16 @@ describe('AuthService.googleLogin', () => {
       getPayload: () => ({
         sub: 'google-123',
         email: 'john@example.com',
+        email_verified: true,
         name: 'John Doe',
       }),
     });
-    (AuthRepository.findByEmailWithPassword as jest.Mock).mockResolvedValue(
-      mockUserDoc({ status: 'blocked' }),
+    (AuthRepository.findByGoogleIdWithPassword as jest.Mock).mockResolvedValue(
+      mockUserDoc({
+        google_id: 'google-123',
+        auth_source: 'google',
+        status: 'blocked',
+      }),
     );
 
     await expect(

@@ -23,18 +23,6 @@ jest.mock('../../../middlewares/auth.middleware', () =>
       },
   ),
 );
-jest.mock('../../../middlewares/validation.middleware', () =>
-  jest.fn(
-    () =>
-      (
-        _req: express.Request,
-        _res: express.Response,
-        next: express.NextFunction,
-      ) =>
-        next(),
-  ),
-);
-
 import archiveRoutes from '../archive.route';
 import * as ArchiveService from '../archive.service';
 
@@ -58,12 +46,12 @@ const buildApp = () => {
   app.use('/api/archive', archiveRoutes);
   app.use(
     (
-      err: { status?: number; message?: string },
+      err: { status?: number; message?: string; name?: string },
       _req: express.Request,
       res: express.Response,
       _next: express.NextFunction,
     ) => {
-      res.status(err.status || 500).json({
+      res.status(err.name === 'ZodError' ? 400 : err.status || 500).json({
         success: false,
         message: err.message || 'Internal Server Error',
       });
@@ -92,6 +80,47 @@ describe('Archive routes', () => {
     );
   });
 
+  it.each([
+    'page=0',
+    'page=10001',
+    'limit=0',
+    'limit=101',
+    'search=',
+    `search=${'a'.repeat(201)}`,
+    'sort=status',
+    'is_featured=1',
+    'status=draft',
+    'is_deleted=true',
+    'fields=%2Bis_deleted',
+  ])('GET /public rejects unsafe query: %s', async (query) => {
+    const response = await request.get(`/api/archive/public?${query}`);
+
+    expect(response.status).toBe(httpStatus.BAD_REQUEST);
+    expect(ArchiveService.getPublicPosts).not.toHaveBeenCalled();
+  });
+
+  it('GET /public accepts bounded filters and sort fields', async () => {
+    (ArchiveService.getPublicPosts as jest.Mock).mockResolvedValue(page);
+
+    const response = await request.get(
+      '/api/archive/public?page=2&limit=25&search=campaign&sort=-created_at,title&type=video&is_featured=true&categories=507f1f77bcf86cd799439099&tags=strategy',
+    );
+
+    expect(response.status).toBe(httpStatus.OK);
+    expect(ArchiveService.getPublicPosts).toHaveBeenCalledWith(
+      expect.objectContaining({
+        page: '2',
+        limit: '25',
+        search: 'campaign',
+        sort: '-created_at,title',
+        type: 'video',
+        is_featured: 'true',
+        categories: '507f1f77bcf86cd799439099',
+        tags: 'strategy',
+      }),
+    );
+  });
+
   it('GET / returns the admin post list', async () => {
     (ArchiveService.getPosts as jest.Mock).mockResolvedValue(page);
 
@@ -105,13 +134,37 @@ describe('Archive routes', () => {
   });
 
   it('GET /:id/public returns a public post detail', async () => {
-    (ArchiveService.getPost as jest.Mock).mockResolvedValue(post);
+    const publicPost = {
+      ...post,
+      user: { name: 'Public author' },
+      categories: [{ name: 'Marketing', icon: 'megaphone' }],
+    };
+    (ArchiveService.getPublicPost as jest.Mock).mockResolvedValue(publicPost);
 
     const response = await request.get(`/api/archive/${POST_ID}/public`);
 
     expect(response.status).toBe(httpStatus.OK);
-    expect(response.body.data).toEqual(post);
-    expect(ArchiveService.getPost).toHaveBeenCalledWith(POST_ID);
+    expect(response.body.data).toEqual(publicPost);
+    expect(response.body.data.user).not.toHaveProperty('email');
+    expect(response.body.data.categories[0]).not.toHaveProperty('status');
+    expect(ArchiveService.getPublicPost).toHaveBeenCalledWith(POST_ID);
+    expect(ArchiveService.getPost).not.toHaveBeenCalled();
+  });
+
+  it('GET /:id/public forwards a private-or-missing post as 404', async () => {
+    (ArchiveService.getPublicPost as jest.Mock).mockRejectedValue({
+      status: httpStatus.NOT_FOUND,
+      message: 'Post not found',
+    });
+
+    const response = await request.get(`/api/archive/${POST_ID}/public`);
+
+    expect(response.status).toBe(httpStatus.NOT_FOUND);
+    expect(response.body).toEqual({
+      success: false,
+      message: 'Post not found',
+    });
+    expect(ArchiveService.getPublicPost).toHaveBeenCalledWith(POST_ID);
   });
 
   it('GET /:id returns an admin post detail', async () => {

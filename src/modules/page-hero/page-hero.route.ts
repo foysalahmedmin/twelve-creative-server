@@ -9,7 +9,11 @@ import {
 
 const router = express.Router();
 
-router.get('/public/:page', PageHeroControllers.getPublicPageHero);
+router.get(
+  '/public/:page',
+  validation(pageHeroParamSchema),
+  PageHeroControllers.getPublicPageHero,
+);
 
 router.get('/', auth('admin', 'editor'), PageHeroControllers.getAllPageHeroes);
 

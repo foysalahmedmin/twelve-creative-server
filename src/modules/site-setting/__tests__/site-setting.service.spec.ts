@@ -11,10 +11,13 @@ import * as SiteSettingService from '../site-setting.service';
 
 const setting = {
   _id: '507f1f77bcf86cd799439011',
+  singleton_key: 'singleton',
   contact_email: 'hello@twelvecreative.co',
+  booking_notification_email: 'private-notifications@example.com',
   social: { instagram: 'https://instagram.com/twelve' },
   faq_section: { title: 'Questions?' },
   content_section: { title: 'Our process' },
+  created_at: new Date('2026-01-01'),
 };
 
 describe('SiteSettingService', () => {
@@ -25,18 +28,43 @@ describe('SiteSettingService', () => {
     expect(getOrCreateSiteSetting).toHaveBeenCalledWith();
   });
 
-  it('creates settings when the singleton does not exist', async () => {
-    const toObject = jest.fn().mockReturnValue(setting);
-    (SiteSetting.findOne as jest.Mock).mockResolvedValue(null);
-    (SiteSetting.create as jest.Mock).mockResolvedValue({ toObject });
+  it('projects only renderable fields for the public endpoint', async () => {
+    (getOrCreateSiteSetting as jest.Mock).mockResolvedValue(setting);
+
+    const result = await SiteSettingService.getPublicSiteSetting();
+
+    expect(result).toMatchObject({
+      contact_email: setting.contact_email,
+      social: setting.social,
+      faq_section: setting.faq_section,
+      content_section: setting.content_section,
+    });
+    expect(result).not.toHaveProperty('_id');
+    expect(result).not.toHaveProperty('singleton_key');
+    expect(result).not.toHaveProperty('booking_notification_email');
+    expect(result).not.toHaveProperty('created_at');
+  });
+
+  it('uses the atomic singleton ensure when settings do not exist', async () => {
+    const existing = {
+      contact_email: 'hello@twelvecreative.co',
+      save: jest.fn().mockResolvedValue(undefined),
+      toObject: jest.fn().mockReturnValue(setting),
+    };
+    (SiteSetting.findOne as jest.Mock)
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(existing);
+    (getOrCreateSiteSetting as jest.Mock).mockResolvedValue(setting);
 
     const payload = { contact_email: 'hello@twelvecreative.co' };
     await expect(
       SiteSettingService.updateSiteSetting(payload),
     ).resolves.toEqual(setting);
 
-    expect(SiteSetting.create).toHaveBeenCalledWith(payload);
-    expect(toObject).toHaveBeenCalledWith();
+    expect(getOrCreateSiteSetting).toHaveBeenCalledWith();
+    expect(SiteSetting.findOne).toHaveBeenCalledTimes(2);
+    expect(existing.save).toHaveBeenCalledWith();
+    expect(existing.toObject).toHaveBeenCalledWith();
   });
 
   it('deep-merges nested sections and updates defined scalar fields', async () => {

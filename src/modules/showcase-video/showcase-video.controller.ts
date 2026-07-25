@@ -19,7 +19,7 @@ export const getPublicShowcaseVideos = catchAsync(async (req, res) => {
   const aspect = raw === 'reel' || raw === 'landscape' ? raw : undefined;
   const industrySlug =
     typeof req.query.industry_slug === 'string'
-      ? req.query.industry_slug
+      ? req.query.industry_slug.trim().toLowerCase()
       : undefined;
   const result = await ShowcaseVideoServices.getPublicShowcaseVideos({
     aspect,

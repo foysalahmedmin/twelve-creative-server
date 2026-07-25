@@ -8,6 +8,7 @@ import AppError from '../builder/app-error';
 import { User } from '../modules/user/user.model';
 import { cacheClient } from '../config/redis';
 import { TJwtPayload, TRole } from '../types/jsonwebtoken.type';
+import { extractAuthorizationToken } from '../utils/authorization-token';
 import catchAsync from '../utils/catch-async';
 
 const getUser = async (_id: string) => {
@@ -37,7 +38,7 @@ const getUser = async (_id: string) => {
 const auth = (...roles: (TRole | 'guest')[]) => {
   return catchAsync(
     async (req: Request, _res: Response, next: NextFunction) => {
-      const token = req.headers.authorization?.trim() || undefined;
+      const token = extractAuthorizationToken(req.headers.authorization);
 
       if (roles.includes('guest') && req.guest?._id && !token) {
         return next();

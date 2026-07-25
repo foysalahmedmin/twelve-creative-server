@@ -3,6 +3,7 @@ import catchAsync from '../../utils/catch-async';
 import sendResponse from '../../utils/send-response';
 import * as AuthServices from './auth.service';
 import { SystemLog } from '../system-log/system-log.model';
+import { extractAuthorizationToken } from '../../utils/authorization-token';
 
 const COOKIE_NAME = 'refresh_token';
 const COOKIE_MAX_AGE = 1000 * 60 * 60 * 24 * 365;
@@ -122,7 +123,7 @@ export const forgetPassword = catchAsync(async (req, res) => {
 });
 
 export const resetPassword = catchAsync(async (req, res) => {
-  const token = req.headers.authorization || '';
+  const token = extractAuthorizationToken(req.headers.authorization) || '';
   const result = await AuthServices.resetPassword(req.body, token);
   sendResponse(res, {
     status: httpStatus.OK,
@@ -143,7 +144,7 @@ export const emailVerificationSource = catchAsync(async (req, res) => {
 });
 
 export const emailVerification = catchAsync(async (req, res) => {
-  const token = req.headers.authorization || '';
+  const token = extractAuthorizationToken(req.headers.authorization) || '';
   const result = await AuthServices.emailVerification(token);
   sendResponse(res, {
     status: httpStatus.OK,

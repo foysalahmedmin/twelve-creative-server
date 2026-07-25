@@ -45,6 +45,31 @@ describe('PageHeroService', () => {
     expect(PageHero.findOne).toHaveBeenNthCalledWith(2, { page: 'about' });
   });
 
+  it('only returns active public hero fields', async () => {
+    const lean = jest.fn().mockResolvedValueOnce(hero).mockResolvedValue(null);
+    const select = jest.fn().mockReturnValue({ lean });
+    (PageHero.findOne as jest.Mock).mockReturnValue({ select });
+
+    await expect(
+      PageHeroService.getPublicPageHeroByPage('home'),
+    ).resolves.toEqual(hero);
+    await expect(
+      PageHeroService.getPublicPageHeroByPage('about'),
+    ).resolves.toBeNull();
+
+    expect(PageHero.findOne).toHaveBeenNthCalledWith(1, {
+      page: 'home',
+      is_active: true,
+    });
+    expect(PageHero.findOne).toHaveBeenNthCalledWith(2, {
+      page: 'about',
+      is_active: true,
+    });
+    expect(select).toHaveBeenCalledWith(
+      'page label title description thumbnail video trust_label primary_cta secondary_cta is_active -_id',
+    );
+  });
+
   it('upserts defined values and unsets explicit null values', async () => {
     (PageHero.findOneAndUpdate as jest.Mock).mockResolvedValue(hero);
 

@@ -48,6 +48,16 @@ export const getPost = catchAsync(async (req, res) => {
   });
 });
 
+export const getPublicPost = catchAsync(async (req, res) => {
+  const result = await ArchiveServices.getPublicPost(req.params.id);
+  sendResponse(res, {
+    status: httpStatus.OK,
+    success: true,
+    message: 'Post retrieved successfully',
+    data: result,
+  });
+});
+
 export const updatePost = catchAsync(async (req, res) => {
   const result = await ArchiveServices.updatePost(req.params.id, req.body);
   sendResponse(res, {

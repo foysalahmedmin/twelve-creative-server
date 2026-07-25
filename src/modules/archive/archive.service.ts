@@ -49,6 +49,18 @@ export const getPost = async (id: string): Promise<TPost> => {
   });
 };
 
+export const getPublicPost = async (id: string): Promise<TPost> => {
+  return await withCache(
+    `${CACHE_PREFIX}:public:id:${id}`,
+    CACHE_TTL,
+    async () => {
+      const result = await ArchiveRepository.findPublicById(id);
+      if (!result) throw new AppError(httpStatus.NOT_FOUND, 'Post not found');
+      return result;
+    },
+  );
+};
+
 export const updatePost = async (
   id: string,
   payload: Partial<TPost>,
@@ -71,6 +83,7 @@ export const deletePostPermanent = async (id: string): Promise<void> => {
   const post = await ArchiveRepository.findByIdWithDeleted(id);
   if (!post) throw new AppError(httpStatus.NOT_FOUND, 'Post not found');
   await ArchiveRepository.hardDeleteById(id);
+  await invalidateCacheByPattern(`${CACHE_PREFIX}:*`);
 };
 
 export const restorePost = async (id: string): Promise<TPost> => {

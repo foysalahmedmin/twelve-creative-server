@@ -5,6 +5,8 @@ import {
   TSiteSettingModel,
 } from './site-setting.type';
 
+export const SITE_SETTING_SINGLETON_KEY = 'singleton' as const;
+
 const socialsSchema = new Schema(
   {
     instagram: { type: String, trim: true },
@@ -41,6 +43,13 @@ const contentSectionSchema = new Schema(
 
 const siteSettingSchema = new Schema<TSiteSettingDocument>(
   {
+    singleton_key: {
+      type: String,
+      enum: [SITE_SETTING_SINGLETON_KEY],
+      default: SITE_SETTING_SINGLETON_KEY,
+      unique: true,
+      select: false,
+    },
     contact_email: {
       type: String,
       trim: true,
@@ -68,14 +77,64 @@ const siteSettingSchema = new Schema<TSiteSettingDocument>(
   },
 );
 
-export const SITE_SETTING_SINGLETON_KEY = 'singleton';
+const withoutSingletonKey = (
+  setting: TSiteSetting & { singleton_key?: string },
+): TSiteSetting => {
+  const { singleton_key: _singletonKey, ...publicSetting } = setting;
+  return publicSetting as TSiteSetting;
+};
 
-/** Ensures only one document exists by always using the same _id-less ensure. */
+/**
+ * Preserve and backfill the existing legacy singleton, while making first-time
+ * creation an atomic upsert guarded by a unique key.
+ */
 export const getOrCreateSiteSetting = async (): Promise<TSiteSetting> => {
-  const existing = await SiteSetting.findOne().lean();
-  if (existing) return existing;
-  const created = await SiteSetting.create({});
-  return created.toObject();
+  const canonical = await SiteSetting.findOne({
+    singleton_key: SITE_SETTING_SINGLETON_KEY,
+  })
+    .select('+singleton_key')
+    .lean();
+  if (canonical) return withoutSingletonKey(canonical);
+
+  const legacy = await SiteSetting.findOne().select('+singleton_key').lean();
+  if (legacy) {
+    const migrated = await SiteSetting.findOneAndUpdate(
+      {
+        _id: legacy._id,
+        singleton_key: { $ne: SITE_SETTING_SINGLETON_KEY },
+      },
+      { $set: { singleton_key: SITE_SETTING_SINGLETON_KEY } },
+      { new: true, runValidators: true },
+    )
+      .select('+singleton_key')
+      .lean();
+
+    if (migrated) return withoutSingletonKey(migrated);
+
+    // Another request may have completed the same migration first.
+    const concurrentlyMigrated = await SiteSetting.findOne({
+      singleton_key: SITE_SETTING_SINGLETON_KEY,
+    })
+      .select('+singleton_key')
+      .lean();
+    if (concurrentlyMigrated) {
+      return withoutSingletonKey(concurrentlyMigrated);
+    }
+  }
+
+  const created = await SiteSetting.findOneAndUpdate(
+    { singleton_key: SITE_SETTING_SINGLETON_KEY },
+    { $setOnInsert: { singleton_key: SITE_SETTING_SINGLETON_KEY } },
+    {
+      upsert: true,
+      new: true,
+      setDefaultsOnInsert: true,
+    },
+  )
+    .select('+singleton_key')
+    .lean();
+
+  return withoutSingletonKey(created!);
 };
 
 export const SiteSetting = mongoose.model<

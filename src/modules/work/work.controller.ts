@@ -24,7 +24,9 @@ export const getPublicWorks = catchAsync(async (_req, res) => {
 });
 
 export const getPublicWorkBySlug = catchAsync(async (req, res) => {
-  const result = await WorkServices.getPublicWorkBySlug(req.params.slug);
+  const result = await WorkServices.getPublicWorkBySlug(
+    req.params.slug.trim().toLowerCase(),
+  );
   sendResponse(res, {
     status: httpStatus.OK,
     success: true,

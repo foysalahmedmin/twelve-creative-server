@@ -29,15 +29,35 @@ export const findPublicPaginated = async (
   data: TCategory[];
   meta: { total: number; page: number; limit: number; total_pages: number };
 }> => {
-  const categoryQuery = new AppQueryFind(Category, {
-    status: 'active',
-    ...query,
-  })
+  const publicQueryParams = { ...query };
+  delete publicQueryParams.status;
+  delete publicQueryParams.is_deleted;
+  delete publicQueryParams.fields;
+  delete publicQueryParams.or;
+  delete publicQueryParams.and;
+
+  publicQueryParams.status = 'active';
+  publicQueryParams.is_deleted = { $ne: true };
+  if (!publicQueryParams.sort) publicQueryParams.sort = 'sequence';
+  if (!publicQueryParams.page) publicQueryParams.page = '1';
+  if (!publicQueryParams.limit) publicQueryParams.limit = '100';
+
+  const categoryQuery = new AppQueryFind(Category, publicQueryParams)
     .search(['name'])
-    .filter()
-    .sort()
+    .filter(['status', 'is_deleted', 'is_featured', 'layout', 'tags'])
+    .sort(['sequence', 'name', 'is_featured'])
     .paginate()
-    .fields()
+    .fields([
+      '_id',
+      'icon',
+      'name',
+      'description',
+      'sequence',
+      'status',
+      'tags',
+      'layout',
+      'is_featured',
+    ])
     .tap((q) => q.lean());
   return await categoryQuery.execute();
 };

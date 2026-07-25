@@ -100,7 +100,9 @@ describe('Work routes', () => {
   it('GET /public/:slug returns a published work', async () => {
     (WorkService.getPublicWorkBySlug as jest.Mock).mockResolvedValue(work);
 
-    const response = await request.get(`/api/work/public/${work.slug}`);
+    const response = await request.get(
+      `/api/work/public/${work.slug.toUpperCase()}`,
+    );
 
     expect(response.status).toBe(httpStatus.OK);
     expect(response.body.data).toEqual(work);

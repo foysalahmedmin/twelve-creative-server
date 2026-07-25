@@ -73,7 +73,7 @@ describe('Showcase video routes', () => {
     expect(response.body.data).toEqual([video]);
     expect(ShowcaseVideoService.getPublicShowcaseVideos).toHaveBeenCalledWith({
       aspect: 'reel',
-      industry_slug: 'Hospitality',
+      industry_slug: 'hospitality',
     });
   });
 

@@ -3,8 +3,13 @@ import { NextFunction, Request, Response } from 'express';
 import fs from 'fs';
 import httpStatus from 'http-status';
 import multer, { FileFilterCallback } from 'multer';
+import { randomUUID } from 'node:crypto';
 import path from 'path';
 import AppError from '../builder/app-error';
+import {
+  getCanonicalUploadExtension,
+  isSupportedLocalUploadMime,
+} from '../constants/upload-policy';
 import catchAsync from '../utils/catch-async';
 
 type TFile = {
@@ -13,7 +18,59 @@ type TFile = {
   size?: number;
   maxCount?: number;
   minCount?: number;
-  allowedTypes?: string[];
+  allowedTypes?: readonly string[];
+};
+
+const getUploadedPaths = (req: Request): string[] => {
+  if (!req.files) return [];
+
+  const uploadedFiles = Array.isArray(req.files)
+    ? req.files
+    : Object.values(req.files).flat();
+
+  return uploadedFiles.map((uploadedFile) => uploadedFile.path).filter(Boolean);
+};
+
+const removeUploadedPaths = async (uploadedPaths: string[]): Promise<void> => {
+  await Promise.all(
+    uploadedPaths.map(async (uploadedPath) => {
+      try {
+        await fs.promises.unlink(uploadedPath);
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+          console.warn(
+            `Failed to clean incomplete upload: ${uploadedPath}`,
+            error,
+          );
+        }
+      }
+    }),
+  );
+};
+
+const registerFailureCleanup = (
+  res: Response,
+  uploadedPaths: string[],
+): void => {
+  let cleanupStarted = false;
+  let responseFinished = false;
+
+  const cleanup = () => {
+    if (cleanupStarted || uploadedPaths.length === 0) return;
+    cleanupStarted = true;
+    void removeUploadedPaths(uploadedPaths);
+  };
+
+  res.once('finish', () => {
+    responseFinished = true;
+    if (res.statusCode >= 400) cleanup();
+  });
+
+  res.once('close', () => {
+    if (!responseFinished && (!res.headersSent || res.statusCode >= 400)) {
+      cleanup();
+    }
+  });
 };
 
 const file = (...files: TFile[]) => {
@@ -35,10 +92,21 @@ const file = (...files: TFile[]) => {
       cb(null, dir);
     },
     filename: (_req, file, cb) => {
-      const ext = path.extname(file.originalname);
-      const baseName = path.basename(file.originalname, ext);
-      const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-      cb(null, `${baseName}-${uniqueSuffix}${ext}`);
+      const extension = getCanonicalUploadExtension(file.mimetype);
+      if (!extension) {
+        return cb(
+          new AppError(
+            httpStatus.BAD_REQUEST,
+            `Invalid file type for field "${file.fieldname}"`,
+          ),
+          '',
+        );
+      }
+
+      // The original filename and extension are untrusted. A UUID plus the
+      // canonical extension prevents path tricks, executable extensions, and
+      // practical filename collisions.
+      cb(null, `${randomUUID()}.${extension}`);
     },
   });
 
@@ -61,7 +129,10 @@ const file = (...files: TFile[]) => {
       );
     }
 
-    if (config.allowedTypes && !config.allowedTypes.includes(file.mimetype)) {
+    if (
+      !isSupportedLocalUploadMime(file.mimetype) ||
+      (config.allowedTypes && !config.allowedTypes.includes(file.mimetype))
+    ) {
       return cb(
         new AppError(
           httpStatus.BAD_REQUEST,
@@ -88,6 +159,7 @@ const file = (...files: TFile[]) => {
   return catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     upload(req, res, (err: unknown) => {
       if (err) {
+        void removeUploadedPaths(getUploadedPaths(req));
         return next(
           new AppError(
             httpStatus.BAD_REQUEST,
@@ -95,6 +167,11 @@ const file = (...files: TFile[]) => {
           ),
         );
       }
+
+      // Multer has finished writing at this point. If validation, a controller,
+      // or the error handler later returns a failure, remove only these newly
+      // created files. Successful responses deliberately retain them.
+      registerFailureCleanup(res, getUploadedPaths(req));
 
       try {
         // Check minCount

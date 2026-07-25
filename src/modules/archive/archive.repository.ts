@@ -16,6 +16,33 @@ export const findById = async (id: string): Promise<TPostDocument | null> => {
   ]);
 };
 
+export const findPublicById = async (id: string): Promise<TPost | null> => {
+  return await Archive.findOne({
+    _id: id,
+    status: 'active',
+    is_deleted: { $ne: true },
+  })
+    .populate([
+      {
+        path: 'thumbnail',
+        select: 'name url mimetype size caption',
+        match: { status: 'active', is_deleted: { $ne: true } },
+      },
+      {
+        path: 'video',
+        select: 'name url mimetype size caption',
+        match: { status: 'active', is_deleted: { $ne: true } },
+      },
+      {
+        path: 'categories',
+        select: 'name icon',
+        match: { status: 'active', is_deleted: { $ne: true } },
+      },
+      { path: 'user', select: 'name' },
+    ])
+    .lean();
+};
+
 export const findByIdLean = async (id: string): Promise<TPost | null> => {
   return await Archive.findById(id).lean();
 };
@@ -32,17 +59,63 @@ export const findPublicPaginated = async (
   data: TPost[];
   meta: { total: number; page: number; limit: number; total_pages: number };
 }> => {
-  const archiveQuery = new AppQueryFind(Archive, { status: 'active', ...query })
+  const publicQueryParams = { ...query };
+  delete publicQueryParams.status;
+  delete publicQueryParams.is_deleted;
+  delete publicQueryParams.fields;
+  delete publicQueryParams.or;
+  delete publicQueryParams.and;
+
+  // Public callers may narrow the active set, but can never replace these
+  // publication/deletion boundaries or project internal model fields.
+  publicQueryParams.status = 'active';
+  publicQueryParams.is_deleted = { $ne: true };
+  if (!publicQueryParams.sort) publicQueryParams.sort = '-created_at';
+  if (!publicQueryParams.page) publicQueryParams.page = '1';
+  if (!publicQueryParams.limit) publicQueryParams.limit = '100';
+
+  const archiveQuery = new AppQueryFind(Archive, publicQueryParams)
     .populate([
-      { path: 'thumbnail' },
-      { path: 'categories', select: 'name icon' },
+      {
+        path: 'thumbnail',
+        select: 'name url mimetype size caption',
+        match: { status: 'active', is_deleted: { $ne: true } },
+      },
+      {
+        path: 'categories',
+        select: 'name icon',
+        match: { status: 'active', is_deleted: { $ne: true } },
+      },
       { path: 'user', select: 'name' },
     ])
     .search(['title', 'description', 'tags'])
-    .filter()
-    .sort()
+    .filter([
+      'type',
+      'is_featured',
+      'categories',
+      'tags',
+      'status',
+      'is_deleted',
+    ])
+    .sort(['created_at', 'title', 'type', 'is_featured'])
     .paginate()
-    .fields()
+    .fields([
+      'title',
+      'description',
+      'content',
+      'thumbnail',
+      'video',
+      'youtube',
+      'tags',
+      'categories',
+      'user',
+      'status',
+      'type',
+      'ratio',
+      'is_featured',
+      'created_at',
+      'updated_at',
+    ])
     .tap((q) => q.lean());
   return await archiveQuery.execute();
 };

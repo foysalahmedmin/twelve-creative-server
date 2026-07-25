@@ -74,7 +74,7 @@ describe('Featured project routes', () => {
     expect(
       FeaturedProjectService.getPublicFeaturedProjects,
     ).toHaveBeenCalledWith({
-      industry_slug: 'Hospitality',
+      industry_slug: 'hospitality',
     });
   });
 

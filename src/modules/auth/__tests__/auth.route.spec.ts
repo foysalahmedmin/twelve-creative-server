@@ -36,9 +36,10 @@ jest.mock('../../../middlewares/file.middleware', () => {
     () =>
       (
         req: express.Request,
-        _res: express.Response,
+        res: express.Response,
         next: express.NextFunction,
       ) => {
+        res.set('x-test-file-middleware', 'ran');
         req.files = {};
         next();
       },
@@ -50,12 +51,20 @@ jest.mock('../../../middlewares/auth.middleware', () => {
   return jest.fn((..._roles: string[]) => {
     return (
       req: express.Request,
-      _res: express.Response,
+      res: express.Response,
       next: express.NextFunction,
     ) => {
+      if (req.get('x-test-auth') === 'deny') {
+        res.status(httpStatus.UNAUTHORIZED).json({
+          success: false,
+          message: 'No token provided.',
+        });
+        return;
+      }
+
       (req as express.Request & { user: unknown }).user = {
         _id: '507f1f77bcf86cd799439011',
-        role: 'editor',
+        role: 'admin',
         name: 'John Doe',
         email: 'john@example.com',
       };
@@ -174,7 +183,7 @@ describe('POST /api/auth/signin', () => {
 // ─── POST /api/auth/signup ────────────────────────────────────────────────────
 
 describe('POST /api/auth/signup', () => {
-  it('should return 200 and create a user', async () => {
+  it('should return 200 and create a user for an authenticated admin', async () => {
     (AuthService.signup as jest.Mock).mockResolvedValue(mockTokenResponse);
 
     const res = await request.post('/api/auth/signup').send({
@@ -188,6 +197,22 @@ describe('POST /api/auth/signup', () => {
     expect(res.body.success).toBe(true);
     expect(res.body.data.token).toBe('mock_access_token');
     expect(AuthService.signup).toHaveBeenCalled();
+  });
+
+  it('should reject an unauthenticated signup before creating a user', async () => {
+    const res = await request
+      .post('/api/auth/signup')
+      .set('x-test-auth', 'deny')
+      .send({
+        name: 'Untrusted User',
+        email: 'untrusted@example.com',
+        password: 'password123',
+      });
+
+    expect(res.status).toBe(httpStatus.UNAUTHORIZED);
+    expect(res.body.success).toBe(false);
+    expect(res.headers['x-test-file-middleware']).toBeUndefined();
+    expect(AuthService.signup).not.toHaveBeenCalled();
   });
 
   it('should return 409 when user already exists', async () => {

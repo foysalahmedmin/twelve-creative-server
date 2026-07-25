@@ -70,42 +70,68 @@ export const googleLogin = async (idToken: string) => {
     throw new AppError(httpStatus.BAD_REQUEST, 'Invalid google token');
   }
 
-  const { sub: google_id, email, name, picture } = payload;
+  const {
+    sub: google_id,
+    email,
+    email_verified: emailVerified,
+    name,
+  } = payload;
 
-  if (!email || !name) {
+  if (!google_id || !email || !name) {
     throw new AppError(
       httpStatus.BAD_REQUEST,
-      'Email and name are required from Google',
+      'Google account ID, email and name are required',
     );
   }
 
-  // Try to find by email, then by google_id
-  let user =
-    (await AuthRepository.findByEmailWithPassword(email)) ||
-    (await AuthRepository.findByGoogleIdWithPassword(google_id!));
+  if (emailVerified !== true) {
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      'Google email address is not verified.',
+    );
+  }
 
-  if (user) {
-    if (user.is_deleted) {
-      throw new AppError(httpStatus.FORBIDDEN, 'User is deleted!');
+  const normalizedEmail = email.trim().toLowerCase();
+
+  // Google's immutable subject identifier is authoritative. Email lookup is
+  // only a one-time provisioning fallback for an account that has never been
+  // linked to Google.
+  let user = await AuthRepository.findByGoogleIdWithPassword(google_id);
+  let shouldLinkGoogleId = false;
+
+  if (!user) {
+    user = await AuthRepository.findByEmailWithPassword(normalizedEmail);
+
+    if (user?.google_id && user.google_id !== google_id) {
+      throw new AppError(
+        httpStatus.FORBIDDEN,
+        'This Google account does not match the provisioned user.',
+      );
     }
-    if (user.status === 'blocked') {
-      throw new AppError(httpStatus.FORBIDDEN, 'User is blocked!');
-    }
-    if (!user.google_id) {
-      user.google_id = google_id;
-    }
+
+    shouldLinkGoogleId = Boolean(user && !user.google_id);
+  }
+
+  if (!user) {
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      'This Google account is not authorized.',
+    );
+  }
+  if (user.is_deleted) {
+    throw new AppError(httpStatus.FORBIDDEN, 'User is deleted!');
+  }
+  if (user.status === 'blocked') {
+    throw new AppError(httpStatus.FORBIDDEN, 'User is blocked!');
+  }
+
+  if (shouldLinkGoogleId) {
+    user.google_id = google_id;
+  }
+
+  if (shouldLinkGoogleId || user.auth_source !== 'google') {
     user.auth_source = 'google';
     await AuthRepository.saveDocument(user);
-  } else {
-    user = await AuthRepository.createUser({
-      name,
-      email,
-      google_id,
-      auth_source: 'google',
-      image: picture,
-      role: 'editor',
-      is_verified: true,
-    });
   }
 
   const jwtPayload = buildJwtPayload(user);

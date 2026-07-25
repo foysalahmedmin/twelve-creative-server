@@ -3,9 +3,14 @@ import { Storage } from '@google-cloud/storage';
 import { NextFunction, Request, Response } from 'express';
 import httpStatus from 'http-status';
 import multer, { FileFilterCallback } from 'multer';
+import { randomUUID } from 'node:crypto';
 import path from 'node:path';
 import config from '../config/env';
 import AppError from '../builder/app-error';
+import {
+  getCanonicalUploadExtension,
+  isSupportedLocalUploadMime,
+} from '../constants/upload-policy';
 import catchAsync from '../utils/catch-async';
 
 export type TStorageResult = {
@@ -24,7 +29,7 @@ export type TStorageFile = {
   size?: number;
   maxCount?: number;
   minCount?: number;
-  allowedTypes?: string[];
+  allowedTypes?: readonly string[];
   bucket?: string; // Optional bucket name, defaults to env variable
   makePublic?: boolean; // Whether to make file publicly accessible
 };
@@ -68,11 +73,14 @@ const storage = (...files: TStorageFile[]) => {
       );
     }
 
-    if (config.allowedTypes && !config.allowedTypes.includes(file.mimetype)) {
+    if (
+      !isSupportedLocalUploadMime(file.mimetype) ||
+      (config.allowedTypes && !config.allowedTypes.includes(file.mimetype))
+    ) {
       return cb(
         new AppError(
           httpStatus.BAD_REQUEST,
-          `Invalid file type for field "${file.fieldname}". Allowed types: ${config.allowedTypes.join(', ')}`,
+          `Invalid file type for field "${file.fieldname}"`,
         ),
       );
     }
@@ -149,11 +157,16 @@ const storage = (...files: TStorageFile[]) => {
                   );
                 }
 
-                // Generate unique filename
-                const ext = path.extname(file.originalname);
-                const baseName = path.basename(file.originalname, ext);
-                const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-                const filename = `${baseName}-${uniqueSuffix}${ext}`;
+                // Generate a server-controlled filename. Never carry the
+                // client-provided name or extension into public storage.
+                const extension = getCanonicalUploadExtension(file.mimetype);
+                if (!extension) {
+                  throw new AppError(
+                    httpStatus.BAD_REQUEST,
+                    `Invalid file type for field "${file.fieldname}"`,
+                  );
+                }
+                const filename = `${randomUUID()}.${extension}`;
 
                 // Create file reference in bucket
                 const bucketFile = bucket.file(filename);

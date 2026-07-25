@@ -21,7 +21,11 @@ const iconUpload = file({
 });
 
 // GET
-router.get('/public', CategoryControllers.getPublicCategories);
+router.get(
+  '/public',
+  validation(CategoryValidations.publicCategoriesQuerySchema),
+  CategoryControllers.getPublicCategories,
+);
 router.get('/', auth('admin', 'editor'), CategoryControllers.getCategories);
 router.get(
   '/:id',

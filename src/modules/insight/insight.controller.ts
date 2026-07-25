@@ -24,7 +24,9 @@ export const getPublicInsights = catchAsync(async (_req, res) => {
 });
 
 export const getPublicInsightBySlug = catchAsync(async (req, res) => {
-  const result = await InsightServices.getPublicInsightBySlug(req.params.slug);
+  const result = await InsightServices.getPublicInsightBySlug(
+    req.params.slug.trim().toLowerCase(),
+  );
   sendResponse(res, {
     status: httpStatus.OK,
     success: true,

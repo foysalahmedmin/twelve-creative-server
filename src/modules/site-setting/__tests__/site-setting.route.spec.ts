@@ -49,19 +49,29 @@ const request = supertest(app);
 const setting = { contact_email: 'hello@twelvecreative.co' };
 
 describe('Site setting routes', () => {
-  it.each(['/api/site-setting/public', '/api/site-setting'])(
-    'GET %s returns the singleton settings',
-    async (path) => {
-      (SiteSettingService.getSiteSetting as jest.Mock).mockResolvedValue(
-        setting,
-      );
+  it('GET /public returns only the public settings projection', async () => {
+    const publicSetting = { ...setting, social: { instagram: 'public' } };
+    (SiteSettingService.getPublicSiteSetting as jest.Mock).mockResolvedValue(
+      publicSetting,
+    );
 
-      const response = await request.get(path);
+    const response = await request.get('/api/site-setting/public');
 
-      expect(response.status).toBe(httpStatus.OK);
-      expect(response.body.data).toEqual(setting);
-    },
-  );
+    expect(response.status).toBe(httpStatus.OK);
+    expect(response.body.data).toEqual(publicSetting);
+    expect(SiteSettingService.getPublicSiteSetting).toHaveBeenCalledWith();
+    expect(SiteSettingService.getSiteSetting).not.toHaveBeenCalled();
+  });
+
+  it('GET / returns the full authenticated settings response', async () => {
+    (SiteSettingService.getSiteSetting as jest.Mock).mockResolvedValue(setting);
+
+    const response = await request.get('/api/site-setting');
+
+    expect(response.status).toBe(httpStatus.OK);
+    expect(response.body.data).toEqual(setting);
+    expect(SiteSettingService.getSiteSetting).toHaveBeenCalledWith();
+  });
 
   it('PATCH / updates the settings payload', async () => {
     const updated = { contact_email: 'studio@twelvecreative.co' };

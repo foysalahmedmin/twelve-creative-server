@@ -7,12 +7,16 @@ import * as ArchiveValidations from './archive.validator';
 const router = express.Router();
 
 // GET
-router.get('/public', ArchiveControllers.getPublicPosts);
+router.get(
+  '/public',
+  validation(ArchiveValidations.publicPostsQuerySchema),
+  ArchiveControllers.getPublicPosts,
+);
 router.get('/', auth('admin', 'editor'), ArchiveControllers.getPosts);
 router.get(
   '/:id/public',
   validation(ArchiveValidations.postIdSchema),
-  ArchiveControllers.getPost,
+  ArchiveControllers.getPublicPost,
 );
 router.get(
   '/:id',

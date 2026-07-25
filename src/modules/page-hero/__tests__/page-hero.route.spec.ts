@@ -50,7 +50,7 @@ const hero = { page: 'home', title: 'Home hero', is_active: true };
 
 describe('Page hero routes', () => {
   it('GET /public/:page returns a public hero, including null when absent', async () => {
-    (PageHeroService.getPageHeroByPage as jest.Mock)
+    (PageHeroService.getPublicPageHeroByPage as jest.Mock)
       .mockResolvedValueOnce(hero)
       .mockResolvedValueOnce(null);
 
@@ -61,14 +61,15 @@ describe('Page hero routes', () => {
     expect(found.body.data).toEqual(hero);
     expect(missing.status).toBe(httpStatus.OK);
     expect(missing.body.data).toBeNull();
-    expect(PageHeroService.getPageHeroByPage).toHaveBeenNthCalledWith(
+    expect(PageHeroService.getPublicPageHeroByPage).toHaveBeenNthCalledWith(
       1,
       'home',
     );
-    expect(PageHeroService.getPageHeroByPage).toHaveBeenNthCalledWith(
+    expect(PageHeroService.getPublicPageHeroByPage).toHaveBeenNthCalledWith(
       2,
       'about',
     );
+    expect(PageHeroService.getPageHeroByPage).not.toHaveBeenCalled();
   });
 
   it('GET / returns every page hero', async () => {

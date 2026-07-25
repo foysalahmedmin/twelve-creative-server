@@ -7,7 +7,7 @@ import * as SiteSettingValidations from './site-setting.validator';
 const router = express.Router();
 
 // Public read — used by the footer + contact pages.
-router.get('/public', SiteSettingControllers.getSiteSetting);
+router.get('/public', SiteSettingControllers.getPublicSiteSetting);
 
 router.get('/', auth('admin', 'editor'), SiteSettingControllers.getSiteSetting);
 

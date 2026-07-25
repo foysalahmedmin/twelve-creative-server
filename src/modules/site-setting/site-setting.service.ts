@@ -1,17 +1,39 @@
 import { getOrCreateSiteSetting, SiteSetting } from './site-setting.model';
-import { TSiteSetting } from './site-setting.type';
+import { TPublicSiteSetting, TSiteSetting } from './site-setting.type';
 
 export const getSiteSetting = async (): Promise<TSiteSetting> => {
   return await getOrCreateSiteSetting();
 };
 
+export const getPublicSiteSetting = async (): Promise<TPublicSiteSetting> => {
+  const setting = await getOrCreateSiteSetting();
+
+  // Explicit allowlist: operational recipients, singleton metadata, ids, and
+  // timestamps can never be serialized by the public endpoint.
+  return {
+    contact_email: setting.contact_email,
+    contact_phone: setting.contact_phone,
+    contact_address: setting.contact_address,
+    social: setting.social,
+    faq_section: setting.faq_section,
+    calendly_url: setting.calendly_url,
+    process_thumbnail: setting.process_thumbnail,
+    how_we_structure_image: setting.how_we_structure_image,
+    meeting_scene_image: setting.meeting_scene_image,
+    content_section: setting.content_section,
+  };
+};
+
 export const updateSiteSetting = async (
   payload: Partial<TSiteSetting>,
 ): Promise<TSiteSetting> => {
-  const existing = await SiteSetting.findOne();
+  let existing = await SiteSetting.findOne();
   if (!existing) {
-    const created = await SiteSetting.create(payload);
-    return created.toObject();
+    await getOrCreateSiteSetting();
+    existing = await SiteSetting.findOne();
+  }
+  if (!existing) {
+    throw new Error('Failed to create site settings');
   }
   // Deep-merge nested objects so partial updates don't blow away sibling keys.
   if (payload.social) {

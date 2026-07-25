@@ -15,7 +15,7 @@ export const getAllPageHeroes = catchAsync(async (_req, res) => {
 });
 
 export const getPublicPageHero = catchAsync(async (req, res) => {
-  const result = await PageHeroServices.getPageHeroByPage(
+  const result = await PageHeroServices.getPublicPageHeroByPage(
     req.params.page as TPageKey,
   );
   sendResponse(res, {

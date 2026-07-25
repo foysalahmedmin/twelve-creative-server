@@ -27,6 +27,7 @@ export type TContentSection = {
 
 export type TSiteSetting = {
   _id?: Types.ObjectId | string;
+  singleton_key?: 'singleton';
   contact_email?: string;
   contact_phone?: string;
   contact_address?: string;
@@ -39,6 +40,20 @@ export type TSiteSetting = {
   meeting_scene_image?: string;
   content_section?: TContentSection;
 };
+
+export type TPublicSiteSetting = Pick<
+  TSiteSetting,
+  | 'contact_email'
+  | 'contact_phone'
+  | 'contact_address'
+  | 'social'
+  | 'faq_section'
+  | 'calendly_url'
+  | 'process_thumbnail'
+  | 'how_we_structure_image'
+  | 'meeting_scene_image'
+  | 'content_section'
+>;
 
 export interface TSiteSettingDocument extends TSiteSetting, Document {
   _id: Types.ObjectId;

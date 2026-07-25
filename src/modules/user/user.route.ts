@@ -10,7 +10,11 @@ const router = express.Router();
 // GET
 router.get('/self', auth('admin', 'editor'), UserControllers.getSelf);
 
-router.get('/writers', UserControllers.getWritersUsers);
+router.get(
+  '/writers',
+  auth('admin', 'editor'),
+  UserControllers.getWritersUsers,
+);
 
 router.get('/', auth('admin'), UserControllers.getUsers);
 

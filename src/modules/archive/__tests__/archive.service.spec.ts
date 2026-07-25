@@ -93,6 +93,44 @@ describe('ArchiveService', () => {
     );
   });
 
+  it('returns an active public post through its public-only cache path', async () => {
+    const publicPost = {
+      ...post,
+      thumbnail: { name: 'Thumbnail', url: '/uploads/thumbnail.webp' },
+      categories: [{ name: 'Marketing', icon: 'megaphone' }],
+      user: { name: 'Public author' },
+    };
+    (ArchiveRepository.findPublicById as jest.Mock).mockResolvedValue(
+      publicPost,
+    );
+
+    await expect(ArchiveService.getPublicPost(POST_ID)).resolves.toEqual(
+      publicPost,
+    );
+
+    expect(CacheUtils.withCache).toHaveBeenCalledWith(
+      `archive:public:id:${POST_ID}`,
+      3600,
+      expect.any(Function),
+    );
+    expect(ArchiveRepository.findPublicById).toHaveBeenCalledWith(POST_ID);
+    expect(ArchiveRepository.findById).not.toHaveBeenCalled();
+    expect(publicPost.user).not.toHaveProperty('email');
+    expect(publicPost.categories[0]).not.toHaveProperty('status');
+  });
+
+  it('returns 404 when a draft, deleted, or missing post has no public match', async () => {
+    (ArchiveRepository.findPublicById as jest.Mock).mockResolvedValue(null);
+
+    await expect(ArchiveService.getPublicPost(POST_ID)).rejects.toMatchObject({
+      status: httpStatus.NOT_FOUND,
+      message: 'Post not found',
+    });
+
+    expect(ArchiveRepository.findPublicById).toHaveBeenCalledWith(POST_ID);
+    expect(ArchiveRepository.findById).not.toHaveBeenCalled();
+  });
+
   it('throws 404 when a requested post does not exist', async () => {
     (ArchiveRepository.findById as jest.Mock).mockResolvedValue(null);
 
@@ -159,6 +197,9 @@ describe('ArchiveService', () => {
     await ArchiveService.deletePostPermanent(POST_ID);
 
     expect(ArchiveRepository.hardDeleteById).toHaveBeenCalledWith(POST_ID);
+    expect(CacheUtils.invalidateCacheByPattern).toHaveBeenCalledWith(
+      'archive:*',
+    );
   });
 
   it('rejects permanent deletion when the post does not exist', async () => {
@@ -171,6 +212,7 @@ describe('ArchiveService', () => {
     ).rejects.toMatchObject({ status: httpStatus.NOT_FOUND });
 
     expect(ArchiveRepository.hardDeleteById).not.toHaveBeenCalled();
+    expect(CacheUtils.invalidateCacheByPattern).not.toHaveBeenCalled();
   });
 
   it('restores a deleted post and invalidates archive caches', async () => {

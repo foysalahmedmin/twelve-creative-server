@@ -35,9 +35,17 @@ jest.mock('../../../middlewares/auth.middleware', () => {
   return jest.fn((..._roles: string[]) => {
     return (
       req: express.Request,
-      _res: express.Response,
+      res: express.Response,
       next: express.NextFunction,
     ) => {
+      if (!req.headers.authorization) {
+        res.status(httpStatus.UNAUTHORIZED).json({
+          success: false,
+          message: 'No token provided.',
+        });
+        return;
+      }
+
       (req as express.Request & { user: unknown }).user = {
         _id: '507f1f77bcf86cd799439011',
         role: 'admin',
@@ -144,15 +152,25 @@ describe('GET /api/user/self', () => {
 // ─── GET /api/user/writers ────────────────────────────────────────────────────
 
 describe('GET /api/user/writers', () => {
-  it('should return 200 with paginated writers', async () => {
+  it('should return 200 with paginated writers for an authenticated user', async () => {
     (UserService.getWritersUsers as jest.Mock).mockResolvedValue(mockPaginated);
 
-    const res = await request.get('/api/user/writers');
+    const res = await request
+      .get('/api/user/writers')
+      .set('Authorization', 'Bearer mock-token');
 
     expect(res.status).toBe(httpStatus.OK);
     expect(res.body.success).toBe(true);
     expect(res.body.data).toHaveLength(1);
     expect(UserService.getWritersUsers).toHaveBeenCalled();
+  });
+
+  it('should reject unauthenticated access before reading writer data', async () => {
+    const res = await request.get('/api/user/writers');
+
+    expect(res.status).toBe(httpStatus.UNAUTHORIZED);
+    expect(res.body.success).toBe(false);
+    expect(UserService.getWritersUsers).not.toHaveBeenCalled();
   });
 });
 

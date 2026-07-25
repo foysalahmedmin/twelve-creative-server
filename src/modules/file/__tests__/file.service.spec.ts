@@ -185,6 +185,7 @@ describe('FileService complete contract', () => {
   });
 
   it('rejects a local upload with an unsupported MIME type', async () => {
+    const { deleteFiles } = jest.requireMock('../../../utils/delete-files');
     const uploaded = {
       filename: 'payload.exe',
       originalname: 'payload.exe',
@@ -200,6 +201,45 @@ describe('FileService complete contract', () => {
       message: expect.stringContaining('application/x-msdownload'),
     });
     expect(FileRepository.create).not.toHaveBeenCalled();
+    expect(deleteFiles).toHaveBeenCalledWith('uploads/payload.exe');
+  });
+
+  it('rejects a stored extension that does not match the MIME policy', async () => {
+    const { deleteFiles } = jest.requireMock('../../../utils/delete-files');
+    const uploaded = {
+      filename: 'payload.html',
+      originalname: 'photo.jpg',
+      path: 'uploads/files/payload.html',
+      mimetype: 'image/jpeg',
+      size: 100,
+    } as Express.Multer.File;
+
+    await expect(
+      FileService.createLocalFile({ _id: 'user-id' } as any, uploaded, {}),
+    ).rejects.toMatchObject({
+      status: httpStatus.BAD_REQUEST,
+      message: 'Stored file extension does not match its MIME type',
+    });
+    expect(FileRepository.create).not.toHaveBeenCalled();
+    expect(deleteFiles).toHaveBeenCalledWith(uploaded.path);
+  });
+
+  it('removes the physical upload when database creation fails', async () => {
+    const { deleteFiles } = jest.requireMock('../../../utils/delete-files');
+    const databaseError = new Error('database unavailable');
+    const uploaded = {
+      filename: '550e8400-e29b-41d4-a716-446655440000.png',
+      originalname: 'photo.png',
+      path: 'uploads/files/550e8400-e29b-41d4-a716-446655440000.png',
+      mimetype: 'image/png',
+      size: 100,
+    } as Express.Multer.File;
+    (FileRepository.create as jest.Mock).mockRejectedValue(databaseError);
+
+    await expect(
+      FileService.createLocalFile({ _id: 'user-id' } as any, uploaded, {}),
+    ).rejects.toBe(databaseError);
+    expect(deleteFiles).toHaveBeenCalledWith(uploaded.path);
   });
 
   it('rejects an empty cloud upload result', async () => {
@@ -227,6 +267,34 @@ describe('FileService complete contract', () => {
       FileService.createCloudFiles({ _id: 'user-id' } as any, results, {}),
     ).rejects.toMatchObject({ status: httpStatus.BAD_REQUEST });
     expect(FileRepository.createMany).not.toHaveBeenCalled();
+    expect(storageClient.bucket).toHaveBeenCalledWith('bucket');
+    const bucket = storageClient.bucket.mock.results[0].value;
+    expect(bucket.file).toHaveBeenCalledWith('payload.exe');
+    expect(bucket.file.mock.results[0].value.delete).toHaveBeenCalledWith();
+  });
+
+  it('removes uploaded GCS objects when database creation fails', async () => {
+    const databaseError = new Error('database unavailable');
+    const results = [
+      {
+        filename: '550e8400-e29b-41d4-a716-446655440000.png',
+        originalName: 'photo.png',
+        publicUrl: 'https://storage/bucket/photo.png',
+        mimetype: 'image/png',
+        size: 100,
+        bucket: 'bucket',
+      },
+    ] as any;
+    (FileRepository.createMany as jest.Mock).mockRejectedValue(databaseError);
+
+    await expect(
+      FileService.createCloudFiles({ _id: 'user-id' } as any, results, {}),
+    ).rejects.toBe(databaseError);
+
+    expect(storageClient.bucket).toHaveBeenCalledWith('bucket');
+    const bucket = storageClient.bucket.mock.results[0].value;
+    expect(bucket.file).toHaveBeenCalledWith(results[0].filename);
+    expect(bucket.file.mock.results[0].value.delete).toHaveBeenCalledWith();
   });
 
   it.each(['type', 'file_type'])(

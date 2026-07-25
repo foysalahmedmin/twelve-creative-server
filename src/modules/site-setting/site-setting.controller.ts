@@ -13,6 +13,16 @@ export const getSiteSetting = catchAsync(async (_req, res) => {
   });
 });
 
+export const getPublicSiteSetting = catchAsync(async (_req, res) => {
+  const result = await SiteSettingServices.getPublicSiteSetting();
+  sendResponse(res, {
+    status: httpStatus.OK,
+    success: true,
+    message: 'Site settings retrieved successfully',
+    data: result,
+  });
+});
+
 export const updateSiteSetting = catchAsync(async (req, res) => {
   const result = await SiteSettingServices.updateSiteSetting(req.body);
   sendResponse(res, {
