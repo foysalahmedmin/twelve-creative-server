@@ -37,6 +37,7 @@ import {
   buildIndustryMediaDocuments,
   INDUSTRY_REEL_MEDIA_SEEDS,
 } from './seeds/industry-media.seed';
+import { seedProcessSection } from './seeds/process-section.seed';
 
 const FORCE = process.argv.includes('--force');
 
@@ -1205,6 +1206,7 @@ async function run(): Promise<void> {
     reports.push(await seedModule('work', Work, WORKS));
     reports.push(await seedPageHeroes());
     reports.push(await seedSiteSetting());
+    reports.push(await seedProcessSection(FORCE));
 
     console.log('\n📊 Seed report:');
     for (const r of reports) {

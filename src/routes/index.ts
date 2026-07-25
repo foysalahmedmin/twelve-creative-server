@@ -10,6 +10,7 @@ import featuredProjectRoutes from '../modules/featured-project/featured-project.
 import fileRoutes from '../modules/file/file.route';
 import industryRoutes from '../modules/industry/industry.route';
 import pageHeroRoutes from '../modules/page-hero/page-hero.route';
+import processSectionRoutes from '../modules/process-section/process-section.route';
 import ticketRoutes from '../modules/ticket/ticket.route';
 import taskRoutes from '../modules/task/task.route';
 import systemLogRoutes from '../modules/system-log/system-log.route';
@@ -110,6 +111,10 @@ const moduleRoutes = [
   {
     path: '/page-hero',
     route: pageHeroRoutes,
+  },
+  {
+    path: '/process-section',
+    route: processSectionRoutes,
   },
   {
     path: '/ticket',
