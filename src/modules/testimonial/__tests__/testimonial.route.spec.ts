@@ -38,8 +38,10 @@ import testimonialRoutes from '../testimonial.route';
 import * as TestimonialService from '../testimonial.service';
 
 const TESTIMONIAL_ID = '507f1f77bcf86cd799439031';
+const INDUSTRY_ID = '507f1f77bcf86cd799439032';
 const testimonial = {
   _id: TESTIMONIAL_ID,
+  industry: INDUSTRY_ID,
   name: 'Jordan Lee',
   designation: 'Founder, Meridian',
   image: '/testimonials/jordan.jpg',
@@ -82,10 +84,15 @@ describe('Testimonial routes', () => {
       data: [testimonial],
     });
 
-    const response = await request.get('/api/testimonial/public');
+    const response = await request.get(
+      '/api/testimonial/public?industry_slug=hospitality',
+    );
 
     expect(response.status).toBe(httpStatus.OK);
     expect(response.body.data).toEqual([testimonial]);
+    expect(TestimonialService.getPublicTestimonials).toHaveBeenCalledWith({
+      industry_slug: 'hospitality',
+    });
   });
 
   it('GET / returns the paginated admin list', async () => {
@@ -203,6 +210,28 @@ describe('Testimonial routes', () => {
     expect(TestimonialService.updateTestimonial).toHaveBeenCalledWith(
       TESTIMONIAL_ID,
       { designation: updated.designation },
+    );
+  });
+
+  it('PATCH /:id forwards a merged category-state validation error', async () => {
+    (TestimonialService.updateTestimonial as jest.Mock).mockRejectedValue(
+      new AppError(
+        httpStatus.BAD_REQUEST,
+        'Video is required for a video testimonial',
+      ),
+    );
+
+    const response = await request
+      .patch(`/api/testimonial/${TESTIMONIAL_ID}`)
+      .send({ category: 'video_message' });
+
+    expect(response.status).toBe(httpStatus.BAD_REQUEST);
+    expect(response.body.message).toBe(
+      'Video is required for a video testimonial',
+    );
+    expect(TestimonialService.updateTestimonial).toHaveBeenCalledWith(
+      TESTIMONIAL_ID,
+      { category: 'video_message' },
     );
   });
 

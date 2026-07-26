@@ -24,7 +24,7 @@ import {
 } from './seeds/industry-media.seed';
 
 const SAMPLE_VIDEO =
-  'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
+  'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4';
 const VIDEO_SOURCES = ['youtube', 'url', 'upload'] as const;
 
 async function run(): Promise<void> {

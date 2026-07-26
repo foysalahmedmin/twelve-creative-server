@@ -5,6 +5,11 @@ jest.mock('../../../utils/send-email', () => ({ sendEmail: jest.fn() }));
 jest.mock('../../../utils/create-system-notification', () => ({
   createSystemNotification: jest.fn(),
 }));
+jest.mock('../../../utils/notification-recipient', () => ({
+  resolveNotificationRecipient: jest
+    .fn()
+    .mockResolvedValue('notifications@twelvecreative.co'),
+}));
 jest.mock('../../../config/env', () => ({
   __esModule: true,
   default: {
@@ -14,6 +19,7 @@ jest.mock('../../../config/env', () => ({
 }));
 
 import { createSystemNotification } from '../../../utils/create-system-notification';
+import { resolveNotificationRecipient } from '../../../utils/notification-recipient';
 import { sendEmail } from '../../../utils/send-email';
 import * as ContactMessageRepository from '../contact-message.repository';
 import * as ContactMessageService from '../contact-message.service';
@@ -34,6 +40,9 @@ describe('ContactMessageService', () => {
   beforeEach(() => {
     jest.resetAllMocks();
     (sendEmail as jest.Mock).mockResolvedValue(undefined);
+    (resolveNotificationRecipient as jest.Mock).mockResolvedValue(
+      'notifications@twelvecreative.co',
+    );
   });
 
   it('creates an unread message, notifies admins, and escapes email HTML', async () => {

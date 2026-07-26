@@ -7,6 +7,7 @@ export const PAGE_KEYS = [
   'industries',
   'what-we-build',
   'contact',
+  'faq',
   'blogs',
   'process',
 ] as const;
@@ -26,6 +27,14 @@ export type TCtaItem = {
   href: string;
 };
 
+export type TPageSeo = {
+  title?: string;
+  description?: string;
+  og_image?: string;
+  canonical_url?: string;
+  no_index?: boolean;
+};
+
 export type TPageHero = {
   _id?: Types.ObjectId | string;
   page: TPageKey;
@@ -37,6 +46,7 @@ export type TPageHero = {
   trust_label?: string;
   primary_cta?: TCtaItem;
   secondary_cta?: TCtaItem;
+  seo?: TPageSeo;
   is_active: boolean;
 };
 

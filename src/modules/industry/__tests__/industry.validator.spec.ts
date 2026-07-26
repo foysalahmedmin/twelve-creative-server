@@ -1,5 +1,6 @@
 import {
   createIndustryValidationSchema,
+  reorderIndustriesValidationSchema,
   updateIndustryValidationSchema,
 } from '../industry.validator';
 
@@ -72,5 +73,18 @@ describe('Industry reel media validation', () => {
 
     expect(missingVideoValue.success).toBe(false);
     expect(oversizedThumbnail.success).toBe(false);
+  });
+
+  it('bounds reorder payloads', () => {
+    expect(
+      reorderIndustriesValidationSchema.safeParse({
+        body: {
+          items: Array.from({ length: 101 }, (_, order) => ({
+            _id: '507f1f77bcf86cd799439011',
+            order,
+          })),
+        },
+      }).success,
+    ).toBe(false);
   });
 });

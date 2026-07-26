@@ -43,7 +43,7 @@ export type ShowcaseVideoSeedDefinition = {
 };
 
 const SAMPLE_VIDEO =
-  'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
+  'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4';
 
 const sampleVideo = (): VideoRef => ({ source: 'url', value: SAMPLE_VIDEO });
 

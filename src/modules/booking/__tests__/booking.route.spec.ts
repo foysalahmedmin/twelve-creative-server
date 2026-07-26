@@ -58,6 +58,7 @@ app.use(
 const request = supertest(app);
 
 const id = '507f1f77bcf86cd799439011';
+const industryId = '507f1f77bcf86cd799439012';
 const booking = {
   _id: id,
   name: 'Taylor',
@@ -69,7 +70,12 @@ const booking = {
 describe('Booking routes', () => {
   it('POST /public submits a booking without returning private data', async () => {
     (BookingService.createBooking as jest.Mock).mockResolvedValue(booking);
-    const payload = { name: booking.name, email: booking.email };
+    const payload = {
+      name: booking.name,
+      email: booking.email,
+      industry_id: industryId,
+      industry_name_snapshot: 'Hospitality',
+    };
 
     const response = await request.post('/api/booking/public').send(payload);
 

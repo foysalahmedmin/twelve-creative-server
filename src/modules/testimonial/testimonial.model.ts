@@ -1,5 +1,9 @@
 import mongoose, { Query, Schema } from 'mongoose';
 import {
+  isSafeImageReference,
+  isSafeVideoReference,
+} from '../cms-content/cms-content.security';
+import {
   TTestimonial,
   TTestimonialDocument,
   TTestimonialModel,
@@ -12,13 +16,32 @@ const videoRefSchema = new Schema(
       enum: ['youtube', 'url', 'upload'],
       required: true,
     },
-    value: { type: String, required: true, trim: true },
+    value: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 2048,
+      validate: {
+        validator(
+          this: { source: 'youtube' | 'url' | 'upload' },
+          value: string,
+        ) {
+          return isSafeVideoReference(this.source, value);
+        },
+        message: 'Invalid video reference for the selected source',
+      },
+    },
   },
   { _id: false },
 );
 
 const testimonialSchema = new Schema<TTestimonialDocument>(
   {
+    industry: {
+      type: Schema.Types.ObjectId,
+      ref: 'Industry',
+      required: [true, 'Industry is required'],
+    },
     name: {
       type: String,
       required: [true, 'Name is required'],
@@ -36,6 +59,11 @@ const testimonialSchema = new Schema<TTestimonialDocument>(
       type: String,
       required: [true, 'Image is required'],
       trim: true,
+      maxlength: 2048,
+      validate: {
+        validator: isSafeImageReference,
+        message: 'Invalid testimonial image reference',
+      },
     },
     category: {
       type: String,
@@ -54,6 +82,11 @@ const testimonialSchema = new Schema<TTestimonialDocument>(
     thumbnail: {
       type: String,
       trim: true,
+      maxlength: 2048,
+      validate: {
+        validator: isSafeImageReference,
+        message: 'Invalid testimonial thumbnail reference',
+      },
     },
     order: { type: Number, default: 0 },
     is_active: { type: Boolean, default: true },
@@ -65,7 +98,34 @@ const testimonialSchema = new Schema<TTestimonialDocument>(
   },
 );
 
-testimonialSchema.index({ is_active: 1 });
+testimonialSchema.pre('validate', function () {
+  if (this.category === 'message') {
+    if (!this.message?.trim() || this.message.trim().length < 10) {
+      this.invalidate(
+        'message',
+        'Message text is required (min 10 chars) for a text testimonial',
+      );
+    }
+    return;
+  }
+
+  if (!this.video_message?.value?.trim()) {
+    this.invalidate(
+      'video_message',
+      'Video is required for a video testimonial',
+    );
+  } else if (
+    this.video_message.source !== 'youtube' &&
+    !this.thumbnail?.trim()
+  ) {
+    this.invalidate(
+      'thumbnail',
+      'Thumbnail is required for URL and uploaded video testimonials',
+    );
+  }
+});
+
+testimonialSchema.index({ industry: 1, is_active: 1, order: 1 });
 testimonialSchema.index({ order: 1 });
 testimonialSchema.index({ category: 1 });
 testimonialSchema.index({ created_at: -1 });

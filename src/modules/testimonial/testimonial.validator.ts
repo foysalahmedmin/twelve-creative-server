@@ -1,4 +1,8 @@
 import { z } from 'zod';
+import {
+  isSafeImageReference,
+  isSafeVideoReference,
+} from '../cms-content/cms-content.security';
 
 const idSchema = z.string().refine((val) => /^[0-9a-fA-F]{24}$/.test(val), {
   message: 'Invalid ID format',
@@ -12,20 +16,29 @@ const urlOrPath = z
   .trim()
   .min(1, 'Cannot be empty')
   .max(2048, 'Too long');
-
-const videoRefSchema = z.object({
-  source: videoSourceEnum,
-  value: urlOrPath,
+const imageReference = urlOrPath.refine(isSafeImageReference, {
+  message: 'Must be a safe HTTP(S) URL or root-relative path',
 });
 
+const videoRefSchema = z
+  .object({
+    source: videoSourceEnum,
+    value: urlOrPath,
+  })
+  .refine((video) => isSafeVideoReference(video.source, video.value), {
+    message: 'Video source and value do not form a safe video reference',
+    path: ['value'],
+  });
+
 const baseBody = z.object({
+  industry: idSchema,
   name: z.string().trim().min(2).max(80),
   designation: z.string().trim().min(2).max(120),
-  image: urlOrPath,
+  image: imageReference,
   category: categoryEnum,
   message: z.string().trim().max(400).optional(),
   video_message: videoRefSchema.optional(),
-  thumbnail: urlOrPath.optional(),
+  thumbnail: imageReference.optional(),
   order: z.coerce.number().int().nonnegative().optional(),
   is_active: z
     .preprocess((v) => (typeof v === 'string' ? v === 'true' : v), z.boolean())
@@ -34,6 +47,30 @@ const baseBody = z.object({
 
 export const testimonialIdSchema = z.object({
   params: z.object({ id: idSchema }),
+});
+
+const industrySlugSchema = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .min(2)
+  .max(80)
+  .regex(/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/);
+
+export const publicTestimonialsQuerySchema = z.object({
+  query: z.object({ industry_slug: industrySlugSchema.optional() }),
+});
+
+export const adminTestimonialsQuerySchema = z.object({
+  query: z.object({
+    search: z.string().trim().max(200).optional(),
+    page: z.coerce.number().int().positive().optional(),
+    limit: z.coerce.number().int().positive().max(100).optional(),
+    filter: z.enum(['active', 'inactive']).optional(),
+    industry: idSchema.optional(),
+    category: categoryEnum.optional(),
+    sort: z.string().trim().max(80).optional(),
+  }),
 });
 
 export const createTestimonialValidationSchema = z.object({
@@ -96,6 +133,7 @@ export const reorderTestimonialsValidationSchema = z.object({
           order: z.coerce.number().int().nonnegative(),
         }),
       )
-      .min(1, 'At least one item is required'),
+      .min(1, 'At least one item is required')
+      .max(100),
   }),
 });

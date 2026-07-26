@@ -1,5 +1,9 @@
 import httpStatus from 'http-status';
 import AppError from '../../builder/app-error';
+import {
+  isSafeImageReference,
+  isSafeVideoReference,
+} from '../cms-content/cms-content.security';
 import * as IndustryRepository from '../industry/industry.repository';
 import * as FeaturedProjectRepository from './featured-project.repository';
 import {
@@ -27,10 +31,34 @@ const ensureIndustryExists = async (
   return industryId;
 };
 
+const ensureRenderableMedia = (
+  video: TFeaturedProject['video'] | undefined,
+  thumbnail: string | undefined,
+): void => {
+  if (!video || !isSafeVideoReference(video.source, video.value)) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'Featured project video reference is invalid',
+    );
+  }
+
+  if (
+    typeof thumbnail !== 'string' ||
+    !thumbnail.trim() ||
+    !isSafeImageReference(thumbnail)
+  ) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'Featured project thumbnail reference is invalid',
+    );
+  }
+};
+
 export const createFeaturedProject = async (
   data: Partial<TFeaturedProject>,
 ): Promise<TFeaturedProjectPopulated> => {
   const industry = await ensureIndustryExists(data.industry);
+  ensureRenderableMedia(data.video, data.thumbnail);
   const created = await FeaturedProjectRepository.create({
     ...data,
     industry,
@@ -82,6 +110,10 @@ export const updateFeaturedProject = async (
   if (payload.industry !== undefined) {
     nextPayload.industry = await ensureIndustryExists(payload.industry);
   }
+  ensureRenderableMedia(
+    payload.video ?? exists.video,
+    payload.thumbnail ?? exists.thumbnail,
+  );
   await FeaturedProjectRepository.updateById(id, nextPayload);
   return (await FeaturedProjectRepository.findByIdLean(id))!;
 };
@@ -144,6 +176,7 @@ export const restoreFeaturedProject = async (
     throw new AppError(httpStatus.NOT_FOUND, 'Featured project not found');
   }
   await ensureIndustryExists(exists.industry);
+  ensureRenderableMedia(exists.video, exists.thumbnail);
 
   const restored = await FeaturedProjectRepository.restoreById(id);
   if (!restored) {

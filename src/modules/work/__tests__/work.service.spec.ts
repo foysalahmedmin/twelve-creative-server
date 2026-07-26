@@ -1,18 +1,29 @@
 import httpStatus from 'http-status';
 
 jest.mock('../work.repository');
+jest.mock('../../industry/industry.repository');
 jest.mock('../work.model', () => ({
   Work: { findOne: jest.fn() },
 }));
 
 import { Work } from '../work.model';
+import * as IndustryRepository from '../../industry/industry.repository';
 import * as WorkRepository from '../work.repository';
 import * as WorkService from '../work.service';
 
 const WORK_ID = '507f1f77bcf86cd799439011';
 const OTHER_ID = '507f1f77bcf86cd799439012';
+const INDUSTRY_ID = '507f1f77bcf86cd799439013';
+const industry = {
+  _id: INDUSTRY_ID,
+  name: 'Hospitality',
+  slug: 'hospitality',
+  order: 0,
+  is_active: true,
+};
 const work = {
   _id: WORK_ID,
+  industry: INDUSTRY_ID,
   slug: 'hospitality-growth',
   type: 'Brand Transformation',
   title: 'Hospitality growth system',
@@ -32,25 +43,48 @@ const page = {
 describe('WorkService', () => {
   beforeEach(() => {
     jest.resetAllMocks();
+    (WorkRepository.countExistingByIds as jest.Mock).mockResolvedValue(1);
   });
 
   it('creates a work when its slug is available', async () => {
     (Work.findOne as jest.Mock).mockResolvedValue(null);
+    (IndustryRepository.findByIdLean as jest.Mock).mockResolvedValue(industry);
     (WorkRepository.create as jest.Mock).mockResolvedValue(work);
+    (WorkRepository.findByIdLean as jest.Mock).mockResolvedValue({
+      ...work,
+      industry,
+    });
 
-    await expect(WorkService.createWork(work)).resolves.toBe(work);
+    await expect(WorkService.createWork(work)).resolves.toEqual({
+      ...work,
+      industry,
+    });
 
     expect(Work.findOne).toHaveBeenCalledWith({ slug: work.slug });
     expect(WorkRepository.create).toHaveBeenCalledWith(work);
   });
 
-  it('creates a work without querying slug uniqueness when no slug is provided', async () => {
+  it('rejects a work when Industry is omitted', async () => {
     const draft = { title: 'Draft work' };
-    (WorkRepository.create as jest.Mock).mockResolvedValue(draft);
 
-    await expect(WorkService.createWork(draft)).resolves.toBe(draft);
+    await expect(WorkService.createWork(draft)).rejects.toMatchObject({
+      status: httpStatus.BAD_REQUEST,
+      message: 'Industry is required',
+    });
 
     expect(Work.findOne).not.toHaveBeenCalled();
+    expect(WorkRepository.create).not.toHaveBeenCalled();
+  });
+
+  it('rejects creation when the selected Industry does not exist', async () => {
+    (Work.findOne as jest.Mock).mockResolvedValue(null);
+    (IndustryRepository.findByIdLean as jest.Mock).mockResolvedValue(null);
+
+    await expect(WorkService.createWork(work)).rejects.toMatchObject({
+      status: httpStatus.NOT_FOUND,
+      message: 'Industry not found',
+    });
+    expect(WorkRepository.create).not.toHaveBeenCalled();
   });
 
   it('throws 409 when creating a work with an existing slug', async () => {
@@ -69,9 +103,12 @@ describe('WorkService', () => {
   it('returns the public work list', async () => {
     (WorkRepository.findPublicList as jest.Mock).mockResolvedValue([work]);
 
-    await expect(WorkService.getPublicWorks()).resolves.toEqual({
+    await expect(
+      WorkService.getPublicWorks({ industry_slug: ' Hospitality ' }),
+    ).resolves.toEqual({
       data: [work],
     });
+    expect(WorkRepository.findPublicList).toHaveBeenCalledWith('hospitality');
   });
 
   it('returns a published work by slug', async () => {
@@ -125,7 +162,9 @@ describe('WorkService', () => {
       title: 'Updated title',
     };
     const updated = { ...work, ...payload };
-    (WorkRepository.findByIdLean as jest.Mock).mockResolvedValue(work);
+    (WorkRepository.findByIdLean as jest.Mock)
+      .mockResolvedValueOnce(work)
+      .mockResolvedValueOnce({ ...work, ...payload });
     (Work.findOne as jest.Mock).mockResolvedValue(null);
     (WorkRepository.updateById as jest.Mock).mockResolvedValue(updated);
 
@@ -178,6 +217,7 @@ describe('WorkService', () => {
       { _id: WORK_ID, order: 1 },
       { _id: OTHER_ID, order: 0 },
     ];
+    (WorkRepository.countExistingByIds as jest.Mock).mockResolvedValue(2);
     (WorkRepository.updateOrder as jest.Mock).mockResolvedValue(undefined);
 
     await WorkService.reorderWorks(items);
@@ -192,6 +232,28 @@ describe('WorkService', () => {
     await expect(
       WorkService.reorderWorks([{ _id: WORK_ID, order: 0 }]),
     ).rejects.toBe(error);
+  });
+
+  it('rejects duplicate or missing work reorder records', async () => {
+    const duplicateItems = [
+      { _id: WORK_ID, order: 0 },
+      { _id: WORK_ID, order: 1 },
+    ];
+    await expect(
+      WorkService.reorderWorks(duplicateItems),
+    ).rejects.toMatchObject({
+      status: httpStatus.BAD_REQUEST,
+      message: 'Work reorder items must be unique',
+    });
+
+    (WorkRepository.countExistingByIds as jest.Mock).mockResolvedValue(0);
+    await expect(
+      WorkService.reorderWorks([{ _id: WORK_ID, order: 0 }]),
+    ).rejects.toMatchObject({
+      status: httpStatus.NOT_FOUND,
+      message: 'One or more works were not found',
+    });
+    expect(WorkRepository.updateOrder).not.toHaveBeenCalled();
   });
 
   it('soft deletes an existing work', async () => {
@@ -215,7 +277,9 @@ describe('WorkService', () => {
   });
 
   it('permanently deletes an existing work', async () => {
-    (WorkRepository.findByIdLean as jest.Mock).mockResolvedValue(work);
+    (WorkRepository.findByIdWithDeletedLean as jest.Mock).mockResolvedValue(
+      work,
+    );
 
     await WorkService.deleteWorkPermanent(WORK_ID);
 
@@ -223,7 +287,9 @@ describe('WorkService', () => {
   });
 
   it('rejects permanent deletion when the work does not exist', async () => {
-    (WorkRepository.findByIdLean as jest.Mock).mockResolvedValue(null);
+    (WorkRepository.findByIdWithDeletedLean as jest.Mock).mockResolvedValue(
+      null,
+    );
 
     await expect(
       WorkService.deleteWorkPermanent(WORK_ID),

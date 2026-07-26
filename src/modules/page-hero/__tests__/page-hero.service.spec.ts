@@ -66,7 +66,7 @@ describe('PageHeroService', () => {
       is_active: true,
     });
     expect(select).toHaveBeenCalledWith(
-      'page label title description thumbnail video trust_label primary_cta secondary_cta is_active -_id',
+      'page label title description thumbnail video trust_label primary_cta secondary_cta seo is_active -_id',
     );
   });
 
@@ -86,7 +86,13 @@ describe('PageHeroService', () => {
         $set: { title: 'Updated title', is_active: false },
         $unset: { description: 1 },
       },
-      { upsert: true, new: true, lean: true },
+      {
+        upsert: true,
+        new: true,
+        lean: true,
+        runValidators: true,
+        setDefaultsOnInsert: true,
+      },
     );
     expect(result).toEqual(hero);
   });
@@ -99,7 +105,13 @@ describe('PageHeroService', () => {
     expect(PageHero.findOneAndUpdate).toHaveBeenCalledWith(
       { page: 'home' },
       {},
-      { upsert: true, new: true, lean: true },
+      {
+        upsert: true,
+        new: true,
+        lean: true,
+        runValidators: true,
+        setDefaultsOnInsert: true,
+      },
     );
   });
 });

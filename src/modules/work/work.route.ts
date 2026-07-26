@@ -7,7 +7,11 @@ import * as WorkValidations from './work.validator';
 const router = express.Router();
 
 // Public — list + slug detail
-router.get('/public', WorkControllers.getPublicWorks);
+router.get(
+  '/public',
+  validation(WorkValidations.publicWorksQuerySchema),
+  WorkControllers.getPublicWorks,
+);
 router.get(
   '/public/:slug',
   validation(WorkValidations.workSlugSchema),
@@ -15,7 +19,12 @@ router.get(
 );
 
 // Admin
-router.get('/', auth('admin', 'editor'), WorkControllers.getWorks);
+router.get(
+  '/',
+  auth('admin', 'editor'),
+  validation(WorkValidations.adminWorksQuerySchema),
+  WorkControllers.getWorks,
+);
 router.get(
   '/:id',
   auth('admin', 'editor'),

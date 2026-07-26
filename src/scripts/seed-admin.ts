@@ -8,7 +8,8 @@
  *   ADMIN_SEED_PASSWORD   (required)
  *
  * Usage:
- *   pnpm ts-node src/scripts/seed-admin.ts
+ *   pnpm seed:admin
+ *   pnpm build && pnpm seed:admin:prod # production install/runtime
  */
 
 /* eslint-disable no-console */

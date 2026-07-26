@@ -72,6 +72,11 @@ const videoRefSchema = new Schema(
 
 const workSchema = new Schema<TWorkDocument>(
   {
+    industry: {
+      type: Schema.Types.ObjectId,
+      ref: 'Industry',
+      required: [true, 'Industry is required'],
+    },
     slug: {
       type: String,
       required: [true, 'Slug is required'],
@@ -143,6 +148,7 @@ workSchema.index(
   },
 );
 workSchema.index({ is_published: 1 });
+workSchema.index({ industry: 1, is_published: 1, order: 1 });
 workSchema.index({ order: 1 });
 workSchema.index({ created_at: -1 });
 

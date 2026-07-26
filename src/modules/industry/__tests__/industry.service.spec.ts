@@ -1,14 +1,22 @@
 import httpStatus from 'http-status';
 
 jest.mock('../industry.repository');
+jest.mock('../../booking/booking.repository');
 jest.mock('../../featured-project/featured-project.repository');
+jest.mock('../../page-cta/page-cta.repository');
 jest.mock('../../showcase-video/showcase-video.repository');
+jest.mock('../../testimonial/testimonial.repository');
+jest.mock('../../work/work.repository');
 jest.mock('../industry.model', () => ({
   Industry: { findOne: jest.fn() },
 }));
 
 import * as FeaturedProjectRepository from '../../featured-project/featured-project.repository';
+import * as BookingRepository from '../../booking/booking.repository';
+import * as PageCtaRepository from '../../page-cta/page-cta.repository';
 import * as ShowcaseVideoRepository from '../../showcase-video/showcase-video.repository';
+import * as TestimonialRepository from '../../testimonial/testimonial.repository';
+import * as WorkRepository from '../../work/work.repository';
 import { Industry } from '../industry.model';
 import * as IndustryRepository from '../industry.repository';
 import * as IndustryService from '../industry.service';
@@ -22,6 +30,14 @@ const reelVideo = {
 };
 
 describe('IndustryService', () => {
+  beforeEach(() => {
+    jest.resetAllMocks();
+    (TestimonialRepository.countByIndustry as jest.Mock).mockResolvedValue(0);
+    (WorkRepository.countByIndustry as jest.Mock).mockResolvedValue(0);
+    (PageCtaRepository.countByIndustry as jest.Mock).mockResolvedValue(0);
+    (BookingRepository.countByIndustry as jest.Mock).mockResolvedValue(0);
+  });
+
   it('returns compact options from the repository', async () => {
     const options = [
       {
@@ -104,6 +120,11 @@ const industry = {
 describe('IndustryService complete contract', () => {
   beforeEach(() => {
     jest.resetAllMocks();
+    (TestimonialRepository.countByIndustry as jest.Mock).mockResolvedValue(0);
+    (WorkRepository.countByIndustry as jest.Mock).mockResolvedValue(0);
+    (PageCtaRepository.countByIndustry as jest.Mock).mockResolvedValue(0);
+    (BookingRepository.countByIndustry as jest.Mock).mockResolvedValue(0);
+    (IndustryRepository.countExistingByIds as jest.Mock).mockResolvedValue(1);
   });
 
   it('creates an industry after checking slug uniqueness', async () => {
@@ -274,6 +295,28 @@ describe('IndustryService complete contract', () => {
     expect(IndustryRepository.updateOrder).toHaveBeenCalledWith(items);
   });
 
+  it('rejects duplicate or missing Industry reorder records', async () => {
+    const duplicateItems = [
+      { _id: INDUSTRY_ID, order: 0 },
+      { _id: INDUSTRY_ID, order: 1 },
+    ];
+    await expect(
+      IndustryService.reorderIndustries(duplicateItems),
+    ).rejects.toMatchObject({
+      status: httpStatus.BAD_REQUEST,
+      message: 'Industry reorder items must be unique',
+    });
+
+    (IndustryRepository.countExistingByIds as jest.Mock).mockResolvedValue(0);
+    await expect(
+      IndustryService.reorderIndustries([{ _id: INDUSTRY_ID, order: 0 }]),
+    ).rejects.toMatchObject({
+      status: httpStatus.NOT_FOUND,
+      message: 'One or more industries were not found',
+    });
+    expect(IndustryRepository.updateOrder).not.toHaveBeenCalled();
+  });
+
   it('throws 404 before soft deletion when the industry is missing', async () => {
     (IndustryRepository.findById as jest.Mock).mockResolvedValue(null);
 
@@ -307,6 +350,75 @@ describe('IndustryService complete contract', () => {
       IndustryService.deleteIndustryPermanent(INDUSTRY_ID),
     ).rejects.toMatchObject({ status: httpStatus.CONFLICT });
     expect(IndustryRepository.hardDeleteById).not.toHaveBeenCalled();
+  });
+
+  it('allows soft deletion with historical bookings but blocks permanent deletion', async () => {
+    const softDelete = jest.fn().mockResolvedValue(undefined);
+    (IndustryRepository.findById as jest.Mock).mockResolvedValue({
+      softDelete,
+    });
+    (IndustryRepository.findByIdWithDeletedLean as jest.Mock).mockResolvedValue(
+      industry,
+    );
+    (FeaturedProjectRepository.countByIndustry as jest.Mock).mockResolvedValue(
+      0,
+    );
+    (ShowcaseVideoRepository.countByIndustry as jest.Mock).mockResolvedValue(0);
+    (BookingRepository.countByIndustry as jest.Mock).mockResolvedValue(1);
+
+    await expect(
+      IndustryService.deleteIndustry(INDUSTRY_ID),
+    ).resolves.toBeUndefined();
+    expect(softDelete).toHaveBeenCalledTimes(1);
+
+    await expect(
+      IndustryService.deleteIndustryPermanent(INDUSTRY_ID),
+    ).rejects.toMatchObject({
+      status: httpStatus.CONFLICT,
+      message: expect.stringContaining('1 historical booking(s)'),
+    });
+    expect(IndustryRepository.hardDeleteById).not.toHaveBeenCalled();
+  });
+
+  it('blocks deletion while testimonials or works reference the industry', async () => {
+    const softDelete = jest.fn();
+    (IndustryRepository.findById as jest.Mock).mockResolvedValue({
+      softDelete,
+    });
+    (FeaturedProjectRepository.countByIndustry as jest.Mock).mockResolvedValue(
+      0,
+    );
+    (ShowcaseVideoRepository.countByIndustry as jest.Mock).mockResolvedValue(0);
+    (TestimonialRepository.countByIndustry as jest.Mock).mockResolvedValue(2);
+    (WorkRepository.countByIndustry as jest.Mock).mockResolvedValue(3);
+
+    await expect(
+      IndustryService.deleteIndustry(INDUSTRY_ID),
+    ).rejects.toMatchObject({
+      status: httpStatus.CONFLICT,
+      message: expect.stringContaining('2 testimonial(s)'),
+    });
+    expect(softDelete).not.toHaveBeenCalled();
+  });
+
+  it('blocks deletion while a page CTA override references the industry', async () => {
+    const softDelete = jest.fn();
+    (IndustryRepository.findById as jest.Mock).mockResolvedValue({
+      softDelete,
+    });
+    (FeaturedProjectRepository.countByIndustry as jest.Mock).mockResolvedValue(
+      0,
+    );
+    (ShowcaseVideoRepository.countByIndustry as jest.Mock).mockResolvedValue(0);
+    (PageCtaRepository.countByIndustry as jest.Mock).mockResolvedValue(1);
+
+    await expect(
+      IndustryService.deleteIndustry(INDUSTRY_ID),
+    ).rejects.toMatchObject({
+      status: httpStatus.CONFLICT,
+      message: expect.stringContaining('1 page CTA override(s)'),
+    });
+    expect(softDelete).not.toHaveBeenCalled();
   });
 
   it('restores a deleted industry when its slug remains unique', async () => {

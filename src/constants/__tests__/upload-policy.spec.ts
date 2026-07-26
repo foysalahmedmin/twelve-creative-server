@@ -12,7 +12,6 @@ describe('upload policy', () => {
     ['image/png', 'png'],
     ['image/gif', 'gif'],
     ['image/webp', 'webp'],
-    ['image/svg+xml', 'svg'],
     ['video/mp4', 'mp4'],
     ['video/webm', 'webm'],
     ['video/ogg', 'ogv'],
@@ -37,11 +36,13 @@ describe('upload policy', () => {
     );
   });
 
-  it.each(['text/html', 'application/javascript', 'application/x-msdownload'])(
-    'rejects executable or unapproved MIME type %s',
-    (mimeType) => {
-      expect(getCanonicalUploadExtension(mimeType)).toBeUndefined();
-      expect(isSupportedLocalUploadMime(mimeType)).toBe(false);
-    },
-  );
+  it.each([
+    'image/svg+xml',
+    'text/html',
+    'application/javascript',
+    'application/x-msdownload',
+  ])('rejects executable or unapproved MIME type %s', (mimeType) => {
+    expect(getCanonicalUploadExtension(mimeType)).toBeUndefined();
+    expect(isSupportedLocalUploadMime(mimeType)).toBe(false);
+  });
 });

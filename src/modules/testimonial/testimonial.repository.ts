@@ -1,12 +1,23 @@
 import AppQueryFind from '../../builder/app-query-find';
+import * as IndustryRepository from '../industry/industry.repository';
 import { Testimonial } from './testimonial.model';
-import { TTestimonial, TTestimonialDocument } from './testimonial.type';
+import {
+  TTestimonial,
+  TTestimonialDocument,
+  TTestimonialPopulated,
+} from './testimonial.type';
+
+export type TTestimonialUnsetField = 'message' | 'video_message' | 'thumbnail';
+
+const INDUSTRY_POPULATE = {
+  path: 'industry',
+  select: '_id name slug order is_active',
+};
 
 export const create = async (
   data: Partial<TTestimonial>,
-): Promise<TTestimonial> => {
-  const result = await Testimonial.create(data);
-  return result.toObject();
+): Promise<TTestimonialDocument> => {
+  return await Testimonial.create(data);
 };
 
 export const findById = async (
@@ -17,8 +28,10 @@ export const findById = async (
 
 export const findByIdLean = async (
   id: string,
-): Promise<TTestimonial | null> => {
-  return await Testimonial.findById(id).lean();
+): Promise<TTestimonialPopulated | null> => {
+  return (await Testimonial.findById(id)
+    .populate(INDUSTRY_POPULATE)
+    .lean()) as TTestimonialPopulated | null;
 };
 
 export const findByIdWithDeleted = async (
@@ -29,41 +42,63 @@ export const findByIdWithDeleted = async (
     .lean();
 };
 
-export const findPublic = async (): Promise<TTestimonial[]> => {
-  return await Testimonial.find({ is_active: true })
+export const findPublic = async (
+  industrySlug?: string,
+): Promise<TTestimonialPopulated[]> => {
+  const industryIds = await IndustryRepository.findActiveIds(industrySlug);
+  if (!industryIds.length) return [];
+
+  return (await Testimonial.find({
+    is_active: true,
+    industry: { $in: industryIds },
+  })
+    .populate(INDUSTRY_POPULATE)
     .sort({ order: 1, created_at: -1 })
-    .lean();
+    .lean()) as unknown as TTestimonialPopulated[];
 };
 
 export const findAdminPaginated = async (
   query: Record<string, unknown>,
 ): Promise<{
-  data: TTestimonial[];
+  data: TTestimonialPopulated[];
   meta: { total: number; page: number; limit: number; total_pages: number };
 }> => {
   const q: Record<string, unknown> = { ...query };
   if (q.filter === 'active') q.is_active = true;
   else if (q.filter === 'inactive') q.is_active = false;
+  if (!q.sort) q.sort = 'order';
 
   const testimonialQuery = new AppQueryFind(Testimonial, q)
     .search(['name', 'designation', 'message'])
-    .filter()
-    .sort()
+    .filter(['industry', 'category', 'is_active'])
+    .sort(['order', 'name', 'category', 'is_active'])
     .paginate()
     .fields()
+    .populate(INDUSTRY_POPULATE)
     .tap((q) => q.lean());
 
-  return await testimonialQuery.execute([
+  return (await testimonialQuery.execute([
     { key: 'active', filter: { is_active: true } },
     { key: 'inactive', filter: { is_active: false } },
-  ]);
+  ])) as unknown as {
+    data: TTestimonialPopulated[];
+    meta: { total: number; page: number; limit: number; total_pages: number };
+  };
 };
 
 export const updateById = async (
   id: string,
   payload: Partial<TTestimonial>,
+  unsetFields: TTestimonialUnsetField[] = [],
 ): Promise<TTestimonialDocument | null> => {
-  return await Testimonial.findByIdAndUpdate(id, payload, {
+  const update = unsetFields.length
+    ? {
+        $set: payload,
+        $unset: Object.fromEntries(unsetFields.map((field) => [field, 1])),
+      }
+    : payload;
+
+  return await Testimonial.findByIdAndUpdate(id, update, {
     new: true,
     runValidators: true,
   });
@@ -80,6 +115,13 @@ export const updateOrder = async (
     },
   }));
   await Testimonial.bulkWrite(ops);
+};
+
+export const countExistingByIds = async (ids: string[]): Promise<number> => {
+  return await Testimonial.countDocuments({
+    _id: { $in: ids },
+    is_deleted: { $ne: true },
+  });
 };
 
 export const softDeleteById = async (id: string): Promise<void> => {
@@ -101,4 +143,8 @@ export const restoreById = async (
 
 export const hardDeleteById = async (id: string): Promise<void> => {
   await Testimonial.findByIdAndDelete(id).setOptions({ bypassDeleted: true });
+};
+
+export const countByIndustry = async (industry: string): Promise<number> => {
+  return await Testimonial.countDocuments({ industry });
 };

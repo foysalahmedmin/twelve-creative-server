@@ -19,6 +19,11 @@ const bookingSchema = new Schema<TBookingDocument>(
     },
     phone: { type: String, trim: true, maxlength: 40 },
     company: { type: String, trim: true, maxlength: 160 },
+    industry_id: {
+      type: Schema.Types.ObjectId,
+      ref: 'Industry',
+    },
+    industry_name_snapshot: { type: String, trim: true, maxlength: 120 },
     industry: { type: String, trim: true, maxlength: 120 },
     timeline: { type: String, trim: true, maxlength: 80 },
     preferred_date: { type: Date },
@@ -54,6 +59,7 @@ const bookingSchema = new Schema<TBookingDocument>(
 bookingSchema.index({ status: 1 });
 bookingSchema.index({ created_at: -1 });
 bookingSchema.index({ email: 1 });
+bookingSchema.index({ industry_id: 1, created_at: -1 });
 
 bookingSchema.methods.toJSON = function () {
   const obj = this.toObject();

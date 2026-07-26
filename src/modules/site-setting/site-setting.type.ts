@@ -25,12 +25,33 @@ export type TContentSection = {
   image?: string;
 };
 
+export type TSectionCopy = {
+  label?: string;
+  title?: string;
+  description?: string;
+};
+
+export type TContactPageContent = {
+  inquiry?: TSectionCopy;
+  booking?: TSectionCopy;
+  map?: TSectionCopy;
+};
+
+export type TFooterContent = {
+  description?: string;
+  cta_text?: string;
+  cta_label?: string;
+  cta_href?: string;
+};
+
 export type TSiteSetting = {
   _id?: Types.ObjectId | string;
   singleton_key?: 'singleton';
   contact_email?: string;
   contact_phone?: string;
   contact_address?: string;
+  contact_whatsapp?: string;
+  contact_map_embed_url?: string;
   social?: TSiteSocials;
   booking_notification_email?: string;
   faq_section?: TFaqSection;
@@ -39,6 +60,8 @@ export type TSiteSetting = {
   how_we_structure_image?: string;
   meeting_scene_image?: string;
   content_section?: TContentSection;
+  contact_page?: TContactPageContent;
+  footer?: TFooterContent;
 };
 
 export type TPublicSiteSetting = Pick<
@@ -46,6 +69,8 @@ export type TPublicSiteSetting = Pick<
   | 'contact_email'
   | 'contact_phone'
   | 'contact_address'
+  | 'contact_whatsapp'
+  | 'contact_map_embed_url'
   | 'social'
   | 'faq_section'
   | 'calendly_url'
@@ -53,6 +78,8 @@ export type TPublicSiteSetting = Pick<
   | 'how_we_structure_image'
   | 'meeting_scene_image'
   | 'content_section'
+  | 'contact_page'
+  | 'footer'
 >;
 
 export interface TSiteSettingDocument extends TSiteSetting, Document {

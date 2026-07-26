@@ -2,10 +2,11 @@
 import httpStatus from 'http-status';
 import AppError from '../../builder/app-error';
 import { sendEmail } from '../../utils/send-email';
-import config from '../../config/env';
 import * as BookingRepository from './booking.repository';
 import { TBooking } from './booking.type';
 import { createSystemNotification } from '../../utils/create-system-notification';
+import { resolveNotificationRecipient } from '../../utils/notification-recipient';
+import * as IndustryRepository from '../industry/industry.repository';
 
 const escapeHtml = (s: string) =>
   s
@@ -30,7 +31,7 @@ const buildNotificationHtml = (booking: TBooking): string => {
         ${row('Email', booking.email)}
         ${row('Phone', booking.phone)}
         ${row('Company', booking.company)}
-        ${row('Industry', booking.industry)}
+        ${row('Industry', booking.industry_name_snapshot || booking.industry)}
         ${row('Timeline', booking.timeline)}
         ${row('Preferred date', date)}
         ${row('Preferred time', booking.preferred_time)}
@@ -39,8 +40,7 @@ const buildNotificationHtml = (booking: TBooking): string => {
     </div>`;
 };
 
-const fireAndForgetEmail = (booking: TBooking) => {
-  const to = config.smtp_email || config.email;
+const fireAndForgetEmail = (booking: TBooking, to?: string) => {
   if (!to) return;
   void (async () => {
     try {
@@ -59,12 +59,41 @@ const fireAndForgetEmail = (booking: TBooking) => {
 export const createBooking = async (
   data: Partial<TBooking>,
 ): Promise<TBooking> => {
+  const nextData = { ...data };
+  if (data.industry_id) {
+    const industryId = data.industry_id.toString();
+    const industry = await IndustryRepository.findByIdLean(industryId);
+    if (!industry || !industry.is_active) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        'Selected Industry is unavailable',
+      );
+    }
+
+    // The authoritative current name is captured by the server. Mirroring it
+    // into the legacy field keeps old admin/search/reporting code compatible.
+    nextData.industry_id = industryId;
+    nextData.industry_name_snapshot = industry.name;
+    nextData.industry = industry.name;
+  } else {
+    const snapshot = (
+      data.industry_name_snapshot ||
+      data.industry ||
+      ''
+    ).trim();
+    if (snapshot) {
+      nextData.industry_name_snapshot = snapshot;
+      nextData.industry = snapshot;
+    }
+  }
+
   const booking = await BookingRepository.create({
-    ...data,
+    ...nextData,
     status: 'pending',
     source: 'booking_form',
   });
-  fireAndForgetEmail(booking);
+  const notificationRecipient = await resolveNotificationRecipient();
+  fireAndForgetEmail(booking, notificationRecipient);
   createSystemNotification({
     title: `New booking from ${booking.name}`,
     message: booking.company

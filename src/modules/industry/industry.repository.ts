@@ -100,6 +100,13 @@ export const updateOrder = async (
   await Industry.bulkWrite(ops);
 };
 
+export const countExistingByIds = async (ids: string[]): Promise<number> => {
+  return await Industry.countDocuments({
+    _id: { $in: ids },
+    is_deleted: { $ne: true },
+  });
+};
+
 export const softDeleteById = async (id: string): Promise<void> => {
   await Industry.findByIdAndUpdate(id, {
     is_deleted: true,

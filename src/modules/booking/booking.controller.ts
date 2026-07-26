@@ -2,6 +2,7 @@ import httpStatus from 'http-status';
 import catchAsync from '../../utils/catch-async';
 import sendResponse from '../../utils/send-response';
 import * as BookingServices from './booking.service';
+import { adminBookingsQuerySchema } from './booking.validator';
 
 // Public — anyone can submit
 export const submitBooking = catchAsync(async (req, res) => {
@@ -17,7 +18,11 @@ export const submitBooking = catchAsync(async (req, res) => {
 
 // Admin
 export const getBookings = catchAsync(async (req, res) => {
-  const result = await BookingServices.getBookings(req.query);
+  // The shared validation middleware intentionally only replaces request
+  // bodies. Parse again here so trimmed/coerced query values, rather than the
+  // raw Express query object, are the only values forwarded to persistence.
+  const { query } = adminBookingsQuerySchema.parse({ query: req.query });
+  const result = await BookingServices.getBookings(query);
   sendResponse(res, {
     status: httpStatus.OK,
     success: true,

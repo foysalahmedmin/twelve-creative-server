@@ -5,6 +5,7 @@ import path from 'path';
 export const deleteFiles = async (
   filePaths?: string | string[],
   folder?: string,
+  options: { throwOnError?: boolean } = {},
 ) => {
   if (!filePaths || (Array.isArray(filePaths) && filePaths.length === 0))
     return;
@@ -28,6 +29,7 @@ export const deleteFiles = async (
           `❌ Failed to delete file: ${fullPath}`,
           (err as Error).message,
         );
+        if (options.throwOnError) throw err;
       }
     }
   }

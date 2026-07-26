@@ -9,7 +9,6 @@ export const LOCAL_UPLOAD_MIME_TO_EXTENSION = Object.freeze({
   'image/png': 'png',
   'image/gif': 'gif',
   'image/webp': 'webp',
-  'image/svg+xml': 'svg',
   'video/mp4': 'mp4',
   'video/webm': 'webm',
   'video/ogg': 'ogv',

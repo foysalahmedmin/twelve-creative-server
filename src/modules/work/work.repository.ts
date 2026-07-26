@@ -1,52 +1,90 @@
 import AppQueryFind from '../../builder/app-query-find';
+import * as IndustryRepository from '../industry/industry.repository';
 import { Work } from './work.model';
-import { TWork, TWorkDocument } from './work.type';
+import { TWork, TWorkDocument, TWorkPopulated } from './work.type';
 
-export const create = async (data: Partial<TWork>): Promise<TWork> => {
-  const result = await Work.create(data);
-  return result.toObject();
+const INDUSTRY_POPULATE = {
+  path: 'industry',
+  select: '_id name slug order is_active',
+};
+
+export const create = async (data: Partial<TWork>): Promise<TWorkDocument> => {
+  return await Work.create(data);
 };
 
 export const findById = async (id: string): Promise<TWorkDocument | null> => {
   return await Work.findById(id);
 };
 
-export const findByIdLean = async (id: string): Promise<TWork | null> => {
-  return await Work.findById(id).lean();
+export const findByIdLean = async (
+  id: string,
+): Promise<TWorkPopulated | null> => {
+  return (await Work.findById(id)
+    .populate(INDUSTRY_POPULATE)
+    .lean()) as TWorkPopulated | null;
 };
 
-export const findBySlugLean = async (slug: string): Promise<TWork | null> => {
-  return await Work.findOne({ slug, is_published: true }).lean();
+export const findByIdWithDeletedLean = async (
+  id: string,
+): Promise<TWork | null> => {
+  return await Work.findById(id).setOptions({ bypassDeleted: true }).lean();
 };
 
-export const findPublicList = async (): Promise<TWork[]> => {
-  return await Work.find({ is_published: true })
+export const findBySlugLean = async (
+  slug: string,
+): Promise<TWorkPopulated | null> => {
+  const activeIndustryIds = await IndustryRepository.findActiveIds();
+  return (await Work.findOne({
+    slug,
+    is_published: true,
+    industry: { $in: activeIndustryIds },
+  })
+    .populate(INDUSTRY_POPULATE)
+    .lean()) as TWorkPopulated | null;
+};
+
+export const findPublicList = async (
+  industrySlug?: string,
+): Promise<TWorkPopulated[]> => {
+  const industryIds = await IndustryRepository.findActiveIds(industrySlug);
+  if (!industryIds.length) return [];
+
+  return (await Work.find({
+    is_published: true,
+    industry: { $in: industryIds },
+  })
+    .populate(INDUSTRY_POPULATE)
     .sort({ order: 1, created_at: -1 })
-    .lean();
+    .lean()) as unknown as TWorkPopulated[];
 };
 
 export const findAdminPaginated = async (
   query: Record<string, unknown>,
 ): Promise<{
-  data: TWork[];
+  data: TWorkPopulated[];
   meta: { total: number; page: number; limit: number; total_pages: number };
 }> => {
   const qp: Record<string, unknown> = { ...query };
   if (qp.filter === 'published') qp.is_published = true;
   else if (qp.filter === 'draft') qp.is_published = false;
+  if (!qp.sort) qp.sort = 'order';
 
   const q = new AppQueryFind(Work, qp)
     .search(['title', 'slug', 'type', 'description'])
-    .filter()
-    .sort()
+    .filter(['industry', 'is_published'])
+    .sort(['order', 'title', 'slug', 'type', 'is_published'])
     .paginate()
     .fields()
+    .populate(INDUSTRY_POPULATE)
     .tap((c) => c.lean());
 
-  return await q.execute([
+  return (await q.execute([
     { key: 'published', filter: { is_published: true } },
     { key: 'draft', filter: { is_published: false } },
-  ]);
+  ])) as unknown as {
+    data: TWorkPopulated[];
+    meta: { total: number; page: number; limit: number; total_pages: number };
+  };
 };
 
 export const updateById = async (
@@ -69,6 +107,13 @@ export const updateOrder = async (
   await Work.bulkWrite(ops);
 };
 
+export const countExistingByIds = async (ids: string[]): Promise<number> => {
+  return await Work.countDocuments({
+    _id: { $in: ids },
+    is_deleted: { $ne: true },
+  });
+};
+
 export const softDeleteById = async (id: string): Promise<void> => {
   await Work.findByIdAndUpdate(id, {
     is_deleted: true,
@@ -78,4 +123,8 @@ export const softDeleteById = async (id: string): Promise<void> => {
 
 export const hardDeleteById = async (id: string): Promise<void> => {
   await Work.findByIdAndDelete(id).setOptions({ bypassDeleted: true });
+};
+
+export const countByIndustry = async (industry: string): Promise<number> => {
+  return await Work.countDocuments({ industry });
 };

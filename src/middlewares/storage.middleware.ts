@@ -48,6 +48,28 @@ const storage = (...files: TStorageFile[]) => {
     }),
   });
 
+  const cleanupStorageResults = async (
+    results: readonly TStorageResult[],
+  ): Promise<void> => {
+    await Promise.all(
+      results.map(async (result) => {
+        try {
+          await storageClient
+            .bucket(result.bucket)
+            .file(result.filename)
+            .delete();
+        } catch (cleanupError: unknown) {
+          if ((cleanupError as { code?: number }).code !== 404) {
+            console.error(
+              `[Storage] Failed to clean incomplete upload (${result.bucket}/${result.filename}):`,
+              (cleanupError as Error).message,
+            );
+          }
+        }
+      }),
+    );
+  };
+
   // Get default bucket from environment with fallback
   const defaultBucket = config.gcp.bucket_name;
 
@@ -111,6 +133,7 @@ const storage = (...files: TStorageFile[]) => {
         );
       }
 
+      const storageResults: TStorageResult[] = [];
       try {
         // Check minCount
         const missing = files.filter((file) => {
@@ -131,8 +154,6 @@ const storage = (...files: TStorageFile[]) => {
         }
 
         // Upload files to Google Cloud Storage
-        const storageResults: TStorageResult[] = [];
-
         if (req.files) {
           const filesRecord = req.files as Record<
             string,
@@ -171,6 +192,24 @@ const storage = (...files: TStorageFile[]) => {
                 // Create file reference in bucket
                 const bucketFile = bucket.file(filename);
 
+                // Track the target before uploading. Cloud writes can fail
+                // ambiguously after the object has been persisted, and ACL
+                // setup can fail after a successful write; either case must
+                // be compensatable from the outer error handler.
+                const storageResult: TStorageResult = {
+                  fieldName: file.fieldname,
+                  originalName: file.originalname,
+                  filename,
+                  bucket: bucketName,
+                  publicUrl: makePublic
+                    ? `https://storage.googleapis.com/${bucketName}/${filename}`
+                    : undefined,
+                  size: file.size,
+                  mimetype: file.mimetype,
+                  uploadedAt: new Date(),
+                };
+                storageResults.push(storageResult);
+
                 // Upload file buffer to bucket
                 await bucketFile.save(file.buffer, {
                   metadata: {
@@ -206,24 +245,6 @@ const storage = (...files: TStorageFile[]) => {
                     }
                   }
                 }
-
-                // Get public URL
-                // If makePublic is true, generate public URL (works even with uniform bucket-level access if bucket is public)
-                const publicUrl = makePublic
-                  ? `https://storage.googleapis.com/${bucketName}/${filename}`
-                  : undefined;
-
-                // Store result
-                storageResults.push({
-                  fieldName: file.fieldname,
-                  originalName: file.originalname,
-                  filename,
-                  bucket: bucketName,
-                  publicUrl,
-                  size: file.size,
-                  mimetype: file.mimetype,
-                  uploadedAt: new Date(),
-                });
               } catch (uploadError: unknown) {
                 console.error(
                   `Failed to upload file ${file.originalname} to Google Cloud Storage:`,
@@ -231,7 +252,7 @@ const storage = (...files: TStorageFile[]) => {
                 );
                 throw new AppError(
                   httpStatus.INTERNAL_SERVER_ERROR,
-                  `Failed to upload file "${file.originalname}": ${(uploadError as Error).message || 'Unknown error'}`,
+                  `Failed to upload file "${file.originalname}". Please retry.`,
                 );
               }
             }
@@ -305,6 +326,7 @@ const storage = (...files: TStorageFile[]) => {
 
         next();
       } catch (error) {
+        await cleanupStorageResults(storageResults);
         next(error);
       }
     });

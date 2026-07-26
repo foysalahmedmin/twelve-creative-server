@@ -1,9 +1,15 @@
 import httpStatus from 'http-status';
 
 jest.mock('../booking.repository');
+jest.mock('../../industry/industry.repository');
 jest.mock('../../../utils/send-email', () => ({ sendEmail: jest.fn() }));
 jest.mock('../../../utils/create-system-notification', () => ({
   createSystemNotification: jest.fn(),
+}));
+jest.mock('../../../utils/notification-recipient', () => ({
+  resolveNotificationRecipient: jest
+    .fn()
+    .mockResolvedValue('notifications@twelvecreative.co'),
 }));
 jest.mock('../../../config/env', () => ({
   __esModule: true,
@@ -14,11 +20,14 @@ jest.mock('../../../config/env', () => ({
 }));
 
 import { createSystemNotification } from '../../../utils/create-system-notification';
+import { resolveNotificationRecipient } from '../../../utils/notification-recipient';
 import { sendEmail } from '../../../utils/send-email';
+import * as IndustryRepository from '../../industry/industry.repository';
 import * as BookingRepository from '../booking.repository';
 import * as BookingService from '../booking.service';
 
 const id = '507f1f77bcf86cd799439011';
+const industryId = '507f1f77bcf86cd799439012';
 const booking = {
   _id: id,
   name: '<Taylor & Co>',
@@ -38,6 +47,9 @@ describe('BookingService', () => {
   beforeEach(() => {
     jest.resetAllMocks();
     (sendEmail as jest.Mock).mockResolvedValue(undefined);
+    (resolveNotificationRecipient as jest.Mock).mockResolvedValue(
+      'notifications@twelvecreative.co',
+    );
   });
 
   it('creates a pending booking, notifies admins, and escapes email HTML', async () => {
@@ -79,6 +91,72 @@ describe('BookingService', () => {
 
     expect(createSystemNotification).toHaveBeenCalledWith(
       expect.objectContaining({ message: booking.email }),
+    );
+  });
+
+  it('resolves an active Industry and stores an authoritative name snapshot', async () => {
+    (IndustryRepository.findByIdLean as jest.Mock).mockResolvedValue({
+      _id: industryId,
+      name: 'Hospitality',
+      is_active: true,
+    });
+    (BookingRepository.create as jest.Mock).mockImplementation(
+      async (payload) => ({ ...booking, ...payload }),
+    );
+
+    await BookingService.createBooking({
+      name: 'Taylor',
+      email: 'taylor@example.com',
+      industry_id: industryId,
+      industry_name_snapshot: 'Spoofed client value',
+    });
+
+    expect(BookingRepository.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        industry_id: industryId,
+        industry_name_snapshot: 'Hospitality',
+        industry: 'Hospitality',
+      }),
+    );
+  });
+
+  it('rejects a missing or inactive selected Industry', async () => {
+    (IndustryRepository.findByIdLean as jest.Mock).mockResolvedValue({
+      _id: industryId,
+      name: 'Hospitality',
+      is_active: false,
+    });
+
+    await expect(
+      BookingService.createBooking({
+        name: 'Taylor',
+        email: 'taylor@example.com',
+        industry_id: industryId,
+      }),
+    ).rejects.toMatchObject({
+      status: httpStatus.BAD_REQUEST,
+      message: 'Selected Industry is unavailable',
+    });
+    expect(BookingRepository.create).not.toHaveBeenCalled();
+  });
+
+  it('preserves an Other snapshot without an Industry reference', async () => {
+    (BookingRepository.create as jest.Mock).mockImplementation(
+      async (payload) => ({ ...booking, ...payload }),
+    );
+
+    await BookingService.createBooking({
+      name: 'Taylor',
+      email: 'taylor@example.com',
+      industry_name_snapshot: 'Other',
+    });
+
+    expect(IndustryRepository.findByIdLean).not.toHaveBeenCalled();
+    expect(BookingRepository.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        industry_name_snapshot: 'Other',
+        industry: 'Other',
+      }),
     );
   });
 

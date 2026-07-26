@@ -40,8 +40,10 @@ import * as WorkService from '../work.service';
 
 const WORK_ID = '507f1f77bcf86cd799439011';
 const OTHER_ID = '507f1f77bcf86cd799439012';
+const INDUSTRY_ID = '507f1f77bcf86cd799439013';
 const work = {
   _id: WORK_ID,
+  industry: INDUSTRY_ID,
   slug: 'hospitality-growth',
   type: 'Brand Transformation',
   title: 'Hospitality growth system',
@@ -90,11 +92,15 @@ describe('Work routes', () => {
       data: [work],
     });
 
-    const response = await request.get('/api/work/public');
+    const response = await request.get(
+      '/api/work/public?industry_slug=hospitality',
+    );
 
     expect(response.status).toBe(httpStatus.OK);
     expect(response.body.data).toEqual([work]);
-    expect(WorkService.getPublicWorks).toHaveBeenCalledTimes(1);
+    expect(WorkService.getPublicWorks).toHaveBeenCalledWith({
+      industry_slug: 'hospitality',
+    });
   });
 
   it('GET /public/:slug returns a published work', async () => {
@@ -136,6 +142,7 @@ describe('Work routes', () => {
     (WorkService.createWork as jest.Mock).mockResolvedValue(work);
     const payload = {
       slug: work.slug,
+      industry: INDUSTRY_ID,
       type: work.type,
       title: work.title,
       description: work.description,

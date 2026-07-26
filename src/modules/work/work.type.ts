@@ -1,4 +1,5 @@
 import { Document, Model, Types } from 'mongoose';
+import { TIndustrySummary } from '../industry/industry.type';
 
 export type TVideoSource = 'youtube' | 'url' | 'upload';
 
@@ -37,6 +38,8 @@ export type TWorkTestimonial = {
 
 export type TWork = {
   _id?: Types.ObjectId | string;
+  /** Mandatory owning Industry. `client.industry` remains a text snapshot. */
+  industry: Types.ObjectId | string;
   slug: string;
   type: string;
   title: string;
@@ -46,21 +49,26 @@ export type TWork = {
   metrics: TMetric[];
   tag_slugs: string[];
   hero_stats?: THeroStat[];
-  client?: TWorkClient;
-  situation_intro?: string;
-  challenge_intro?: string;
+  client?: TWorkClient | null;
+  situation_intro?: string | null;
+  challenge_intro?: string | null;
   challenge_items?: TChallengeItem[];
-  solution_intro?: string;
+  solution_intro?: string | null;
   solution_phases?: TSolutionPhase[];
-  outcome_desc?: string;
-  outcome_video?: TVideoRef;
-  outcome_video_thumbnail?: string;
-  testimonial?: TWorkTestimonial;
-  calendly_url?: string;
+  outcome_desc?: string | null;
+  outcome_video?: TVideoRef | null;
+  outcome_video_thumbnail?: string | null;
+  testimonial?: TWorkTestimonial | null;
+  calendly_url?: string | null;
   order: number;
   is_published: boolean;
   is_deleted?: boolean;
   deleted_at?: Date;
+};
+
+/** Populated API shape; null also represents a pre-migration legacy record. */
+export type TWorkPopulated = Omit<TWork, 'industry'> & {
+  industry: TIndustrySummary | null;
 };
 
 export interface TWorkDocument extends TWork, Document {

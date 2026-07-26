@@ -1,5 +1,9 @@
 import mongoose, { Query, Schema } from 'mongoose';
 import {
+  isSafeImageReference,
+  isSafeVideoReference,
+} from '../cms-content/cms-content.security';
+import {
   TShowcaseVideo,
   TShowcaseVideoDocument,
   TShowcaseVideoModel,
@@ -12,7 +16,21 @@ const videoRefSchema = new Schema(
       enum: ['youtube', 'url', 'upload'],
       required: true,
     },
-    value: { type: String, required: true, trim: true },
+    value: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: [2048, 'Video reference cannot exceed 2048 characters'],
+      validate: {
+        validator(
+          this: { source: 'youtube' | 'url' | 'upload' },
+          value: string,
+        ) {
+          return isSafeVideoReference(this.source, value);
+        },
+        message: 'Invalid video reference for the selected source',
+      },
+    },
   },
   { _id: false },
 );
@@ -31,6 +49,11 @@ const showcaseVideoSchema = new Schema<TShowcaseVideoDocument>(
     thumbnail: {
       type: String,
       trim: true,
+      maxlength: [2048, 'Thumbnail cannot exceed 2048 characters'],
+      validate: {
+        validator: isSafeImageReference,
+        message: 'Thumbnail must be a safe image reference',
+      },
     },
     alt: {
       type: String,
@@ -63,6 +86,15 @@ showcaseVideoSchema.index({
 });
 showcaseVideoSchema.index({ aspect: 1, is_active: 1, order: 1 });
 showcaseVideoSchema.index({ created_at: -1 });
+
+showcaseVideoSchema.pre('validate', function () {
+  if (this.video?.source !== 'youtube' && !this.thumbnail?.trim()) {
+    this.invalidate(
+      'thumbnail',
+      'Thumbnail is required for URL and uploaded showcase videos',
+    );
+  }
+});
 
 showcaseVideoSchema.methods.toJSON = function () {
   const obj = this.toObject();

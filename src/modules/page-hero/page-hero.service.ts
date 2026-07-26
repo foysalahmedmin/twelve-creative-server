@@ -16,7 +16,7 @@ export const getPublicPageHeroByPage = async (
 ): Promise<TPageHero | null> => {
   return await PageHero.findOne({ page, is_active: true })
     .select(
-      'page label title description thumbnail video trust_label primary_cta secondary_cta is_active -_id',
+      'page label title description thumbnail video trust_label primary_cta secondary_cta seo is_active -_id',
     )
     .lean();
 };
@@ -38,6 +38,8 @@ export const upsertPageHero = async (
     upsert: true,
     new: true,
     lean: true,
+    runValidators: true,
+    setDefaultsOnInsert: true,
   });
   return result!;
 };

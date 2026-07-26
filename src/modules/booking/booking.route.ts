@@ -36,7 +36,12 @@ router.get(
   BookingControllers.getPendingCount,
 );
 
-router.get('/', auth('admin', 'editor'), BookingControllers.getBookings);
+router.get(
+  '/',
+  auth('admin', 'editor'),
+  validation(BookingValidations.adminBookingsQuerySchema),
+  BookingControllers.getBookings,
+);
 
 router.get(
   '/:id',

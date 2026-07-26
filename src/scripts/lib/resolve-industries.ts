@@ -40,7 +40,7 @@ export const resolveSeedIndustries = async (
   );
   if (missing.length) {
     throw new Error(
-      `Required active Industries are missing: ${missing.join(', ')}`,
+      `Required${requireActive ? ' active' : ''} Industries are missing: ${missing.join(', ')}`,
     );
   }
 

@@ -13,6 +13,7 @@
  * Usage:
  *   pnpm seed:initial            # safe — only seeds empty modules
  *   pnpm seed:initial --force    # destructive — clears + reseeds everything
+ *   pnpm build && pnpm seed:initial:prod # production install/runtime
  *
  * Does NOT seed: users (use pnpm seed:admin), bookings, contact-messages
  * (those are user-submitted and should start empty).
@@ -37,12 +38,26 @@ import {
   buildIndustryMediaDocuments,
   INDUSTRY_REEL_MEDIA_SEEDS,
 } from './seeds/industry-media.seed';
+import {
+  attachIndustriesToTestimonials,
+  attachIndustriesToWorks,
+  backfillIndustryContentRelations,
+} from './seeds/industry-content.seed';
 import { seedProcessSection } from './seeds/process-section.seed';
+import { seedAboutPage } from './seeds/about-page.seed';
+import { seedLegalPages } from './seeds/legal-page.seed';
+import { migrateLegacySiteSettingContent } from './seeds/legacy-content-migration.seed';
+import { seedPageCtas } from './seeds/page-cta.seed';
+import { seedSharedSections } from './seeds/shared-section.seed';
+import { SharedSection } from '../modules/shared-section/shared-section.model';
+import { AboutPage } from '../modules/about-page/about-page.model';
 
 const FORCE = process.argv.includes('--force');
 
+// Stable, HTTPS, CC0 fallback media. Client-owned project footage can replace
+// these references through the admin without changing the seed contract.
 const SAMPLE_VIDEO =
-  'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
+  'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4';
 
 // ─── Testimonials ────────────────────────────────────────────────────────────
 const TESTIMONIALS = [
@@ -354,10 +369,13 @@ const INDUSTRIES = [
 ];
 
 // ─── Brands ──────────────────────────────────────────────────────────────────
-// Wordmark logos via placehold.co — clean text-based placeholders the client
-// can swap for real logos one by one through the admin UI.
+// Local typographic wordmarks avoid a third-party placeholder dependency. The
+// client can replace each fallback with an approved logo through the admin.
 const brandLogo = (name: string) =>
-  `https://placehold.co/240x80/0a0a0a/ffffff?text=${encodeURIComponent(name)}`;
+  `/brand-logos/${name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')}.svg`;
 
 const BRANDS = [
   'Casa del Mar',
@@ -440,7 +458,7 @@ const TEAM = [
     image:
       'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&h=600&fit=crop&auto=format',
     socials: {
-      linkedin: 'https://www.linkedin.com/in/carlosdoce',
+      linkedin: 'https://www.linkedin.com/in/carlos-a-doce',
     },
   },
   {
@@ -506,7 +524,6 @@ const WORKS = [
     client: {
       name: 'Hudson Hospitality',
       industry: 'Restaurant Group',
-      domain: 'hudsonhospitality.example',
       employees: '50-200',
       tags: ['Restaurant', 'Hospitality', 'Multi-location'],
       desc: 'A multi-concept restaurant group operating across hospitality categories — full-service dining, a sister pizzeria, and a private events space.',
@@ -587,7 +604,6 @@ const WORKS = [
     client: {
       name: 'Meridian Properties',
       industry: 'Real Estate Development',
-      domain: 'meridianproperties.example',
       employees: '20-50',
       tags: ['Luxury', 'Residential', 'Development'],
       desc: 'A real estate developer focused on luxury residential and mixed-use projects in coastal markets.',
@@ -668,7 +684,6 @@ const WORKS = [
     client: {
       name: 'Skyline Charter',
       industry: 'Private Aviation',
-      domain: 'skylinecharter.example',
       employees: '10-50',
       tags: ['Charter', 'Aviation', 'Founder-led'],
       desc: 'A founder-led private aviation brand operating charter services for high-trust buyers and corporate clients.',
@@ -965,6 +980,14 @@ const PAGE_HEROES = [
     primary_cta: { label: 'Start a Conversation', href: '/contact' },
     secondary_cta: { label: 'View Our Work', href: '/works' },
     video: { source: 'url', value: SAMPLE_VIDEO },
+    seo: {
+      title: 'Twelve Creative — We Build the Structure Behind Growth',
+      description:
+        'Twelve Creative builds positioning, creative, distribution, and conversion systems into one connected structure for growth.',
+      canonical_url: 'https://twelvecreative.io',
+      og_image: '/og-image.jpg',
+      no_index: false,
+    },
     is_active: true,
   },
   {
@@ -974,6 +997,13 @@ const PAGE_HEROES = [
       'Built for businesses that need strategy and execution in the same room.',
     description:
       'Twelve Creative was built from the belief that creative work should be connected to the business it serves. We exist to close the gap between strategy and execution.',
+    seo: {
+      title: 'About Twelve Creative | Strategy, Creative & Systems',
+      description:
+        'Learn how Twelve Creative connects strategy, creative execution, and growth systems.',
+      canonical_url: 'https://twelvecreative.io/about',
+      no_index: false,
+    },
     is_active: true,
   },
   {
@@ -982,6 +1012,13 @@ const PAGE_HEROES = [
     title: 'Work built around business context.',
     description:
       'Our work is not measured by how it looks in isolation. It is measured by whether it helps the business become clearer, more credible, and better equipped to convert attention into action.',
+    seo: {
+      title: 'Work | Twelve Creative Case Studies',
+      description:
+        'Explore Twelve Creative case studies across positioning, campaigns, content, websites, and conversion systems.',
+      canonical_url: 'https://twelvecreative.io/works',
+      no_index: false,
+    },
     is_active: true,
   },
   {
@@ -991,6 +1028,13 @@ const PAGE_HEROES = [
       'Built for businesses where trust, presentation, and follow-up matter.',
     description:
       'Twelve Creative works across industries where the buying decision depends on credibility, timing, taste, and a clear path to action.',
+    seo: {
+      title: 'Industries | Twelve Creative',
+      description:
+        'Industry-focused growth systems for hospitality, real estate, aviation, and professional services.',
+      canonical_url: 'https://twelvecreative.io/industries',
+      no_index: false,
+    },
     is_active: true,
   },
   {
@@ -999,6 +1043,13 @@ const PAGE_HEROES = [
     title: 'Marketing works better when the pieces are connected.',
     description:
       'Twelve Creative builds the creative, strategic, and operational pieces that help a business move from visibility to revenue.',
+    seo: {
+      title: 'What We Build | Positioning, Creative, Websites, Ads & CRM',
+      description:
+        'Explore connected positioning, creative, websites, distribution, CRM, automation, and growth support.',
+      canonical_url: 'https://twelvecreative.io/what-we-build',
+      no_index: false,
+    },
     is_active: true,
   },
   {
@@ -1007,6 +1058,28 @@ const PAGE_HEROES = [
     title: "Let's build something worth building.",
     description:
       'Tell us where the business is and what needs to move. If the project is aligned, we will reach out to schedule a conversation.',
+    seo: {
+      title: 'Contact Twelve Creative | Start a Conversation',
+      description:
+        'Start a conversation about positioning, creative, campaigns, websites, CRM, automation, and growth systems.',
+      canonical_url: 'https://twelvecreative.io/contact',
+      no_index: false,
+    },
+    is_active: true,
+  },
+  {
+    page: 'faq',
+    label: 'FAQ',
+    title: 'Frequently Asked Questions',
+    description:
+      'Clear answers about how we work, who we work with, and what to expect from an engagement.',
+    seo: {
+      title: 'Frequently Asked Questions | Twelve Creative',
+      description:
+        "Answers about Twelve Creative's services, process, engagements, pricing, and industry experience.",
+      canonical_url: 'https://twelvecreative.io/faq',
+      no_index: false,
+    },
     is_active: true,
   },
   {
@@ -1015,6 +1088,13 @@ const PAGE_HEROES = [
     title: 'Notes on positioning, creative, and growth systems.',
     description:
       'Field-tested thinking from the work we do for hospitality, real estate, aviation, and professional service operators.',
+    seo: {
+      title: 'Insights | Twelve Creative',
+      description:
+        'Notes on positioning, creative, distribution, and the systems behind real business growth.',
+      canonical_url: 'https://twelvecreative.io/blogs',
+      no_index: false,
+    },
     is_active: true,
   },
   {
@@ -1023,38 +1103,66 @@ const PAGE_HEROES = [
     title: 'Our process is built around clarity first.',
     description:
       'We do not begin by making random assets. We begin by understanding what the business is trying to move, where the friction is, and what structure needs to be built.',
+    seo: {
+      title: 'Process | How Twelve Creative Builds Growth Systems',
+      description:
+        'How Twelve Creative moves from diagnostics and positioning through creative, systems, launch, and optimization.',
+      canonical_url: 'https://twelvecreative.io/process',
+      no_index: false,
+    },
     is_active: true,
   },
 ];
 
 async function seedPageHeroes(): Promise<SeedReport> {
   const existing = await PageHero.countDocuments();
-
-  if (existing > 0 && !FORCE) {
-    return { module: 'page-hero', action: 'skipped', count: existing };
-  }
-
   if (FORCE) await PageHero.deleteMany({});
 
+  let inserted = 0;
+  let updated = 0;
   for (const doc of PAGE_HEROES) {
-    await PageHero.findOneAndUpdate(
-      { page: doc.page },
-      { $set: doc },
-      { upsert: true },
+    const current = FORCE
+      ? null
+      : await PageHero.findOne({ page: doc.page }).lean();
+    if (!current) {
+      await PageHero.create(doc);
+      inserted += 1;
+      continue;
+    }
+
+    const missingFields = buildMissingSeedFields(
+      current as unknown as Record<string, unknown>,
+      doc as unknown as Record<string, unknown>,
     );
+    if (Object.keys(missingFields).length) {
+      await PageHero.updateOne({ _id: current._id }, { $set: missingFields });
+      updated += 1;
+    }
   }
+
   return {
     module: 'page-hero',
-    action: existing ? 'replaced' : 'inserted',
-    count: PAGE_HEROES.length,
+    action: FORCE
+      ? existing
+        ? 'replaced'
+        : 'inserted'
+      : updated
+        ? 'updated'
+        : inserted
+          ? 'inserted'
+          : 'skipped',
+    count: FORCE ? PAGE_HEROES.length : inserted + updated,
   };
 }
 
 const SITE_SETTING = {
-  contact_email: 'hello@twelvecreative.io',
-  contact_phone: '+1 (000) 000-0000',
-  contact_address: 'New York, NY',
-  booking_notification_email: 'hello@twelvecreative.io',
+  contact_email: 'carlos@twelvecreative.io',
+  contact_phone: '+1 (951) 822-6223',
+  contact_address: '2121 NW 1st Place, Suite 203, Miami, FL 33127',
+  contact_whatsapp: '+1 (951) 822-6223',
+  contact_map_embed_url:
+    'https://maps.google.com/maps?q=2121+NW+1st+Place,+Miami,+FL+33127&t=&z=14&ie=UTF8&iwloc=&output=embed',
+  booking_notification_email: 'carlos@twelvecreative.io',
   social: {
     instagram: 'https://www.instagram.com/twelvecreative',
     linkedin: 'https://www.linkedin.com/company/twelvecreative',
@@ -1091,14 +1199,73 @@ const SITE_SETTING = {
     image:
       'https://images.unsplash.com/photo-1552664730-d307ca884978?w=768&h=768&fit=crop&auto=format',
   },
+  contact_page: {
+    inquiry: {
+      label: 'Send an Inquiry',
+      title: 'Tell us what needs to move.',
+      description:
+        'Whether the issue is unclear positioning, weak content, poor follow-up, a website that does not convert, or a campaign that needs structure — the first step is understanding the business.',
+    },
+    booking: {
+      label: 'Schedule a Call',
+      title: 'Pick a time that works for you.',
+      description:
+        "Skip the form and book a 30-minute call directly. We'll talk through where the business is, what you're trying to move, and whether the project is a fit.",
+    },
+    map: {
+      label: 'Visit / Mail Us',
+      title: 'Based in Miami.',
+      description:
+        'We work with operators across hospitality, real estate, aviation, and professional services — based in Miami with reach across the US.',
+    },
+  },
+  footer: {
+    description:
+      'Twelve Creative builds positioning, creative, distribution, websites, CRM, and automation systems for businesses that need a clearer path from attention to revenue.',
+    cta_text: 'Ready to build the structure behind your growth?',
+    cta_label: 'Start a conversation',
+    cta_href: '/contact',
+  },
 };
 
 // ─── Runner ──────────────────────────────────────────────────────────────────
 
 interface SeedReport {
   module: string;
-  action: 'inserted' | 'skipped' | 'replaced';
+  action: 'inserted' | 'skipped' | 'replaced' | 'updated';
   count: number;
+}
+
+const isPlainObject = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' &&
+  value !== null &&
+  !Array.isArray(value) &&
+  !(value instanceof Date);
+
+/** Returns Mongo dot-paths that are absent from an existing document. */
+function buildMissingSeedFields(
+  current: Record<string, unknown>,
+  defaults: Record<string, unknown>,
+  prefix = '',
+): Record<string, unknown> {
+  const fields: Record<string, unknown> = {};
+
+  for (const [key, defaultValue] of Object.entries(defaults)) {
+    const path = prefix ? `${prefix}.${key}` : key;
+    const currentValue = current[key];
+    if (currentValue === undefined) {
+      fields[path] = defaultValue;
+      continue;
+    }
+    if (isPlainObject(defaultValue) && isPlainObject(currentValue)) {
+      Object.assign(
+        fields,
+        buildMissingSeedFields(currentValue, defaultValue, path),
+      );
+    }
+  }
+
+  return fields;
 }
 
 async function seedModule<T>(
@@ -1130,11 +1297,45 @@ async function seedModule<T>(
   };
 }
 
+/**
+ * Industry is the parent taxonomy for several seeded modules. In safe mode,
+ * insert any missing canonical slug individually instead of skipping the
+ * entire collection because one administrator-created Industry exists.
+ */
+async function seedIndustries(): Promise<SeedReport> {
+  if (FORCE) return await seedModule('industry', Industry, INDUSTRIES);
+
+  const existing = await Industry.find({
+    slug: { $in: INDUSTRIES.map((industry) => industry.slug) },
+  })
+    .select('slug -_id')
+    .lean();
+  const existingSlugs = new Set(existing.map((industry) => industry.slug));
+  const missing = INDUSTRIES.filter(
+    (industry) => !existingSlugs.has(industry.slug),
+  );
+
+  if (!missing.length) {
+    return { module: 'industry', action: 'skipped', count: existing.length };
+  }
+
+  await Industry.insertMany(missing);
+  return { module: 'industry', action: 'inserted', count: missing.length };
+}
+
 async function seedSiteSetting(): Promise<SeedReport> {
   const existing = await SiteSetting.findOne();
 
   if (existing && !FORCE) {
-    return { module: 'site-setting', action: 'skipped', count: 1 };
+    const missingFields = buildMissingSeedFields(
+      existing.toObject() as unknown as Record<string, unknown>,
+      SITE_SETTING as unknown as Record<string, unknown>,
+    );
+    if (!Object.keys(missingFields).length) {
+      return { module: 'site-setting', action: 'skipped', count: 0 };
+    }
+    await SiteSetting.updateOne({ _id: existing._id }, { $set: missingFields });
+    return { module: 'site-setting', action: 'updated', count: 1 };
   }
 
   if (existing && FORCE) {
@@ -1183,14 +1384,35 @@ async function run(): Promise<void> {
       });
     }
 
-    reports.push(await seedModule('testimonial', Testimonial, TESTIMONIALS));
     reports.push(await seedModule('service', Service, SERVICES));
 
     // Industries are the canonical parent for Featured Projects and Showcase
     // Videos. Resolve their stable slugs only after the Industry seed has run,
     // then build dependent documents with real ObjectId references.
-    reports.push(await seedModule('industry', Industry, INDUSTRIES));
-    const industryIds = await resolveSeedIndustries();
+    reports.push(await seedIndustries());
+    // An administrator may intentionally keep a canonical Industry inactive.
+    // Relationships still need the stable parent id; public queries enforce
+    // active-parent visibility independently.
+    const industryIds = await resolveSeedIndustries({ requireActive: false });
+    if (!FORCE) {
+      const relationReport =
+        await backfillIndustryContentRelations(industryIds);
+      reports.push({
+        module: 'industry-relations',
+        action:
+          relationReport.testimonialCount + relationReport.workCount > 0
+            ? 'updated'
+            : 'skipped',
+        count: relationReport.testimonialCount + relationReport.workCount,
+      });
+    }
+    reports.push(
+      await seedModule(
+        'testimonial',
+        Testimonial,
+        attachIndustriesToTestimonials(TESTIMONIALS, industryIds),
+      ),
+    );
     const { featuredProjects, showcaseVideos } =
       buildIndustryMediaDocuments(industryIds);
     reports.push(
@@ -1203,10 +1425,38 @@ async function run(): Promise<void> {
     reports.push(await seedModule('brand', Brand, BRANDS));
     reports.push(await seedModule('faq', Faq, FAQS));
     reports.push(await seedModule('team-member', TeamMember, TEAM));
-    reports.push(await seedModule('work', Work, WORKS));
+    reports.push(
+      await seedModule(
+        'work',
+        Work,
+        attachIndustriesToWorks(WORKS, industryIds),
+      ),
+    );
     reports.push(await seedPageHeroes());
     reports.push(await seedSiteSetting());
     reports.push(await seedProcessSection(FORCE));
+    reports.push(await seedPageCtas(FORCE));
+
+    const [existingDifference, existingAbout] = FORCE
+      ? [true, true]
+      : await Promise.all([
+          SharedSection.exists({ key: 'difference' }),
+          AboutPage.exists({}),
+        ]);
+    reports.push(await seedSharedSections(FORCE));
+    reports.push(await seedAboutPage(FORCE));
+    if (!FORCE) {
+      const migratedLegacyContent = await migrateLegacySiteSettingContent({
+        differenceWasMissing: !existingDifference,
+        aboutWasMissing: !existingAbout,
+      });
+      reports.push({
+        module: 'legacy-content',
+        action: migratedLegacyContent ? 'updated' : 'skipped',
+        count: migratedLegacyContent,
+      });
+    }
+    reports.push(await seedLegalPages(FORCE));
 
     console.log('\n📊 Seed report:');
     for (const r of reports) {
@@ -1215,7 +1465,9 @@ async function run(): Promise<void> {
           ? '✅'
           : r.action === 'replaced'
             ? '♻️ '
-            : '⏭️ ';
+            : r.action === 'updated'
+              ? '🔄'
+              : '⏭️ ';
       console.log(
         `  ${icon} ${r.module.padEnd(20)} ${r.action.padEnd(10)} ${r.count} doc(s)`,
       );

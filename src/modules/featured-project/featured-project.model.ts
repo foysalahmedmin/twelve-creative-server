@@ -1,5 +1,9 @@
 import mongoose, { Query, Schema } from 'mongoose';
 import {
+  isSafeImageReference,
+  isSafeVideoReference,
+} from '../cms-content/cms-content.security';
+import {
   TFeaturedProject,
   TFeaturedProjectDocument,
   TFeaturedProjectModel,
@@ -12,7 +16,21 @@ const videoRefSchema = new Schema(
       enum: ['youtube', 'url', 'upload'],
       required: true,
     },
-    value: { type: String, required: true, trim: true },
+    value: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: [2048, 'Video reference cannot exceed 2048 characters'],
+      validate: {
+        validator(
+          this: { source: 'youtube' | 'url' | 'upload' },
+          value: string,
+        ) {
+          return isSafeVideoReference(this.source, value);
+        },
+        message: 'Invalid video reference for the selected source',
+      },
+    },
   },
   { _id: false },
 );
@@ -41,6 +59,11 @@ const featuredProjectSchema = new Schema<TFeaturedProjectDocument>(
       type: String,
       required: [true, 'Thumbnail is required'],
       trim: true,
+      maxlength: [2048, 'Thumbnail cannot exceed 2048 characters'],
+      validate: {
+        validator: isSafeImageReference,
+        message: 'Thumbnail must be a safe image reference',
+      },
     },
     video: {
       type: videoRefSchema,

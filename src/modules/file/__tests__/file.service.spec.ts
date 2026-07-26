@@ -159,7 +159,9 @@ describe('FileService.deleteFilePermanent', () => {
 
     await FileService.deleteFilePermanent('id');
 
-    expect(deleteFiles).toHaveBeenCalledWith(file.metadata?.path);
+    expect(deleteFiles).toHaveBeenCalledWith(file.metadata?.path, undefined, {
+      throwOnError: true,
+    });
     expect(FileRepository.hardDeleteById).toHaveBeenCalledWith('id');
   });
 });
@@ -420,6 +422,40 @@ describe('FileService complete contract', () => {
     expect(FileRepository.hardDeleteById).toHaveBeenCalledWith('cloud-id');
   });
 
+  it('retains the database record when GCS deletion fails', async () => {
+    const cloud = mockCloudFile();
+    const failedDelete = jest
+      .fn()
+      .mockRejectedValue(new Error('storage unavailable'));
+    storageClient.bucket.mockReturnValueOnce({
+      file: jest.fn(() => ({ delete: failedDelete })),
+    });
+    (FileRepository.findByIdWithDeleted as jest.Mock).mockResolvedValue(cloud);
+
+    await expect(
+      FileService.deleteFilePermanent('cloud-id'),
+    ).rejects.toMatchObject({
+      status: httpStatus.INTERNAL_SERVER_ERROR,
+      message: expect.stringContaining('record was retained'),
+    });
+    expect(FileRepository.hardDeleteById).not.toHaveBeenCalled();
+  });
+
+  it('retains the database record when local physical deletion fails', async () => {
+    const local = mockLocalFile();
+    const { deleteFiles } = jest.requireMock('../../../utils/delete-files');
+    deleteFiles.mockRejectedValueOnce(new Error('permission denied'));
+    (FileRepository.findByIdWithDeleted as jest.Mock).mockResolvedValue(local);
+
+    await expect(
+      FileService.deleteFilePermanent('local-id'),
+    ).rejects.toMatchObject({
+      status: httpStatus.INTERNAL_SERVER_ERROR,
+      message: expect.stringContaining('record was retained'),
+    });
+    expect(FileRepository.hardDeleteById).not.toHaveBeenCalled();
+  });
+
   it('bulk permanently deletes physical files and reports missing ids', async () => {
     const local = { ...mockLocalFile(), _id: { toString: () => 'local' } };
     const cloud = { ...mockCloudFile(), _id: { toString: () => 'cloud' } };
@@ -432,11 +468,12 @@ describe('FileService complete contract', () => {
     await expect(
       FileService.deleteFilesPermanent(['local', 'cloud', 'missing']),
     ).resolves.toEqual({ count: 2, not_found_ids: ['missing'] });
-    expect(deleteFiles).toHaveBeenCalledWith(local.metadata!.path);
-    expect(FileRepository.hardDeleteManyByIds).toHaveBeenCalledWith([
-      'local',
-      'cloud',
-    ]);
+    expect(deleteFiles).toHaveBeenCalledWith(local.metadata!.path, undefined, {
+      throwOnError: true,
+    });
+    expect(FileRepository.hardDeleteById).toHaveBeenNthCalledWith(1, 'local');
+    expect(FileRepository.hardDeleteById).toHaveBeenNthCalledWith(2, 'cloud');
+    expect(FileRepository.hardDeleteManyByIds).not.toHaveBeenCalled();
   });
 
   it('restores one deleted file', async () => {

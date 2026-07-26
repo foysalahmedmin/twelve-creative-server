@@ -1,5 +1,9 @@
 import httpStatus from 'http-status';
 import AppError from '../../builder/app-error';
+import {
+  isSafeImageReference,
+  isSafeVideoReference,
+} from '../cms-content/cms-content.security';
 import * as IndustryRepository from '../industry/industry.repository';
 import * as ShowcaseVideoRepository from './showcase-video.repository';
 import { TShowcaseVideo, TShowcaseVideoPopulated } from './showcase-video.type';
@@ -36,11 +40,36 @@ const ensureRenderableThumbnail = (
   }
 };
 
+const ensureRenderableMedia = (
+  video: TShowcaseVideo['video'] | undefined,
+  thumbnail: string | undefined,
+): void => {
+  if (!video || !isSafeVideoReference(video.source, video.value)) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'Showcase video reference is invalid',
+    );
+  }
+
+  if (
+    thumbnail !== undefined &&
+    (typeof thumbnail !== 'string' ||
+      (thumbnail.trim() && !isSafeImageReference(thumbnail)))
+  ) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'Showcase video thumbnail reference is invalid',
+    );
+  }
+
+  ensureRenderableThumbnail(video, thumbnail);
+};
+
 export const createShowcaseVideo = async (
   data: Partial<TShowcaseVideo>,
 ): Promise<TShowcaseVideoPopulated> => {
   const industry = await ensureIndustryExists(data.industry);
-  ensureRenderableThumbnail(data.video, data.thumbnail);
+  ensureRenderableMedia(data.video, data.thumbnail);
   const created = await ShowcaseVideoRepository.create({ ...data, industry });
   return (await ShowcaseVideoRepository.findByIdLean(created._id.toString()))!;
 };
@@ -91,7 +120,7 @@ export const updateShowcaseVideo = async (
   if (payload.industry !== undefined) {
     nextPayload.industry = await ensureIndustryExists(payload.industry);
   }
-  ensureRenderableThumbnail(
+  ensureRenderableMedia(
     payload.video ?? exists.video,
     payload.thumbnail ?? exists.thumbnail,
   );
@@ -162,7 +191,7 @@ export const restoreShowcaseVideo = async (
     throw new AppError(httpStatus.NOT_FOUND, 'Showcase video not found');
   }
   await ensureIndustryExists(exists.industry);
-  ensureRenderableThumbnail(exists.video, exists.thumbnail);
+  ensureRenderableMedia(exists.video, exists.thumbnail);
 
   const restored = await ShowcaseVideoRepository.restoreById(id);
   if (!restored) {

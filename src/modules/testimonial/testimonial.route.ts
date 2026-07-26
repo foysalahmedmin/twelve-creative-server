@@ -7,13 +7,18 @@ import * as TestimonialValidations from './testimonial.validator';
 const router = express.Router();
 
 // ─── Public ──────────────────────────────────────────────────────────────────
-router.get('/public', TestimonialControllers.getPublicTestimonials);
+router.get(
+  '/public',
+  validation(TestimonialValidations.publicTestimonialsQuerySchema),
+  TestimonialControllers.getPublicTestimonials,
+);
 
 // ─── Admin ───────────────────────────────────────────────────────────────────
 
 router.get(
   '/',
   auth('admin', 'editor'),
+  validation(TestimonialValidations.adminTestimonialsQuerySchema),
   TestimonialControllers.getTestimonials,
 );
 

@@ -13,8 +13,14 @@ export const createTestimonial = catchAsync(async (req, res) => {
   });
 });
 
-export const getPublicTestimonials = catchAsync(async (_req, res) => {
-  const result = await TestimonialServices.getPublicTestimonials();
+export const getPublicTestimonials = catchAsync(async (req, res) => {
+  const industrySlug =
+    typeof req.query.industry_slug === 'string'
+      ? req.query.industry_slug.trim().toLowerCase()
+      : undefined;
+  const result = await TestimonialServices.getPublicTestimonials({
+    industry_slug: industrySlug,
+  });
   sendResponse(res, {
     status: httpStatus.OK,
     success: true,

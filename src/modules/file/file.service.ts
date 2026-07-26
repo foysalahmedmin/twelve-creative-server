@@ -48,6 +48,47 @@ const cleanupCloudResults = async (
   );
 };
 
+const deletePhysicalFile = async (file: TFile): Promise<void> => {
+  try {
+    if (file.provider === 'local') {
+      if (!file.metadata?.path) {
+        throw new Error('Local storage path is missing');
+      }
+      await deleteFilesFromDisk(file.metadata.path, undefined, {
+        throwOnError: true,
+      });
+      return;
+    }
+
+    if (file.provider === 'gcs') {
+      if (!file.metadata?.bucket) {
+        throw new Error('Cloud storage bucket is missing');
+      }
+      await storageClient
+        .bucket(file.metadata.bucket)
+        .file(file.filename)
+        .delete();
+      return;
+    }
+
+    throw new Error('Unsupported storage provider');
+  } catch (error: unknown) {
+    // Missing physical objects are an idempotent success: a prior attempt may
+    // have removed the object before its database operation failed.
+    const code = (error as { code?: number | string }).code;
+    if (code === 404 || code === 'ENOENT') return;
+
+    console.error(
+      `Physical file deletion failed (${file.provider}/${file.filename}):`,
+      (error as Error).message,
+    );
+    throw new AppError(
+      httpStatus.INTERNAL_SERVER_ERROR,
+      'Physical storage deletion failed; the file record was retained for retry',
+    );
+  }
+};
+
 // ─── Create (Local) ─────────────────────────────────────────────────────────
 
 export const createLocalFile = async (
@@ -299,24 +340,7 @@ export const deleteFilePermanent = async (id: string): Promise<void> => {
     throw new AppError(httpStatus.NOT_FOUND, 'File not found');
   }
 
-  // Delete physical file based on provider
-  if (file.provider === 'local' && file.metadata?.path) {
-    await deleteFilesFromDisk(file.metadata.path);
-  } else if (file.provider === 'gcs' && file.metadata?.bucket) {
-    try {
-      const bucket = storageClient.bucket(file.metadata.bucket);
-      const cloudFile = bucket.file(file.filename);
-      await cloudFile.delete();
-    } catch (error: unknown) {
-      if ((error as { code?: number }).code !== 404) {
-        console.error(
-          `GCS Delete Error (${file.filename}):`,
-          (error as Error).message,
-        );
-      }
-    }
-  }
-
+  await deletePhysicalFile(file);
   await FileRepository.hardDeleteById(id);
 };
 
@@ -330,30 +354,15 @@ export const deleteFilesPermanent = async (
   const foundIds = files.map((file) => file._id!.toString());
   const notFoundIds = ids.filter((id) => !foundIds.includes(id));
 
-  // Batch delete physical files
+  let deletedCount = 0;
   for (const file of files) {
-    if (file.provider === 'local' && file.metadata?.path) {
-      await deleteFilesFromDisk(file.metadata.path);
-    } else if (file.provider === 'gcs' && file.metadata?.bucket) {
-      try {
-        const bucket = storageClient.bucket(file.metadata.bucket);
-        const cloudFile = bucket.file(file.filename);
-        await cloudFile.delete();
-      } catch (error: unknown) {
-        if ((error as { code?: number }).code !== 404) {
-          console.warn(
-            `GCS Batch Delete Fail (${file.filename}):`,
-            (error as Error).message,
-          );
-        }
-      }
-    }
+    await deletePhysicalFile(file);
+    await FileRepository.hardDeleteById(file._id!.toString());
+    deletedCount += 1;
   }
 
-  await FileRepository.hardDeleteManyByIds(foundIds);
-
   return {
-    count: foundIds.length,
+    count: deletedCount,
     not_found_ids: notFoundIds,
   };
 };

@@ -97,6 +97,19 @@ describe('local file middleware', () => {
     expect(uploadDirectoryContents()).toEqual([]);
   });
 
+  it('rejects active SVG content before a file is written', async () => {
+    const response = await supertest(buildApp())
+      .post('/upload')
+      .attach('file', Buffer.from('<svg onload="alert(1)"></svg>'), {
+        filename: 'active.svg',
+        contentType: 'image/svg+xml',
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toContain('Invalid file type');
+    expect(uploadDirectoryContents()).toEqual([]);
+  });
+
   it('removes a newly written file when downstream validation fails', async () => {
     const response = await supertest(
       buildApp((_req, _res, next) => {

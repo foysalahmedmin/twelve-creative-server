@@ -21,7 +21,10 @@ const industry = {
 const video = {
   _id: VIDEO_ID,
   industry,
-  video: { source: 'url' as const, value: '/showcase.mp4' },
+  video: {
+    source: 'url' as const,
+    value: 'https://media.example.com/showcase.mp4',
+  },
   thumbnail: '/showcase.jpg',
   alt: 'Hospitality showcase',
   aspect: 'reel' as const,
@@ -61,7 +64,7 @@ describe('ShowcaseVideoService', () => {
     await expect(
       ShowcaseVideoService.createShowcaseVideo({
         industry: INDUSTRY_ID,
-        video: { source: 'url', value: '/showcase.mp4' },
+        video: { source: 'url', value: 'https://media.test/showcase.mp4' },
         alt: 'Missing poster',
         aspect: 'reel',
         order: 0,
@@ -162,7 +165,10 @@ describe('ShowcaseVideoService complete contract', () => {
   it('allows a YouTube video without a thumbnail', async () => {
     const youtubeVideo = {
       ...video,
-      video: { source: 'youtube' as const, value: 'youtube-id' },
+      video: {
+        source: 'youtube' as const,
+        value: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+      },
       thumbnail: undefined,
     };
     (IndustryRepository.findByIdLean as jest.Mock).mockResolvedValue(industry);
@@ -442,6 +448,59 @@ describe('ShowcaseVideoService complete contract', () => {
     ).rejects.toMatchObject({ status: httpStatus.BAD_REQUEST });
     expect(ShowcaseVideoRepository.restoreById).not.toHaveBeenCalled();
   });
+
+  it.each([
+    {
+      invalidMedia: {
+        video: {
+          source: 'youtube' as const,
+          value: 'https://www.youtube.com/',
+        },
+      },
+      message: 'Showcase video reference is invalid',
+    },
+    {
+      invalidMedia: {
+        video: { source: 'url' as const, value: undefined as never },
+      },
+      message: 'Showcase video reference is invalid',
+    },
+    {
+      invalidMedia: {
+        video: {
+          source: 'vimeo' as never,
+          value: 'https://media.test/showcase.mp4',
+        },
+      },
+      message: 'Showcase video reference is invalid',
+    },
+    {
+      invalidMedia: { thumbnail: 'javascript:alert(1)' },
+      message: 'Showcase video thumbnail reference is invalid',
+    },
+  ])(
+    'rejects restoring invalid legacy showcase media: $message',
+    async ({ invalidMedia, message }) => {
+      (
+        ShowcaseVideoRepository.findByIdWithDeleted as jest.Mock
+      ).mockResolvedValue({
+        ...video,
+        ...invalidMedia,
+        industry: INDUSTRY_ID,
+      });
+      (IndustryRepository.findByIdLean as jest.Mock).mockResolvedValue(
+        industry,
+      );
+
+      await expect(
+        ShowcaseVideoService.restoreShowcaseVideo(VIDEO_ID),
+      ).rejects.toMatchObject({
+        status: httpStatus.BAD_REQUEST,
+        message,
+      });
+      expect(ShowcaseVideoRepository.restoreById).not.toHaveBeenCalled();
+    },
+  );
 
   it('rejects restore when the repository reports a non-deleted record', async () => {
     (

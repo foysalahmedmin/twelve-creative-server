@@ -1,4 +1,5 @@
 import express from 'express';
+import aboutPageRoutes from '../modules/about-page/about-page.route';
 import archiveRoutes from '../modules/archive/archive.route';
 import authRoutes from '../modules/auth/auth.route';
 import bookingRoutes from '../modules/booking/booking.route';
@@ -9,6 +10,8 @@ import faqRoutes from '../modules/faq/faq.route';
 import featuredProjectRoutes from '../modules/featured-project/featured-project.route';
 import fileRoutes from '../modules/file/file.route';
 import industryRoutes from '../modules/industry/industry.route';
+import legalPageRoutes from '../modules/legal-page/legal-page.route';
+import pageCtaRoutes from '../modules/page-cta/page-cta.route';
 import pageHeroRoutes from '../modules/page-hero/page-hero.route';
 import processSectionRoutes from '../modules/process-section/process-section.route';
 import ticketRoutes from '../modules/ticket/ticket.route';
@@ -20,6 +23,7 @@ import NotificationRecipientRoutes from '../modules/notification-recipient/notif
 import notificationRoutes from '../modules/notification/notification.route';
 import showcaseVideoRoutes from '../modules/showcase-video/showcase-video.route';
 import siteSettingRoutes from '../modules/site-setting/site-setting.route';
+import sharedSectionRoutes from '../modules/shared-section/shared-section.route';
 import teamMemberRoutes from '../modules/team-member/team-member.route';
 import testimonialRoutes from '../modules/testimonial/testimonial.route';
 import userRoutes from '../modules/user/user.route';
@@ -111,6 +115,22 @@ const moduleRoutes = [
   {
     path: '/page-hero',
     route: pageHeroRoutes,
+  },
+  {
+    path: '/page-ctas',
+    route: pageCtaRoutes,
+  },
+  {
+    path: '/shared-sections',
+    route: sharedSectionRoutes,
+  },
+  {
+    path: '/about-page',
+    route: aboutPageRoutes,
+  },
+  {
+    path: '/legal-pages',
+    route: legalPageRoutes,
   },
   {
     path: '/process-section',

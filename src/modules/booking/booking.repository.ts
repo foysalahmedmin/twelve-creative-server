@@ -2,6 +2,38 @@ import AppQueryFind from '../../builder/app-query-find';
 import { Booking } from './booking.model';
 import { TBooking, TBookingDocument } from './booking.type';
 
+const BOOKING_SORT_FIELDS: (keyof TBooking)[] = [
+  'created_at',
+  'updated_at',
+  'name',
+  'email',
+  'company',
+  'status',
+  'preferred_date',
+  'lead_source',
+];
+
+const BOOKING_SELECT_FIELDS: (keyof TBooking)[] = [
+  '_id',
+  'name',
+  'email',
+  'phone',
+  'company',
+  'industry_id',
+  'industry_name_snapshot',
+  'industry',
+  'timeline',
+  'preferred_date',
+  'preferred_time',
+  'message',
+  'status',
+  'internal_note',
+  'source',
+  'lead_source',
+  'created_at',
+  'updated_at',
+];
+
 export const create = async (data: Partial<TBooking>): Promise<TBooking> => {
   const result = await Booking.create(data);
   return result.toObject();
@@ -34,13 +66,14 @@ export const findAdminPaginated = async (
   if (typeof qp.filter === 'string' && statuses.includes(qp.filter)) {
     qp.status = qp.filter;
   }
+  if (!qp.sort) qp.sort = '-created_at';
 
   const q = new AppQueryFind(Booking, qp)
-    .search(['name', 'email', 'company', 'industry'])
-    .filter()
-    .sort()
+    .search(['name', 'email', 'company', 'industry', 'industry_name_snapshot'])
+    .filter(['status', 'industry_id', 'lead_source'])
+    .sort(BOOKING_SORT_FIELDS)
     .paginate()
-    .fields()
+    .fields(BOOKING_SELECT_FIELDS)
     .tap((c) => c.lean());
 
   return await q.execute([
@@ -53,6 +86,15 @@ export const findAdminPaginated = async (
 
 export const countPending = async (): Promise<number> => {
   return await Booking.countDocuments({ status: 'pending' });
+};
+
+/**
+ * Includes soft-deleted bookings because their Industry relation is retained
+ * as historical data. The `{ industry_id, created_at }` index supports this
+ * equality query through its leading field.
+ */
+export const countByIndustry = async (industryId: string): Promise<number> => {
+  return await Booking.countDocuments({ industry_id: industryId });
 };
 
 export const updateById = async (

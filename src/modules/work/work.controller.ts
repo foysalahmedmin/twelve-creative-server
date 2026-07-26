@@ -13,8 +13,14 @@ export const createWork = catchAsync(async (req, res) => {
   });
 });
 
-export const getPublicWorks = catchAsync(async (_req, res) => {
-  const result = await WorkServices.getPublicWorks();
+export const getPublicWorks = catchAsync(async (req, res) => {
+  const industrySlug =
+    typeof req.query.industry_slug === 'string'
+      ? req.query.industry_slug.trim().toLowerCase()
+      : undefined;
+  const result = await WorkServices.getPublicWorks({
+    industry_slug: industrySlug,
+  });
   sendResponse(res, {
     status: httpStatus.OK,
     success: true,

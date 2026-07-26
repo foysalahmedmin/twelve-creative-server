@@ -1,4 +1,8 @@
 import { z } from 'zod';
+import {
+  isSafeImageReference,
+  isSafeVideoReference,
+} from '../cms-content/cms-content.security';
 
 const idSchema = z.string().refine((val) => /^[0-9a-fA-F]{24}$/.test(val), {
   message: 'Invalid ID format',
@@ -11,10 +15,19 @@ const urlOrPath = z
   .min(1, 'Cannot be empty')
   .max(2048, 'Too long');
 
-const videoRefSchema = z.object({
-  source: videoSourceEnum,
-  value: urlOrPath,
+const imageReference = urlOrPath.refine(isSafeImageReference, {
+  message: 'Must be a safe HTTP(S) URL or root-relative path',
 });
+
+const videoRefSchema = z
+  .object({
+    source: videoSourceEnum,
+    value: urlOrPath,
+  })
+  .refine((video) => isSafeVideoReference(video.source, video.value), {
+    message: 'Video source and value do not form a safe video reference',
+    path: ['value'],
+  });
 
 const aspectEnum = z.enum(['reel', 'landscape']);
 
@@ -22,7 +35,7 @@ const baseBody = z.object({
   title: z.string().trim().min(2).max(200),
   industry: idSchema,
   aspect: aspectEnum.optional(),
-  thumbnail: urlOrPath,
+  thumbnail: imageReference,
   video: videoRefSchema,
   order: z.coerce.number().int().nonnegative().optional(),
   is_active: z
@@ -77,6 +90,7 @@ export const reorderFeaturedProjectsValidationSchema = z.object({
           order: z.coerce.number().int().nonnegative(),
         }),
       )
-      .min(1, 'At least one item is required'),
+      .min(1, 'At least one item is required')
+      .max(100),
   }),
 });

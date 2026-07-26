@@ -24,7 +24,10 @@ const project = {
   industry,
   aspect: 'reel' as const,
   thumbnail: '/hotel.jpg',
-  video: { source: 'url' as const, value: '/hotel.mp4' },
+  video: {
+    source: 'url' as const,
+    value: 'https://media.example.com/hotel.mp4',
+  },
   order: 0,
   is_active: true,
 };
@@ -354,6 +357,56 @@ describe('FeaturedProjectService complete contract', () => {
       PROJECT_ID,
     );
   });
+
+  it.each([
+    {
+      invalidMedia: {
+        video: { source: 'url' as const, value: 'http://media.test/hotel.mp4' },
+      },
+      message: 'Featured project video reference is invalid',
+    },
+    {
+      invalidMedia: {
+        video: {
+          source: 'vimeo' as never,
+          value: 'https://media.test/hotel.mp4',
+        },
+      },
+      message: 'Featured project video reference is invalid',
+    },
+    {
+      invalidMedia: {
+        video: { source: 'url' as const, value: undefined as never },
+      },
+      message: 'Featured project video reference is invalid',
+    },
+    {
+      invalidMedia: { thumbnail: 'javascript:alert(1)' },
+      message: 'Featured project thumbnail reference is invalid',
+    },
+  ])(
+    'rejects restoring a project with invalid legacy media: $message',
+    async ({ invalidMedia, message }) => {
+      (
+        FeaturedProjectRepository.findByIdWithDeletedLean as jest.Mock
+      ).mockResolvedValue({
+        ...project,
+        ...invalidMedia,
+        industry: INDUSTRY_ID,
+      });
+      (IndustryRepository.findByIdLean as jest.Mock).mockResolvedValue(
+        industry,
+      );
+
+      await expect(
+        FeaturedProjectService.restoreFeaturedProject(PROJECT_ID),
+      ).rejects.toMatchObject({
+        status: httpStatus.BAD_REQUEST,
+        message,
+      });
+      expect(FeaturedProjectRepository.restoreById).not.toHaveBeenCalled();
+    },
+  );
 
   it('rejects restore when the project does not exist with deleted records', async () => {
     (

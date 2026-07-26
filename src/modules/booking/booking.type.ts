@@ -21,6 +21,11 @@ export type TBooking = {
   email: string;
   phone?: string;
   company?: string;
+  /** Optional relational Industry selected from the active public list. */
+  industry_id?: Types.ObjectId | string;
+  /** Immutable display value captured when the booking is submitted. */
+  industry_name_snapshot?: string;
+  /** @deprecated Kept as the historical/search-compatible display field. */
   industry?: string;
   timeline?: string;
   preferred_date?: Date;
@@ -32,6 +37,8 @@ export type TBooking = {
   lead_source?: TLeadSource;
   is_deleted?: boolean;
   deleted_at?: Date;
+  created_at?: Date;
+  updated_at?: Date;
 };
 
 export interface TBookingDocument extends TBooking, Document {
