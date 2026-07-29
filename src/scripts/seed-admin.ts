@@ -1,7 +1,10 @@
 /**
- * Seed the first admin user.
+ * Seed / sync the admin user from env (env is the source of truth).
  *
- * Idempotent: re-running won't duplicate or overwrite the existing admin.
+ * Idempotent: won't duplicate. If the admin already exists it is SYNCED to the
+ * env values — name + password are reset and the account is ensured admin +
+ * verified. (Re-running therefore resets the admin password to ADMIN_SEED_PASSWORD;
+ * change it in the panel afterwards if you want a secret the env doesn't hold.)
  * Reads credentials from env:
  *   ADMIN_SEED_NAME       (default: "Twelve Creative Admin")
  *   ADMIN_SEED_EMAIL      (required)
@@ -48,14 +51,16 @@ const run = async (): Promise<void> => {
     const existing = await User.isUserExistByEmail(email);
 
     if (existing) {
-      if (existing.role !== 'admin') {
-        existing.role = 'admin';
-        existing.status = 'in-progress';
-        await existing.save();
-        console.log(`✅ Promoted existing user ${email} to admin.`);
-      } else {
-        console.log(`ℹ️  Admin ${email} already exists. No changes.`);
-      }
+      // Env is the source of truth: keep the admin's name + password in sync
+      // with ADMIN_SEED_* and ensure the account stays an active admin.
+      existing.name = name;
+      existing.password = password; // pre('save') hook re-hashes it
+      existing.role = 'admin';
+      existing.is_verified = true;
+      await existing.save();
+      console.log(
+        `✅ Admin ${email} synced from env (name + password reset to ADMIN_SEED_* values).`,
+      );
       return;
     }
 
