@@ -6,6 +6,7 @@ import multer, { FileFilterCallback } from 'multer';
 import { randomUUID } from 'node:crypto';
 import path from 'path';
 import AppError from '../builder/app-error';
+import config from '../config/env';
 import {
   getCanonicalUploadExtension,
   isSupportedLocalUploadMime,
@@ -87,7 +88,9 @@ const file = (...files: TFile[]) => {
     destination: (_req, file, cb) => {
       const folder = files.find((f) => f.name === file.fieldname)?.folder || '';
       const safeFolder = folder.replace(/^\/+/, ''); // remove leading slash
-      const dir = path.join('uploads', safeFolder);
+      // Absolute, persistent directory — never resolved against
+      // process.cwd() (which changes on every atomic-release deploy).
+      const dir = path.join(config.upload_dir, safeFolder);
       fs.mkdirSync(dir, { recursive: true });
       cb(null, dir);
     },

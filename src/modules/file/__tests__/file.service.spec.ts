@@ -5,6 +5,7 @@
  */
 
 import httpStatus from 'http-status';
+import config from '../../../config/env';
 
 // ── Mock the entire repository before importing the service ──────────────────
 jest.mock('@google-cloud/storage', () => ({
@@ -28,6 +29,8 @@ import { TFile } from '../file.type';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+const localFilePath = `${config.upload_dir}/files/test-image-123.jpg`;
+
 const mockLocalFile = (): TFile => ({
   _id: '507f1f77bcf86cd799439011',
   name: 'test-image.jpg',
@@ -41,7 +44,7 @@ const mockLocalFile = (): TFile => ({
   status: 'active',
   is_deleted: false,
   metadata: {
-    path: 'uploads/files/test-image-123.jpg',
+    path: localFilePath,
     extension: 'jpg',
     file_type: 'image',
   },
@@ -74,7 +77,10 @@ describe('FileService.createLocalFile', () => {
     (FileRepository.create as jest.Mock).mockResolvedValue(mockFileData);
 
     const multerFile = {
-      path: 'uploads\\files\\test-image-123.jpg',
+      // Backslashes simulate a Windows-style path from multer's diskStorage —
+      // exercises the \\ -> / normalization. Always absolute in real usage,
+      // since destination() resolves from config.upload_dir, never cwd.
+      path: localFilePath.replace(/\//g, '\\'),
       filename: 'test-image-123.jpg',
       originalname: 'test-image.jpg',
       mimetype: 'image/jpeg',
@@ -94,7 +100,7 @@ describe('FileService.createLocalFile', () => {
       }),
     );
     expect(result.provider).toBe('local');
-    expect(result.metadata?.path).toBe('uploads/files/test-image-123.jpg');
+    expect(result.metadata?.path).toBe(localFilePath);
   });
 });
 

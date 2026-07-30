@@ -119,13 +119,24 @@ export const createLocalFile = async (
     }
 
     const filePath = file.path.replace(/\\/g, '/');
+    // The public URL is always served under /uploads/<...> (nginx and the
+    // Express static fallback both map that prefix to config.upload_dir) —
+    // derive it from the disk path relative to upload_dir, never from
+    // file.path directly. file.path is an absolute filesystem path and must
+    // never leak into a public URL. Normalize both sides to forward slashes
+    // before comparing — path.relative on POSIX treats a literal backslash
+    // as an ordinary character, not a separator.
+    const publicPath = path.posix.relative(
+      config.upload_dir.replace(/\\/g, '/'),
+      filePath,
+    );
     const fileType = getFileTypeFromMime(file.mimetype, canonicalExtension);
 
     const fileData: Partial<TFile> = {
       name: payload.name || file.originalname,
       originalname: file.originalname,
       filename: file.filename,
-      url: `${baseUrl}/${filePath}`,
+      url: `${baseUrl}/uploads/${publicPath}`,
       mimetype: file.mimetype,
       size: file.size,
       author: user._id as unknown as Types.ObjectId,

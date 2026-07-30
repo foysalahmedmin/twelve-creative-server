@@ -5,7 +5,6 @@ import dotenv from 'dotenv';
 import express, { Application } from 'express';
 import session from 'express-session';
 import helmet from 'helmet';
-import path from 'path';
 import config from './config';
 import { configureTrustProxy } from './config/trust-proxy';
 import error from './middlewares/error.middleware';
@@ -90,8 +89,10 @@ app.get('/', (_req, res) => {
   res.send('Welcome to TwelveCreative API');
 });
 
-// Static file serving for uploads
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+// Static file serving for uploads. In production nginx serves /uploads/
+// directly from config.upload_dir and never reaches this route — kept
+// consistent for local dev and defense-in-depth.
+app.use('/uploads', express.static(config.upload_dir));
 
 app.use(notfound);
 app.use(error);

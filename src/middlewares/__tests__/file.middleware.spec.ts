@@ -6,25 +6,30 @@ import { existsSync, mkdtempSync, readdirSync, rmSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import supertest from 'supertest';
+import config from '../../config/env';
 import { SUPPORTED_LOCAL_UPLOAD_MIME_TYPES } from '../../constants/upload-policy';
 import file from '../file.middleware';
 
 describe('local file middleware', () => {
-  const originalWorkingDirectory = process.cwd();
+  // config.upload_dir is resolved once, at module load — not tied to
+  // process.cwd() at request time (that's the whole point of the fix this
+  // covers: uploads must never depend on cwd, which changes every deploy).
+  // Point it at a fresh temp dir per test instead of chdir-ing the process.
+  const originalUploadDir = config.upload_dir;
   let workingDirectory: string;
 
   beforeEach(() => {
     workingDirectory = mkdtempSync(path.join(os.tmpdir(), 'tc-upload-test-'));
-    process.chdir(workingDirectory);
+    config.upload_dir = workingDirectory;
   });
 
   afterEach(() => {
-    process.chdir(originalWorkingDirectory);
+    config.upload_dir = originalUploadDir;
     rmSync(workingDirectory, { recursive: true, force: true });
   });
 
   const uploadDirectoryContents = (): string[] => {
-    const uploadDirectory = path.join(workingDirectory, 'uploads/files');
+    const uploadDirectory = path.join(workingDirectory, 'files');
     return existsSync(uploadDirectory) ? readdirSync(uploadDirectory) : [];
   };
 
@@ -78,7 +83,7 @@ describe('local file middleware', () => {
       /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.png$/i,
     );
     expect(response.body.filename).not.toContain('client-controlled');
-    expect(readdirSync(path.join(workingDirectory, 'uploads/files'))).toEqual([
+    expect(readdirSync(path.join(workingDirectory, 'files'))).toEqual([
       response.body.filename,
     ]);
   });

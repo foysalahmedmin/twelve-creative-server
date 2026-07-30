@@ -14,6 +14,18 @@ const config = {
     (process.env.URL as string) ||
     `http://localhost:${process.env.PORT || 5000}`,
 
+  // 📁 Local upload storage — MUST be an absolute path outside any per-deploy
+  // release directory. Atomic-release deploys give every release its own
+  // fresh working directory, so a relative "uploads" path (resolved against
+  // process.cwd()) silently orphans every previously uploaded file the
+  // moment the next deploy ships. Production points this at a persistent,
+  // pre-provisioned directory that's also what nginx serves /uploads/ from
+  // and what the daily uploads-backup timer snapshots — keep all three in
+  // sync if this ever moves. Defaults to a local ./uploads folder (existing
+  // dev behaviour) when unset.
+  upload_dir:
+    (process.env.UPLOAD_DIR as string) || path.join(process.cwd(), 'uploads'),
+
   // 🗄️ Database Configuration
   database_url: process.env.DATABASE_URL as string,
 
