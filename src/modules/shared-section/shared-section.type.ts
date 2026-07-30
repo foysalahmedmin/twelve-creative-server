@@ -61,7 +61,6 @@ export type TDifferenceColumn = {
 export type TDifferenceContent = {
   fragmented: TDifferenceColumn;
   connected: TDifferenceColumn;
-  media?: TCmsMedia;
 };
 
 export type TWhyChooseUsFeature = {
@@ -199,7 +198,6 @@ export type TSharedSectionInput =
         connected: Omit<TDifferenceColumn, 'items'> & {
           items: TOrderedTextItemInput[];
         };
-        media?: TCmsMedia;
       };
     })
   | (Omit<TSharedSectionBase, 'is_active' | 'created_at' | 'updated_at'> & {

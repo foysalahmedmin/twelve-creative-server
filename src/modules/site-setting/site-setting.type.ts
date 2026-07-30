@@ -57,7 +57,6 @@ export type TSiteSetting = {
   faq_section?: TFaqSection;
   calendly_url?: string;
   process_thumbnail?: string;
-  how_we_structure_image?: string;
   meeting_scene_image?: string;
   content_section?: TContentSection;
   contact_page?: TContactPageContent;
@@ -75,7 +74,6 @@ export type TPublicSiteSetting = Pick<
   | 'faq_section'
   | 'calendly_url'
   | 'process_thumbnail'
-  | 'how_we_structure_image'
   | 'meeting_scene_image'
   | 'content_section'
   | 'contact_page'

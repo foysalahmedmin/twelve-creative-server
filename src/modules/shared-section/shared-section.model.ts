@@ -179,7 +179,6 @@ const sharedContentSchema = new Schema(
   {
     fragmented: { type: differenceColumnSchema },
     connected: { type: differenceColumnSchema },
-    media: { type: mediaSchema },
     features: { type: [featureSchema], default: undefined },
     steps: { type: [growthStepSchema], default: undefined },
     paragraphs: { type: [statementParagraphSchema], default: undefined },
@@ -242,7 +241,6 @@ sharedSectionSchema.pre('validate', function () {
     valid =
       !content.fragmented &&
       !content.connected &&
-      !content.media &&
       !content.features &&
       !content.steps &&
       !content.paragraphs &&

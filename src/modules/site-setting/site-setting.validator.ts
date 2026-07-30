@@ -78,7 +78,6 @@ export const updateSiteSettingValidationSchema = z.object({
       .optional(),
     calendly_url: optionalHttpUrl,
     process_thumbnail: optionalImageReference,
-    how_we_structure_image: optionalImageReference,
     meeting_scene_image: optionalImageReference,
     content_section: z
       .object({

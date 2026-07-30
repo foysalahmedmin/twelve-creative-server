@@ -49,7 +49,6 @@ import { seedLegalPages } from './seeds/legal-page.seed';
 import { migrateLegacySiteSettingContent } from './seeds/legacy-content-migration.seed';
 import { seedPageCtas } from './seeds/page-cta.seed';
 import { seedSharedSections } from './seeds/shared-section.seed';
-import { SharedSection } from '../modules/shared-section/shared-section.model';
 import { AboutPage } from '../modules/about-page/about-page.model';
 
 const FORCE = process.argv.includes('--force');
@@ -1185,9 +1184,6 @@ const SITE_SETTING = {
   // C4: Process section thumbnail — sticky left column in the Process section
   process_thumbnail:
     'https://images.unsplash.com/photo-1552664730-d307ca884978?w=768&h=898&fit=crop&auto=format',
-  // C5: "How we structure" section visual asset — shown in The Twelve Creative Difference section
-  how_we_structure_image:
-    'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1280&h=720&fit=crop&auto=format',
   // C6: TC Meeting scene / founder photo — shown in the About page founder section
   meeting_scene_image:
     'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&h=600&fit=crop&auto=format',
@@ -1437,17 +1433,11 @@ async function run(): Promise<void> {
     reports.push(await seedProcessSection(FORCE));
     reports.push(await seedPageCtas(FORCE));
 
-    const [existingDifference, existingAbout] = FORCE
-      ? [true, true]
-      : await Promise.all([
-          SharedSection.exists({ key: 'difference' }),
-          AboutPage.exists({}),
-        ]);
+    const existingAbout = FORCE ? true : await AboutPage.exists({});
     reports.push(await seedSharedSections(FORCE));
     reports.push(await seedAboutPage(FORCE));
     if (!FORCE) {
       const migratedLegacyContent = await migrateLegacySiteSettingContent({
-        differenceWasMissing: !existingDifference,
         aboutWasMissing: !existingAbout,
       });
       reports.push({

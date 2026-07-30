@@ -4,7 +4,6 @@ describe('legacy SiteSetting content migration', () => {
   it('maps reviewed legacy media and story copy into the new owners', () => {
     expect(
       buildLegacyContentMigration({
-        how_we_structure_image: '/uploads/difference.webp',
         meeting_scene_image: 'https://cdn.example.com/founder.webp',
         content_section: {
           subtitle: 'Our Story',
@@ -14,12 +13,6 @@ describe('legacy SiteSetting content migration', () => {
         },
       }),
     ).toEqual({
-      difference: {
-        'content.media': {
-          type: 'image',
-          image: '/uploads/difference.webp',
-        },
-      },
       about: {
         'founder.media': {
           type: 'image',
@@ -39,11 +32,10 @@ describe('legacy SiteSetting content migration', () => {
 
   it('does not propagate unsafe legacy image references', () => {
     const result = buildLegacyContentMigration({
-      how_we_structure_image: 'javascript:alert(1)',
       meeting_scene_image: '//evil.example/founder.jpg',
       content_section: { image: '/uploads/../private.txt' },
     });
 
-    expect(result).toEqual({ difference: {}, about: {} });
+    expect(result).toEqual({ about: {} });
   });
 });

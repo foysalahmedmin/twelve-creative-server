@@ -168,12 +168,6 @@ const siteSettingSchema = new Schema<TSiteSettingDocument>(
       maxlength: 2048,
       validate: imageValidator,
     },
-    how_we_structure_image: {
-      type: String,
-      trim: true,
-      maxlength: 2048,
-      validate: imageValidator,
-    },
     meeting_scene_image: {
       type: String,
       trim: true,

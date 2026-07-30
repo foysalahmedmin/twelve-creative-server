@@ -87,7 +87,6 @@ describe('SiteSettingService', () => {
       booking_notification_email: 'old-booking@example.com',
       calendly_url: 'old-calendly',
       process_thumbnail: 'old-process.jpg',
-      how_we_structure_image: 'old-structure.jpg',
       meeting_scene_image: 'old-meeting.jpg',
       save: jest.fn().mockResolvedValue(undefined),
       toObject: jest.fn(),
@@ -120,7 +119,6 @@ describe('SiteSettingService', () => {
       booking_notification_email: 'new-booking@example.com',
       calendly_url: 'new-calendly',
       process_thumbnail: 'new-process.jpg',
-      how_we_structure_image: 'new-structure.jpg',
       meeting_scene_image: 'new-meeting.jpg',
     });
 
@@ -158,7 +156,6 @@ describe('SiteSettingService', () => {
       booking_notification_email: 'new-booking@example.com',
       calendly_url: 'new-calendly',
       process_thumbnail: 'new-process.jpg',
-      how_we_structure_image: 'new-structure.jpg',
       meeting_scene_image: 'new-meeting.jpg',
     });
     expect(existing.save).toHaveBeenCalledWith();

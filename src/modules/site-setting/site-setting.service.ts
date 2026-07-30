@@ -23,7 +23,6 @@ export const getPublicSiteSetting = async (): Promise<TPublicSiteSetting> => {
     faq_section: setting.faq_section,
     calendly_url: setting.calendly_url,
     process_thumbnail: setting.process_thumbnail,
-    how_we_structure_image: setting.how_we_structure_image,
     meeting_scene_image: setting.meeting_scene_image,
     content_section: setting.content_section,
     contact_page: setting.contact_page,
@@ -106,8 +105,6 @@ export const updateSiteSetting = async (
     existing.calendly_url = payload.calendly_url;
   if (payload.process_thumbnail !== undefined)
     existing.process_thumbnail = payload.process_thumbnail;
-  if (payload.how_we_structure_image !== undefined)
-    existing.how_we_structure_image = payload.how_we_structure_image;
   if (payload.meeting_scene_image !== undefined)
     existing.meeting_scene_image = payload.meeting_scene_image;
   await existing.save();

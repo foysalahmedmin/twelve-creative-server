@@ -97,7 +97,6 @@ export const normalizeSharedSection = (
               'Connected system item',
             ),
           },
-          media: payload.content.media,
         },
       };
     case 'why-choose-us':

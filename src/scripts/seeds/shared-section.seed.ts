@@ -45,11 +45,6 @@ export const SHARED_SECTION_SEED_INPUT: TSharedSectionInput[] = [
           { id: 'one-system', text: 'One team, one operating system' },
         ],
       },
-      media: {
-        type: 'image',
-        image:
-          'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1280&h=720&fit=crop&auto=format',
-      },
     },
     is_active: true,
   },

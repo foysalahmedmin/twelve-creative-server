@@ -43,7 +43,6 @@ const differenceSchema = z.object({
     .object({
       fragmented: differenceColumnSchema,
       connected: differenceColumnSchema,
-      media: mediaSchema.optional(),
     })
     .strict(),
 });
