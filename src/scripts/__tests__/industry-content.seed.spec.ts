@@ -31,11 +31,11 @@ describe('Industry-owned content seed mapping', () => {
     expect(documents.map((document) => document.industry)).toEqual([
       industryIds.get('hospitality'),
       industryIds.get('real-estate'),
-      industryIds.get('aviation'),
+      industryIds.get('ventures'),
       industryIds.get('professional-services'),
       industryIds.get('hospitality'),
       industryIds.get('real-estate'),
-      industryIds.get('aviation'),
+      industryIds.get('ventures'),
       industryIds.get('professional-services'),
     ]);
   });
@@ -54,7 +54,7 @@ describe('Industry-owned content seed mapping', () => {
     expect(documents.map((document) => document.industry)).toEqual([
       industryIds.get('hospitality'),
       industryIds.get('real-estate'),
-      industryIds.get('aviation'),
+      industryIds.get('ventures'),
     ]);
   });
 

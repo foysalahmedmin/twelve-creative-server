@@ -3,7 +3,7 @@ import type { Types } from 'mongoose';
 export const REQUIRED_INDUSTRY_SLUGS = [
   'hospitality',
   'real-estate',
-  'aviation',
+  'ventures',
   'professional-services',
 ] as const;
 
@@ -63,7 +63,7 @@ export const INDUSTRY_REEL_MEDIA_SEEDS = {
       'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=720&h=1280&fit=crop&auto=format',
     reel_video: sampleVideo(),
   },
-  aviation: {
+  ventures: {
     reel_thumbnail:
       'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=720&h=1280&fit=crop&auto=format',
     reel_video: sampleVideo(),
@@ -157,7 +157,7 @@ export const FEATURED_PROJECT_SEEDS: FeaturedProjectSeedDefinition[] = [
     is_active: true,
   },
   {
-    industry_slug: 'aviation',
+    industry_slug: 'ventures',
     title: 'Velocity Aviation — Charter Film',
     aspect: 'reel',
     thumbnail:
@@ -167,7 +167,7 @@ export const FEATURED_PROJECT_SEEDS: FeaturedProjectSeedDefinition[] = [
     is_active: true,
   },
   {
-    industry_slug: 'aviation',
+    industry_slug: 'ventures',
     title: 'Skyline Charter — Founder Story',
     aspect: 'reel',
     thumbnail:
@@ -177,7 +177,7 @@ export const FEATURED_PROJECT_SEEDS: FeaturedProjectSeedDefinition[] = [
     is_active: true,
   },
   {
-    industry_slug: 'aviation',
+    industry_slug: 'ventures',
     title: 'Northstar — Operations Behind the Scenes',
     aspect: 'reel',
     thumbnail:
@@ -187,7 +187,7 @@ export const FEATURED_PROJECT_SEEDS: FeaturedProjectSeedDefinition[] = [
     is_active: true,
   },
   {
-    industry_slug: 'aviation',
+    industry_slug: 'ventures',
     title: 'Elite Travel — Apex Air',
     aspect: 'reel',
     thumbnail:
@@ -260,7 +260,7 @@ export const SHOWCASE_VIDEO_SEEDS: ShowcaseVideoSeedDefinition[] = [
     is_active: true,
   },
   {
-    industry_slug: 'aviation',
+    industry_slug: 'ventures',
     video: sampleVideo(),
     thumbnail:
       'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=512&h=912&fit=crop&auto=format',
@@ -290,7 +290,7 @@ export const SHOWCASE_VIDEO_SEEDS: ShowcaseVideoSeedDefinition[] = [
     is_active: true,
   },
   {
-    industry_slug: 'aviation',
+    industry_slug: 'ventures',
     video: sampleVideo(),
     thumbnail:
       'https://images.unsplash.com/photo-1540962351504-03099e0a754b?w=512&h=912&fit=crop&auto=format',
@@ -340,7 +340,7 @@ export const SHOWCASE_VIDEO_SEEDS: ShowcaseVideoSeedDefinition[] = [
     is_active: true,
   },
   {
-    industry_slug: 'aviation',
+    industry_slug: 'ventures',
     video: sampleVideo(),
     thumbnail:
       'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=1280&h=720&fit=crop&auto=format',

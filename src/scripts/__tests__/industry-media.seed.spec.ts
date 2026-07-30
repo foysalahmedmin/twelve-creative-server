@@ -70,7 +70,7 @@ describe('industry media seed manifest', () => {
     expect(distribution).toEqual({
       hospitality: { reel: 3, landscape: 3 },
       'real-estate': { reel: 2, landscape: 1 },
-      aviation: { reel: 2, landscape: 1 },
+      ventures: { reel: 2, landscape: 1 },
       'professional-services': { reel: 1, landscape: 1 },
     });
   });

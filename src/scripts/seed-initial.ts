@@ -283,7 +283,7 @@ const INDUSTRIES = [
       'Influencer coordination',
       'Event promotion',
     ],
-    order: 1,
+    order: 2,
     is_active: true,
     tagline: 'Seats filled. Tables turned.',
     thumbnail:
@@ -308,7 +308,7 @@ const INDUSTRIES = [
       'Lead generation',
       'CRM and follow-up',
     ],
-    order: 2,
+    order: 1,
     is_active: true,
     tagline: 'From listing to sellout.',
     thumbnail:
@@ -317,8 +317,8 @@ const INDUSTRIES = [
     ...INDUSTRY_REEL_MEDIA_SEEDS['real-estate'],
   },
   {
-    slug: 'aviation',
-    name: 'Aviation',
+    slug: 'ventures',
+    name: 'Ventures',
     headline: 'High-trust marketing for high-value decisions.',
     description:
       'Private aviation is relationship-driven and credibility-dependent. We build positioning, content, funnels, and systems to support serious conversations.',
@@ -339,7 +339,7 @@ const INDUSTRIES = [
     thumbnail:
       'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=1200&h=675&fit=crop&auto=format',
     video: { source: 'url' as const, value: SAMPLE_VIDEO },
-    ...INDUSTRY_REEL_MEDIA_SEEDS.aviation,
+    ...INDUSTRY_REEL_MEDIA_SEEDS.ventures,
   },
   {
     slug: 'professional-services',
@@ -1031,7 +1031,7 @@ const PAGE_HEROES = [
     seo: {
       title: 'Industries | Twelve Creative',
       description:
-        'Industry-focused growth systems for hospitality, real estate, aviation, and professional services.',
+        'Industry-focused growth systems for hospitality, real estate, ventures, and professional services.',
       canonical_url: 'https://twelvecreative.io/industries',
       no_index: false,
     },
@@ -1087,7 +1087,7 @@ const PAGE_HEROES = [
     label: 'Insights',
     title: 'Notes on positioning, creative, and growth systems.',
     description:
-      'Field-tested thinking from the work we do for hospitality, real estate, aviation, and professional service operators.',
+      'Field-tested thinking from the work we do for hospitality, real estate, ventures, and professional service operators.',
     seo: {
       title: 'Insights | Twelve Creative',
       description:
@@ -1216,7 +1216,7 @@ const SITE_SETTING = {
       label: 'Visit / Mail Us',
       title: 'Based in Miami.',
       description:
-        'We work with operators across hospitality, real estate, aviation, and professional services — based in Miami with reach across the US.',
+        'We work with operators across hospitality, real estate, ventures, and professional services — based in Miami with reach across the US.',
     },
   },
   footer: {

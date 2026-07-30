@@ -6,18 +6,18 @@ import type { IndustryIdMap, IndustrySeedSlug } from './industry-media.seed';
 const TESTIMONIAL_INDUSTRY_BY_NAME = {
   'Elena Marchetti': 'hospitality',
   'Daniel Hartwell': 'real-estate',
-  'Marcus Reid': 'aviation',
+  'Marcus Reid': 'ventures',
   'Priya Anand': 'professional-services',
   'Jacob Nguyen': 'hospitality',
   'Sofia Reyes': 'real-estate',
-  'Aaron Whitfield': 'aviation',
+  'Aaron Whitfield': 'ventures',
   'Naomi Brooks': 'professional-services',
 } as const satisfies Record<string, IndustrySeedSlug>;
 
 const WORK_INDUSTRY_BY_SLUG = {
   'hudson-hospitality': 'hospitality',
   'meridian-properties': 'real-estate',
-  'skyline-charter': 'aviation',
+  'skyline-charter': 'ventures',
 } as const satisfies Record<string, IndustrySeedSlug>;
 
 const getIndustryId = (

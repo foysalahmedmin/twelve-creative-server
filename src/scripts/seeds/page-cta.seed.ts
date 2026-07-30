@@ -35,7 +35,7 @@ export const PAGE_CTA_SEED: Omit<
     industry: null,
     title: 'Working in one of these industries?',
     description:
-      'We understand the buying decision in hospitality, real estate, aviation, and professional services — where credibility, taste, and follow-up directly impact revenue.',
+      'We understand the buying decision in hospitality, real estate, ventures, and professional services — where credibility, taste, and follow-up directly impact revenue.',
     image:
       'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=900&h=600&fit=crop&auto=format',
     primary_cta: { label: 'Start a Conversation', href: '/contact' },

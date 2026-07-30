@@ -48,7 +48,7 @@ export const ABOUT_PAGE_SEED: TAboutPageInput = {
       id: 'business-logic',
       title: 'Creative built around business logic',
       description:
-        'Carlos founded Twelve Creative after 15+ years in video production and a background in film and business at NYU. The work spans hospitality, real estate, aviation, and professional services — sectors where credibility, taste, and follow-up directly impact revenue.',
+        'Carlos founded Twelve Creative after 15+ years in video production and a background in film and business at NYU. The work spans hospitality, real estate, ventures, and professional services — sectors where credibility, taste, and follow-up directly impact revenue.',
       media: {
         type: 'image',
         image:
