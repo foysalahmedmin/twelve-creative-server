@@ -27,7 +27,10 @@ export const findAll = async (
       .skip(skip)
       .limit(limit)
       .lean(),
-    Task.countDocuments(filter),
+    // countDocuments bypasses the schema's pre(/^find/) soft-delete filter
+    // (it isn't a "find*" op), so is_deleted must be applied explicitly here
+    // to match the rows actually returned above.
+    Task.countDocuments({ ...filter, is_deleted: { $ne: true } }),
   ]);
 
   return {

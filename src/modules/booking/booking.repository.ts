@@ -85,7 +85,13 @@ export const findAdminPaginated = async (
 };
 
 export const countPending = async (): Promise<number> => {
-  return await Booking.countDocuments({ status: 'pending' });
+  // countDocuments bypasses the schema's pre(/^find/) soft-delete filter, so
+  // is_deleted must be applied explicitly or a deleted-but-still-"pending"
+  // booking would inflate the admin nav badge.
+  return await Booking.countDocuments({
+    status: 'pending',
+    is_deleted: { $ne: true },
+  });
 };
 
 /**

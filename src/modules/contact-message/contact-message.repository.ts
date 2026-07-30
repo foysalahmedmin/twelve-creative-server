@@ -57,9 +57,13 @@ export const findAdminPaginated = async (
 };
 
 export const countUnread = async (): Promise<number> => {
+  // countDocuments bypasses the schema's pre(/^find/) soft-delete filter, so
+  // is_deleted must be applied explicitly or a deleted-but-still-unread
+  // message would inflate the admin nav badge.
   return await ContactMessage.countDocuments({
     is_read: false,
     is_archived: false,
+    is_deleted: { $ne: true },
   });
 };
 

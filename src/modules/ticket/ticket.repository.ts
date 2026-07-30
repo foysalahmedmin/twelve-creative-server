@@ -23,7 +23,10 @@ export const findAll = async (
 
   const [data, total] = await Promise.all([
     Ticket.find(filter).sort({ created_at: -1 }).skip(skip).limit(limit).lean(),
-    Ticket.countDocuments(filter),
+    // countDocuments bypasses the schema's pre(/^find/) soft-delete filter
+    // (it isn't a "find*" op), so is_deleted must be applied explicitly here
+    // to match the rows actually returned above.
+    Ticket.countDocuments({ ...filter, is_deleted: { $ne: true } }),
   ]);
 
   return {
