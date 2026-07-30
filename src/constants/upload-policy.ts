@@ -9,6 +9,9 @@ export const LOCAL_UPLOAD_MIME_TO_EXTENSION = Object.freeze({
   'image/png': 'png',
   'image/gif': 'gif',
   'image/webp': 'webp',
+  // Sanitized on upload (see sanitizeSvgIfNeeded in file.middleware.ts) —
+  // never serve an SVG straight from disk without stripping scripts first.
+  'image/svg+xml': 'svg',
   'video/mp4': 'mp4',
   'video/webm': 'webm',
   'video/ogg': 'ogv',

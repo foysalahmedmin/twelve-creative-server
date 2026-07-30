@@ -2,6 +2,7 @@
 import { NextFunction, Request, Response } from 'express';
 import fs from 'fs';
 import httpStatus from 'http-status';
+import DOMPurify from 'isomorphic-dompurify';
 import multer, { FileFilterCallback } from 'multer';
 import { randomUUID } from 'node:crypto';
 import path from 'path';
@@ -22,14 +23,30 @@ type TFile = {
   allowedTypes?: readonly string[];
 };
 
-const getUploadedPaths = (req: Request): string[] => {
+const getUploadedFiles = (req: Request): Express.Multer.File[] => {
   if (!req.files) return [];
+  return Array.isArray(req.files) ? req.files : Object.values(req.files).flat();
+};
 
-  const uploadedFiles = Array.isArray(req.files)
-    ? req.files
-    : Object.values(req.files).flat();
+const getUploadedPaths = (req: Request): string[] =>
+  getUploadedFiles(req)
+    .map((uploadedFile) => uploadedFile.path)
+    .filter(Boolean);
 
-  return uploadedFiles.map((uploadedFile) => uploadedFile.path).filter(Boolean);
+// SVG is XML, not a raster format — an unsanitized file can carry a <script>
+// or on*="" handler that executes if its URL is ever opened directly rather
+// than embedded via <img>. Strip that before the file is considered
+// "uploaded"; every field that accepts image/svg+xml goes through here.
+const sanitizeSvgIfNeeded = async (
+  uploadedFile: Express.Multer.File,
+): Promise<void> => {
+  if (uploadedFile.mimetype !== 'image/svg+xml') return;
+  const raw = await fs.promises.readFile(uploadedFile.path, 'utf8');
+  const clean = DOMPurify.sanitize(raw, {
+    USE_PROFILES: { svg: true, svgFilters: true },
+    FORBID_TAGS: ['foreignObject'],
+  });
+  await fs.promises.writeFile(uploadedFile.path, clean, 'utf8');
 };
 
 const removeUploadedPaths = async (uploadedPaths: string[]): Promise<void> => {
@@ -160,7 +177,7 @@ const file = (...files: TFile[]) => {
   );
 
   return catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-    upload(req, res, (err: unknown) => {
+    upload(req, res, async (err: unknown) => {
       if (err) {
         void removeUploadedPaths(getUploadedPaths(req));
         return next(
@@ -177,6 +194,8 @@ const file = (...files: TFile[]) => {
       registerFailureCleanup(res, getUploadedPaths(req));
 
       try {
+        await Promise.all(getUploadedFiles(req).map(sanitizeSvgIfNeeded));
+
         // Check minCount
         const missing = files.filter((file) => {
           const uploaded = (

@@ -2,13 +2,35 @@ import express, {
   type ErrorRequestHandler,
   type RequestHandler,
 } from 'express';
-import { existsSync, mkdtempSync, readdirSync, rmSync } from 'node:fs';
+import {
+  existsSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+} from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import supertest from 'supertest';
 import config from '../../config/env';
 import { SUPPORTED_LOCAL_UPLOAD_MIME_TYPES } from '../../constants/upload-policy';
 import file from '../file.middleware';
+
+// The real isomorphic-dompurify pulls in jsdom, which ships a transitive
+// ESM-only dependency Jest's CommonJS transform can't parse. Stand in with a
+// minimal stripper: real enough to prove the middleware reads, sanitizes,
+// and rewrites the file, without needing jsdom in the test runner. DOMPurify
+// itself is a well-established library — this only verifies our wiring.
+jest.mock('isomorphic-dompurify', () => ({
+  __esModule: true,
+  default: {
+    sanitize: jest.fn((dirty: string) =>
+      dirty
+        .replace(/\son\w+="[^"]*"/gi, '')
+        .replace(/<script[\s\S]*?<\/script>/gi, ''),
+    ),
+  },
+}));
 
 describe('local file middleware', () => {
   // config.upload_dir is resolved once, at module load — not tied to
@@ -102,17 +124,43 @@ describe('local file middleware', () => {
     expect(uploadDirectoryContents()).toEqual([]);
   });
 
-  it('rejects active SVG content before a file is written', async () => {
+  it('strips active content from an uploaded SVG instead of rejecting it', async () => {
     const response = await supertest(buildApp())
       .post('/upload')
-      .attach('file', Buffer.from('<svg onload="alert(1)"></svg>'), {
-        filename: 'active.svg',
-        contentType: 'image/svg+xml',
-      });
+      .attach(
+        'file',
+        Buffer.from('<svg onload="alert(1)"><script>alert(2)</script></svg>'),
+        { filename: 'active.svg', contentType: 'image/svg+xml' },
+      );
 
-    expect(response.status).toBe(400);
-    expect(response.body.message).toContain('Invalid file type');
-    expect(uploadDirectoryContents()).toEqual([]);
+    expect(response.status).toBe(201);
+    const [filename] = uploadDirectoryContents();
+    expect(filename).toMatch(/\.svg$/);
+
+    const written = readFileSync(
+      path.join(workingDirectory, 'files', filename),
+      'utf8',
+    );
+    expect(written).not.toContain('onload');
+    expect(written).not.toContain('<script>');
+  });
+
+  it('preserves safe markup in a benign uploaded SVG', async () => {
+    const response = await supertest(buildApp())
+      .post('/upload')
+      .attach(
+        'file',
+        Buffer.from('<svg><circle cx="5" cy="5" r="4" /></svg>'),
+        { filename: 'logo.svg', contentType: 'image/svg+xml' },
+      );
+
+    expect(response.status).toBe(201);
+    const [filename] = uploadDirectoryContents();
+    const written = readFileSync(
+      path.join(workingDirectory, 'files', filename),
+      'utf8',
+    );
+    expect(written).toContain('<circle');
   });
 
   it('removes a newly written file when downstream validation fails', async () => {
