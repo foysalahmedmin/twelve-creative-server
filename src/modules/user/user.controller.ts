@@ -48,7 +48,10 @@ export const getUsers = catchAsync(async (req, res) => {
 
 export const updateSelf = catchAsync(async (req, res) => {
   const files = req.files as Record<string, Express.Multer.File[]>;
-  const image = files.image?.[0]?.filename || '';
+  const filename = files.image?.[0]?.filename;
+  // Root-relative public path, not a bare filename — matches the /uploads/
+  // folder the file() middleware wrote it to (folder: '/users').
+  const image = filename ? `/uploads/users/${filename}` : '';
 
   const payload = {
     ...req.body,
@@ -68,7 +71,8 @@ export const updateUser = catchAsync(async (req, res) => {
   const { id } = req.params;
 
   const files = req.files as Record<string, Express.Multer.File[]>;
-  const image = files.image?.[0]?.filename || '';
+  const filename = files.image?.[0]?.filename;
+  const image = filename ? `/uploads/users/${filename}` : '';
 
   const payload = {
     ...req.body,

@@ -32,7 +32,12 @@ jest.mock('../../../middlewares/file.middleware', () =>
         next: express.NextFunction,
       ) => {
         req.files = {
-          icon: [{ path: 'uploads\\categories\\icon.png' }],
+          icon: [
+            {
+              path: 'uploads\\categories\\icons\\icon.png',
+              filename: 'icon.png',
+            },
+          ],
         } as unknown as Express.Multer.File[];
         next();
       },
@@ -166,7 +171,7 @@ describe('Category routes', () => {
     expect(response.body.data).toEqual(category);
     expect(CategoryService.createCategory).toHaveBeenCalledWith({
       ...payload,
-      icon: 'uploads/categories/icon.png',
+      icon: '/uploads/categories/icons/icon.png',
     });
   });
 
@@ -192,7 +197,7 @@ describe('Category routes', () => {
     expect(response.body.data).toEqual(updated);
     expect(CategoryService.updateCategory).toHaveBeenCalledWith(CATEGORY_ID, {
       name: updated.name,
-      icon: 'uploads/categories/icon.png',
+      icon: '/uploads/categories/icons/icon.png',
     });
   });
 

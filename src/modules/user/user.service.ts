@@ -7,7 +7,9 @@
  */
 
 import httpStatus from 'http-status';
+import path from 'node:path';
 import AppError from '../../builder/app-error';
+import config from '../../config/env';
 import { TJwtPayload } from '../../types/jsonwebtoken.type';
 import {
   generateCacheKey,
@@ -97,7 +99,14 @@ export const updateSelf = async (
   }
 
   if (payload?.image !== data.image && data.image) {
-    deleteFiles(data.image, 'uploads/users');
+    // data.image is a root-relative public path (/uploads/users/<file>), not
+    // a disk path — take just the filename and resolve it against
+    // config.upload_dir (never process.cwd(), which changes on every
+    // atomic-release deploy).
+    deleteFiles(
+      path.basename(data.image),
+      path.join(config.upload_dir, 'users'),
+    );
     payload.image = payload.image || '';
   }
 
