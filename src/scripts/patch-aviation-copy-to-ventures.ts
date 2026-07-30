@@ -37,7 +37,9 @@ async function run(): Promise<void> {
       industriesHero.seo.description = swap(before);
       await industriesHero.save();
       patched++;
-      console.log(`✅ pageheroes(industries).seo.description\n   ${before}\n-> ${industriesHero.seo.description}`);
+      console.log(
+        `✅ pageheroes(industries).seo.description\n   ${before}\n-> ${industriesHero.seo.description}`,
+      );
     } else {
       console.log('ℹ️  pageheroes(industries).seo.description already clean');
     }
@@ -49,7 +51,9 @@ async function run(): Promise<void> {
       blogsHero.description = swap(before);
       await blogsHero.save();
       patched++;
-      console.log(`✅ pageheroes(blogs).description\n   ${before}\n-> ${blogsHero.description}`);
+      console.log(
+        `✅ pageheroes(blogs).description\n   ${before}\n-> ${blogsHero.description}`,
+      );
     } else {
       console.log('ℹ️  pageheroes(blogs).description already clean');
     }
@@ -62,9 +66,13 @@ async function run(): Promise<void> {
       map.description = swap(before);
       await settings.save();
       patched++;
-      console.log(`✅ sitesettings.contact_page.map.description\n   ${before}\n-> ${map.description}`);
+      console.log(
+        `✅ sitesettings.contact_page.map.description\n   ${before}\n-> ${map.description}`,
+      );
     } else {
-      console.log('ℹ️  sitesettings.contact_page.map.description already clean');
+      console.log(
+        'ℹ️  sitesettings.contact_page.map.description already clean',
+      );
     }
 
     // PageCta(industries).description
@@ -77,7 +85,9 @@ async function run(): Promise<void> {
       industriesCta.description = swap(before);
       await industriesCta.save();
       patched++;
-      console.log(`✅ pagectas(industries).description\n   ${before}\n-> ${industriesCta.description}`);
+      console.log(
+        `✅ pagectas(industries).description\n   ${before}\n-> ${industriesCta.description}`,
+      );
     } else {
       console.log('ℹ️  pagectas(industries).description already clean');
     }
@@ -90,9 +100,13 @@ async function run(): Promise<void> {
       card.description = swap(before);
       await about.save();
       patched++;
-      console.log(`✅ aboutpages.story_cards[business-logic].description\n   ${before}\n-> ${card.description}`);
+      console.log(
+        `✅ aboutpages.story_cards[business-logic].description\n   ${before}\n-> ${card.description}`,
+      );
     } else {
-      console.log('ℹ️  aboutpages.story_cards[business-logic].description already clean');
+      console.log(
+        'ℹ️  aboutpages.story_cards[business-logic].description already clean',
+      );
     }
 
     console.log(`\n${patched} field(s) patched.`);

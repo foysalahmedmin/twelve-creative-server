@@ -47,7 +47,9 @@ async function run(): Promise<void> {
       .sort({ order: 1 })
       .lean();
     for (const d of docs) {
-      console.log(`  order=${d.order}  slug=${d.slug.padEnd(24)} name=${d.name}`);
+      console.log(
+        `  order=${d.order}  slug=${d.slug.padEnd(24)} name=${d.name}`,
+      );
     }
   } finally {
     await disconnectDB();
