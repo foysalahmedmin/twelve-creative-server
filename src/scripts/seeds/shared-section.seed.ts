@@ -1,14 +1,14 @@
 import { SharedSection } from '../../modules/shared-section/shared-section.model';
+import { normalizeSharedSection } from '../../modules/shared-section/shared-section.service';
 import {
   TSharedSection,
   TSharedSectionInput,
 } from '../../modules/shared-section/shared-section.type';
-import { normalizeSharedSection } from '../../modules/shared-section/shared-section.service';
 
 export const SHARED_SECTION_SEED_INPUT: TSharedSectionInput[] = [
   {
     key: 'difference',
-    label: 'The Twelve Creative Difference',
+    label: 'Twelve Creative Effect',
     title: 'Creative is only valuable when it is connected to the business.',
     description:
       'Most companies separate creative, ads, websites, and follow-up systems into different vendors. The result is often fragmented. We build these pieces together so the business has a clearer path from attention to revenue.',
