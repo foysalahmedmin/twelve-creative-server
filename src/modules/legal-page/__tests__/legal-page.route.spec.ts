@@ -28,7 +28,6 @@ jest.mock('../../../middlewares/validation.middleware', () =>
   ),
 );
 
-import { LEGAL_PAGE_SEED } from '../../../scripts/seeds/legal-page.seed';
 import legalPageRoutes from '../legal-page.route';
 import * as LegalPageService from '../legal-page.service';
 
@@ -48,7 +47,21 @@ app.use(
   },
 );
 const request = supertest(app);
-const page = LEGAL_PAGE_SEED[0];
+// Local fixture, JSON-safe: the payload round-trips through supertest, so an
+// effective_date must be the string a real HTTP client would send rather than
+// a Date instance. Kept independent of LEGAL_PAGE_SEED so editing the real
+// policy copy cannot break routing assertions.
+const page = {
+  slug: 'privacy-policy' as const,
+  title: 'Privacy Policy',
+  markdown: '# Privacy Policy\n\nApproved copy.',
+  effective_date: '2026-07-27',
+  seo: {
+    title: 'Privacy Policy | Twelve Creative',
+    description: 'Twelve Creative privacy policy and data practices.',
+  },
+  is_published: true,
+};
 
 describe('Legal page routes', () => {
   it('serves a published public page without authentication', async () => {
@@ -62,9 +75,7 @@ describe('Legal page routes', () => {
   });
 
   it('protects the admin list', async () => {
-    (LegalPageService.getLegalPages as jest.Mock).mockResolvedValue(
-      LEGAL_PAGE_SEED,
-    );
+    (LegalPageService.getLegalPages as jest.Mock).mockResolvedValue([page]);
     const response = await request.get('/api/legal-pages');
     expect(response.status).toBe(httpStatus.OK);
     expect(response.headers['x-test-auth-roles']).toBe('admin,editor');

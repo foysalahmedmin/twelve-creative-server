@@ -7,12 +7,26 @@ jest.mock('../legal-page.model', () => ({
 }));
 
 import httpStatus from 'http-status';
-import { LEGAL_PAGE_SEED } from '../../../scripts/seeds/legal-page.seed';
 import { LegalPage } from '../legal-page.model';
 import * as LegalPageService from '../legal-page.service';
 
+// Local fixtures rather than LEGAL_PAGE_SEED: these tests assert the
+// "cannot publish without an effective date" rule and must not change
+// behaviour when the real policy copy is edited.
+const draft = {
+  slug: 'privacy-policy' as const,
+  title: 'Privacy Policy',
+  markdown: '# Privacy Policy\n\nDraft copy.',
+  effective_date: null,
+  seo: {
+    title: 'Privacy Policy | Twelve Creative',
+    description: 'Twelve Creative privacy policy and data practices.',
+  },
+  is_published: false,
+};
+
 const published = {
-  ...LEGAL_PAGE_SEED[0],
+  ...draft,
   markdown: '# Privacy\r\n\r\nApproved copy.  ',
   effective_date: new Date('2026-07-27'),
   is_published: true,
@@ -43,7 +57,7 @@ describe('LegalPageService', () => {
     await expect(
       LegalPageService.upsertLegalPage(
         'terms-and-conditions',
-        LEGAL_PAGE_SEED[0],
+        draft,
       ),
     ).rejects.toMatchObject({ status: httpStatus.BAD_REQUEST });
   });
@@ -51,7 +65,7 @@ describe('LegalPageService', () => {
   it('enforces an effective date at the service boundary', async () => {
     await expect(
       LegalPageService.upsertLegalPage('privacy-policy', {
-        ...LEGAL_PAGE_SEED[0],
+        ...draft,
         is_published: true,
       }),
     ).rejects.toMatchObject({

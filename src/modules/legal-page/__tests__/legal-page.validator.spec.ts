@@ -1,9 +1,23 @@
-import { LEGAL_PAGE_SEED } from '../../../scripts/seeds/legal-page.seed';
 import { upsertLegalPageValidationSchema } from '../legal-page.validator';
+
+// A minimal unpublished draft. Deliberately local rather than imported from
+// LEGAL_PAGE_SEED: these tests assert the "cannot publish without an effective
+// date" rule, and must not start passing or failing because the real policy
+// copy was edited.
+const draft = {
+  slug: 'privacy-policy' as const,
+  title: 'Privacy Policy',
+  markdown: '# Privacy Policy\n\nDraft copy.',
+  effective_date: null,
+  seo: {
+    title: 'Privacy Policy | Twelve Creative',
+    description: 'Twelve Creative privacy policy and data practices.',
+  },
+  is_published: false,
+};
 
 describe('Legal page validation', () => {
   it('accepts safe unpublished drafts without an effective date', () => {
-    const draft = LEGAL_PAGE_SEED[0];
     expect(
       upsertLegalPageValidationSchema.safeParse({
         params: { slug: draft.slug },
@@ -13,7 +27,6 @@ describe('Legal page validation', () => {
   });
 
   it('requires an effective date before publishing', () => {
-    const draft = LEGAL_PAGE_SEED[0];
     expect(
       upsertLegalPageValidationSchema.safeParse({
         params: { slug: draft.slug },
@@ -23,7 +36,6 @@ describe('Legal page validation', () => {
   });
 
   it('coerces a valid effective date for a published record', () => {
-    const draft = LEGAL_PAGE_SEED[0];
     const result = upsertLegalPageValidationSchema.safeParse({
       params: { slug: draft.slug },
       body: {
@@ -50,7 +62,6 @@ describe('Legal page validation', () => {
   ])(
     'rejects an invalid or over-coerced effective date %p',
     (effectiveDate) => {
-      const draft = LEGAL_PAGE_SEED[0];
       expect(
         upsertLegalPageValidationSchema.safeParse({
           params: { slug: draft.slug },
@@ -65,7 +76,6 @@ describe('Legal page validation', () => {
   );
 
   it('accepts the UTC ISO timestamp emitted by the admin form', () => {
-    const draft = LEGAL_PAGE_SEED[0];
     const result = upsertLegalPageValidationSchema.safeParse({
       params: { slug: draft.slug },
       body: {
@@ -88,7 +98,6 @@ describe('Legal page validation', () => {
     '[Unsafe](javascript:alert(1))',
     '<iframe src="https://evil.example"></iframe>',
   ])('rejects unsafe Markdown source %s', (markdown) => {
-    const draft = LEGAL_PAGE_SEED[0];
     expect(
       upsertLegalPageValidationSchema.safeParse({
         params: { slug: draft.slug },
