@@ -55,10 +55,7 @@ describe('LegalPageService', () => {
 
   it('rejects route/payload slug mismatches', async () => {
     await expect(
-      LegalPageService.upsertLegalPage(
-        'terms-and-conditions',
-        draft,
-      ),
+      LegalPageService.upsertLegalPage('terms-and-conditions', draft),
     ).rejects.toMatchObject({ status: httpStatus.BAD_REQUEST });
   });
 
