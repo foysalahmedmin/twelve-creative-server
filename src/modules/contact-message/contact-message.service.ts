@@ -5,6 +5,7 @@ import { sendEmail } from '../../utils/send-email';
 import * as ContactMessageRepository from './contact-message.repository';
 import { TContactMessage } from './contact-message.type';
 import { createSystemNotification } from '../../utils/create-system-notification';
+import { deleteSystemNotificationsByReference } from '../../utils/delete-system-notifications';
 import { resolveNotificationRecipient } from '../../utils/notification-recipient';
 
 const escapeHtml = (s: string) =>
@@ -63,7 +64,7 @@ export const createContactMessage = async (
     title: `New message from ${msg.name}`,
     message: msg.subject || msg.email,
     type: 'contact',
-    metadata: { url: '/admin/messages' },
+    metadata: { url: '/admin/messages', reference: String(msg._id) },
   });
   return msg;
 };
@@ -115,6 +116,9 @@ export const deleteContactMessagePermanent = async (
     throw new AppError(httpStatus.NOT_FOUND, 'Message not found');
   }
   await ContactMessageRepository.hardDeleteById(id);
+  // Drop the bell notifications raised for this message so they can't outlive
+  // the record they point at.
+  await deleteSystemNotificationsByReference(id);
 };
 
 export const getUnreadCount = async (): Promise<number> => {

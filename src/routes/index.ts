@@ -1,10 +1,8 @@
 import express from 'express';
 import aboutPageRoutes from '../modules/about-page/about-page.route';
-import archiveRoutes from '../modules/archive/archive.route';
 import authRoutes from '../modules/auth/auth.route';
 import bookingRoutes from '../modules/booking/booking.route';
 import brandRoutes from '../modules/brand/brand.route';
-import categoryRoutes from '../modules/category/category.route';
 import contactMessageRoutes from '../modules/contact-message/contact-message.route';
 import faqRoutes from '../modules/faq/faq.route';
 import featuredProjectRoutes from '../modules/featured-project/featured-project.route';
@@ -51,14 +49,6 @@ const moduleRoutes = [
   {
     path: '/file',
     route: fileRoutes,
-  },
-  {
-    path: '/category',
-    route: categoryRoutes,
-  },
-  {
-    path: '/archive',
-    route: archiveRoutes,
   },
   {
     path: '/testimonial',

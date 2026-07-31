@@ -35,14 +35,10 @@ const getUser = async (_id: string) => {
   }
 };
 
-const auth = (...roles: (TRole | 'guest')[]) => {
+const auth = (...roles: TRole[]) => {
   return catchAsync(
     async (req: Request, _res: Response, next: NextFunction) => {
       const token = extractAuthorizationToken(req.headers.authorization);
-
-      if (roles.includes('guest') && req.guest?._id && !token) {
-        return next();
-      }
 
       if (!token) {
         throw new AppError(httpStatus.UNAUTHORIZED, 'No token provided.');

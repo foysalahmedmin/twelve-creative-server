@@ -11,7 +11,6 @@ export type TInsight = {
   content: string;
   category?: string;
   read_minutes?: number;
-  author?: Types.ObjectId | string;
   status: TInsightStatus;
   published_at?: Date;
   is_deleted?: boolean;

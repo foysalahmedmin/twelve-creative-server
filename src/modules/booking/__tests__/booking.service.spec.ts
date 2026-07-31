@@ -6,6 +6,9 @@ jest.mock('../../../utils/send-email', () => ({ sendEmail: jest.fn() }));
 jest.mock('../../../utils/create-system-notification', () => ({
   createSystemNotification: jest.fn(),
 }));
+jest.mock('../../../utils/delete-system-notifications', () => ({
+  deleteSystemNotificationsByReference: jest.fn().mockResolvedValue(undefined),
+}));
 jest.mock('../../../utils/notification-recipient', () => ({
   resolveNotificationRecipient: jest
     .fn()
@@ -20,6 +23,7 @@ jest.mock('../../../config/env', () => ({
 }));
 
 import { createSystemNotification } from '../../../utils/create-system-notification';
+import { deleteSystemNotificationsByReference } from '../../../utils/delete-system-notifications';
 import { resolveNotificationRecipient } from '../../../utils/notification-recipient';
 import { sendEmail } from '../../../utils/send-email';
 import * as IndustryRepository from '../../industry/industry.repository';
@@ -69,7 +73,9 @@ describe('BookingService', () => {
       title: `New booking from ${booking.name}`,
       message: `${booking.company} — ${booking.email}`,
       type: 'booking',
-      metadata: { url: '/admin/bookings' },
+      // `reference` lets the notification be removed again if the booking is
+      // ever permanently deleted.
+      metadata: { url: '/admin/bookings', reference: id },
     });
     expect(sendEmail).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -239,6 +245,8 @@ describe('BookingService', () => {
       BookingService.deleteBookingPermanent(id),
     ).resolves.toBeUndefined();
     expect(BookingRepository.hardDeleteById).toHaveBeenCalledWith(id);
+    // The bell notifications for this booking must go with it.
+    expect(deleteSystemNotificationsByReference).toHaveBeenCalledWith(id);
   });
 
   it('does not permanently delete a missing booking', async () => {
@@ -252,6 +260,7 @@ describe('BookingService', () => {
       status: httpStatus.NOT_FOUND,
     });
     expect(BookingRepository.hardDeleteById).not.toHaveBeenCalled();
+    expect(deleteSystemNotificationsByReference).not.toHaveBeenCalled();
   });
 
   it('returns the pending booking count', async () => {

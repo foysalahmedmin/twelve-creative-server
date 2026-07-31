@@ -21,7 +21,6 @@ const baseBody = z.object({
   cover: z.string().trim().min(1).max(2048),
   content: z.string().trim().min(50),
   category: z.string().trim().max(80).optional(),
-  author: idSchema.optional(),
   status: z.enum(['draft', 'published']).optional(),
 });
 

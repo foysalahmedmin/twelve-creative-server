@@ -8,7 +8,12 @@ interface SystemNotificationPayload {
   title: string;
   message: string;
   type: 'booking' | 'contact';
-  metadata?: { url?: string };
+  /**
+   * `reference` is the source record's id. It lets the notification be removed
+   * again if that record is later permanently deleted — see
+   * `deleteSystemNotificationsByReference`.
+   */
+  metadata?: { url?: string; reference?: string };
 }
 
 /**

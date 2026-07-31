@@ -38,7 +38,6 @@ const insightSchema = new Schema<TInsightDocument>(
     },
     category: { type: String, trim: true, maxlength: 80 },
     read_minutes: { type: Number, default: 0 },
-    author: { type: Schema.Types.ObjectId, ref: 'TeamMember' },
     status: {
       type: String,
       enum: ['draft', 'published'],

@@ -5,6 +5,7 @@ import { sendEmail } from '../../utils/send-email';
 import * as BookingRepository from './booking.repository';
 import { TBooking } from './booking.type';
 import { createSystemNotification } from '../../utils/create-system-notification';
+import { deleteSystemNotificationsByReference } from '../../utils/delete-system-notifications';
 import { resolveNotificationRecipient } from '../../utils/notification-recipient';
 import * as IndustryRepository from '../industry/industry.repository';
 
@@ -100,7 +101,7 @@ export const createBooking = async (
       ? `${booking.company} — ${booking.email}`
       : booking.email,
     type: 'booking',
-    metadata: { url: '/admin/bookings' },
+    metadata: { url: '/admin/bookings', reference: String(booking._id) },
   });
   return booking;
 };
@@ -150,6 +151,9 @@ export const deleteBookingPermanent = async (id: string): Promise<void> => {
     throw new AppError(httpStatus.NOT_FOUND, 'Booking not found');
   }
   await BookingRepository.hardDeleteById(id);
+  // Drop the bell notifications raised for this booking so they can't outlive
+  // the record they point at.
+  await deleteSystemNotificationsByReference(id);
 };
 
 export const getPendingCount = async (): Promise<number> => {

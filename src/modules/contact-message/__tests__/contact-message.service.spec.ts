@@ -5,6 +5,9 @@ jest.mock('../../../utils/send-email', () => ({ sendEmail: jest.fn() }));
 jest.mock('../../../utils/create-system-notification', () => ({
   createSystemNotification: jest.fn(),
 }));
+jest.mock('../../../utils/delete-system-notifications', () => ({
+  deleteSystemNotificationsByReference: jest.fn().mockResolvedValue(undefined),
+}));
 jest.mock('../../../utils/notification-recipient', () => ({
   resolveNotificationRecipient: jest
     .fn()
@@ -19,6 +22,7 @@ jest.mock('../../../config/env', () => ({
 }));
 
 import { createSystemNotification } from '../../../utils/create-system-notification';
+import { deleteSystemNotificationsByReference } from '../../../utils/delete-system-notifications';
 import { resolveNotificationRecipient } from '../../../utils/notification-recipient';
 import { sendEmail } from '../../../utils/send-email';
 import * as ContactMessageRepository from '../contact-message.repository';
@@ -63,7 +67,9 @@ describe('ContactMessageService', () => {
       title: `New message from ${message.name}`,
       message: message.subject,
       type: 'contact',
-      metadata: { url: '/admin/messages' },
+      // `reference` lets the notification be removed again if the message is
+      // ever permanently deleted.
+      metadata: { url: '/admin/messages', reference: id },
     });
     expect(sendEmail).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -187,6 +193,8 @@ describe('ContactMessageService', () => {
       ContactMessageService.deleteContactMessagePermanent(id),
     ).resolves.toBeUndefined();
     expect(ContactMessageRepository.hardDeleteById).toHaveBeenCalledWith(id);
+    // The bell notifications for this message must go with it.
+    expect(deleteSystemNotificationsByReference).toHaveBeenCalledWith(id);
   });
 
   it('does not permanently delete a missing message', async () => {
@@ -200,6 +208,7 @@ describe('ContactMessageService', () => {
       status: httpStatus.NOT_FOUND,
     });
     expect(ContactMessageRepository.hardDeleteById).not.toHaveBeenCalled();
+    expect(deleteSystemNotificationsByReference).not.toHaveBeenCalled();
   });
 
   it('returns the unread message count', async () => {
