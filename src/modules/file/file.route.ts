@@ -1,5 +1,8 @@
 import express from 'express';
-import { SUPPORTED_LOCAL_UPLOAD_MIME_TYPES } from '../../constants/upload-policy';
+import {
+  MAX_UPLOAD_BYTES,
+  SUPPORTED_LOCAL_UPLOAD_MIME_TYPES,
+} from '../../constants/upload-policy';
 import auth from '../../middlewares/auth.middleware';
 import file from '../../middlewares/file.middleware';
 import storage from '../../middlewares/storage.middleware';
@@ -18,7 +21,7 @@ router.post(
   file({
     name: 'file',
     folder: 'files',
-    size: 50 * 1024 * 1024, // 50MB
+    size: MAX_UPLOAD_BYTES,
     allowedTypes: SUPPORTED_LOCAL_UPLOAD_MIME_TYPES,
   }),
   validation(FileValidations.createFileValidationSchema),
@@ -31,7 +34,7 @@ router.post(
   auth('admin', 'editor'),
   storage({
     name: 'file',
-    size: 50 * 1024 * 1024, // 50MB
+    size: MAX_UPLOAD_BYTES,
     allowedTypes: SUPPORTED_LOCAL_UPLOAD_MIME_TYPES,
     makePublic: true,
   }),
