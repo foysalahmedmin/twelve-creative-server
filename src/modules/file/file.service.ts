@@ -12,6 +12,7 @@ import {
 import { TStorageResult } from '../../middlewares/storage.middleware';
 import { TJwtPayload } from '../../types/jsonwebtoken.type';
 import { deleteFiles as deleteFilesFromDisk } from '../../utils/delete-files';
+import { scheduleVideoCompression } from '../../utils/video-compression';
 import * as FileRepository from './file.repository';
 import { TFile, TFileInput } from './file.type';
 import { getExtensionFromFilename, getFileTypeFromMime } from './file.util';
@@ -153,7 +154,35 @@ export const createLocalFile = async (
       },
     };
 
-    return await FileRepository.create(fileData);
+    const created = await FileRepository.create(fileData);
+
+    // Fire-and-forget: the response below is not delayed by this. A
+    // testimonial/reel upload can be tens of megabytes of effectively raw
+    // camera output; re-encoding it synchronously here risked the request
+    // itself timing out. Nothing about the upload's success depends on this
+    // succeeding — it silently leaves the original file alone on any
+    // failure, including simply deciding the file isn't worth compressing.
+    scheduleVideoCompression(
+      String(created._id),
+      filePath,
+      file.mimetype,
+      file.size,
+      async ({ fileId, newSize }) => {
+        try {
+          await FileRepository.updateById(fileId, { size: newSize });
+        } catch (updateError) {
+          // The file on disk is already correct at this point — only the
+          // DB's cached size field would be stale, which self-corrects the
+          // next time this record is re-saved. Not worth surfacing further.
+          console.warn(
+            `Compressed ${fileId} but could not update its stored size:`,
+            updateError,
+          );
+        }
+      },
+    );
+
+    return created;
   } catch (error) {
     // Multer has already written the file at this point. Any validation or DB
     // failure must remove it so rejected requests cannot accumulate orphans.
