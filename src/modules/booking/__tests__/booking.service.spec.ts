@@ -10,9 +10,9 @@ jest.mock('../../../utils/delete-system-notifications', () => ({
   deleteSystemNotificationsByReference: jest.fn().mockResolvedValue(undefined),
 }));
 jest.mock('../../../utils/notification-recipient', () => ({
-  resolveNotificationRecipient: jest
+  resolveNotificationRecipients: jest
     .fn()
-    .mockResolvedValue('notifications@twelvecreative.co'),
+    .mockResolvedValue(['notifications@twelvecreative.co']),
 }));
 jest.mock('../../../config/env', () => ({
   __esModule: true,
@@ -24,7 +24,7 @@ jest.mock('../../../config/env', () => ({
 
 import { createSystemNotification } from '../../../utils/create-system-notification';
 import { deleteSystemNotificationsByReference } from '../../../utils/delete-system-notifications';
-import { resolveNotificationRecipient } from '../../../utils/notification-recipient';
+import { resolveNotificationRecipients } from '../../../utils/notification-recipient';
 import { sendEmail } from '../../../utils/send-email';
 import * as IndustryRepository from '../../industry/industry.repository';
 import * as BookingRepository from '../booking.repository';
@@ -51,9 +51,9 @@ describe('BookingService', () => {
   beforeEach(() => {
     jest.resetAllMocks();
     (sendEmail as jest.Mock).mockResolvedValue(undefined);
-    (resolveNotificationRecipient as jest.Mock).mockResolvedValue(
+    (resolveNotificationRecipients as jest.Mock).mockResolvedValue([
       'notifications@twelvecreative.co',
-    );
+    ]);
   });
 
   it('creates a pending booking, notifies admins, and escapes email HTML', async () => {
@@ -79,7 +79,7 @@ describe('BookingService', () => {
     });
     expect(sendEmail).toHaveBeenCalledWith(
       expect.objectContaining({
-        to: 'notifications@twelvecreative.co',
+        to: ['notifications@twelvecreative.co'],
         subject: `New booking from ${booking.name}`,
         html: expect.stringContaining('&lt;Taylor &amp; Co&gt;'),
       }),

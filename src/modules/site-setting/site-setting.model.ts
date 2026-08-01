@@ -149,11 +149,13 @@ const siteSettingSchema = new Schema<TSiteSettingDocument>(
       validate: httpUrlValidator,
     },
     social: { type: socialsSchema, default: () => ({}) },
+    // Comma-separated recipient list, so several people can be notified.
+    // Wider than a single-address field to hold the full list.
     booking_notification_email: {
       type: String,
       trim: true,
       lowercase: true,
-      maxlength: 200,
+      maxlength: 500,
     },
     faq_section: { type: faqSectionSchema, default: () => ({}) },
     calendly_url: {

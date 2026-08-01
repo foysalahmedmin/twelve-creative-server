@@ -23,6 +23,16 @@ export const getPublicSiteSetting = catchAsync(async (_req, res) => {
   });
 });
 
+export const sendTestNotificationEmail = catchAsync(async (_req, res) => {
+  const result = await SiteSettingServices.sendTestNotificationEmail();
+  sendResponse(res, {
+    status: httpStatus.OK,
+    success: true,
+    message: `Test email sent to ${result.recipients.join(', ')}`,
+    data: result,
+  });
+});
+
 export const updateSiteSetting = catchAsync(async (req, res) => {
   const result = await SiteSettingServices.updateSiteSetting(req.body);
   sendResponse(res, {

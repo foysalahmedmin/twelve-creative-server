@@ -6,7 +6,7 @@ import * as BookingRepository from './booking.repository';
 import { TBooking } from './booking.type';
 import { createSystemNotification } from '../../utils/create-system-notification';
 import { deleteSystemNotificationsByReference } from '../../utils/delete-system-notifications';
-import { resolveNotificationRecipient } from '../../utils/notification-recipient';
+import { resolveNotificationRecipients } from '../../utils/notification-recipient';
 import * as IndustryRepository from '../industry/industry.repository';
 
 const escapeHtml = (s: string) =>
@@ -41,8 +41,8 @@ const buildNotificationHtml = (booking: TBooking): string => {
     </div>`;
 };
 
-const fireAndForgetEmail = (booking: TBooking, to?: string) => {
-  if (!to) return;
+const fireAndForgetEmail = (booking: TBooking, to: string[]) => {
+  if (!to.length) return;
   void (async () => {
     try {
       await sendEmail({
@@ -93,8 +93,8 @@ export const createBooking = async (
     status: 'pending',
     source: 'booking_form',
   });
-  const notificationRecipient = await resolveNotificationRecipient();
-  fireAndForgetEmail(booking, notificationRecipient);
+  const notificationRecipients = await resolveNotificationRecipients();
+  fireAndForgetEmail(booking, notificationRecipients);
   createSystemNotification({
     title: `New booking from ${booking.name}`,
     message: booking.company

@@ -63,6 +63,15 @@ export type TSiteSetting = {
   footer?: TFooterContent;
 };
 
+/**
+ * Admin read shape. `notification_recipients_effective` is derived, never
+ * stored: it answers "where would a lead notification actually land right
+ * now", including the configured fallback when the field is left empty.
+ */
+export type TAdminSiteSetting = TSiteSetting & {
+  notification_recipients_effective: string[];
+};
+
 export type TPublicSiteSetting = Pick<
   TSiteSetting,
   | 'contact_email'

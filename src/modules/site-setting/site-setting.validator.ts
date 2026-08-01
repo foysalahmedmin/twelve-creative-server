@@ -1,5 +1,11 @@
 import { z } from 'zod';
 import {
+  MAX_NOTIFICATION_RECIPIENTS,
+  formatRecipientList,
+  isEmailAddress,
+  parseRecipientList,
+} from '../../utils/notification-recipient';
+import {
   isHttpUrl,
   isSafeImageReference,
   isSafeLinkReference,
@@ -9,9 +15,40 @@ const optionalEmail = z
   .string()
   .trim()
   .max(200)
-  .refine((v) => !v || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v), {
+  .refine((v) => !v || isEmailAddress(v), {
     message: 'Invalid email',
   })
+  .optional();
+
+/**
+ * A comma-separated recipient list. Normalizes on the way in so the stored
+ * value is always canonical (lower-cased, de-duplicated, ", "-joined) no
+ * matter how the admin typed or pasted it. Empty means "use the default".
+ */
+const optionalEmailList = z
+  .string()
+  .trim()
+  .max(500)
+  .superRefine((value, ctx) => {
+    if (!value) return;
+    const addresses = parseRecipientList(value);
+    const invalid = addresses.filter((address) => !isEmailAddress(address));
+    if (invalid.length) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Invalid email address: ${invalid.join(', ')}`,
+      });
+    }
+    if (addresses.length > MAX_NOTIFICATION_RECIPIENTS) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Use at most ${MAX_NOTIFICATION_RECIPIENTS} addresses`,
+      });
+    }
+  })
+  .transform((value) =>
+    value ? formatRecipientList(parseRecipientList(value)) : value,
+  )
   .optional();
 
 const optionalSafeReference = (
@@ -53,7 +90,7 @@ export const updateSiteSettingValidationSchema = z.object({
     contact_address: z.string().trim().max(400).optional(),
     contact_whatsapp: z.string().trim().max(40).optional(),
     contact_map_embed_url: optionalHttpUrl,
-    booking_notification_email: optionalEmail,
+    booking_notification_email: optionalEmailList,
     social: z
       .object({
         instagram: optionalHttpUrl,

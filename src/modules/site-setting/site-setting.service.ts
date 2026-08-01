@@ -1,11 +1,23 @@
+import httpStatus from 'http-status';
+import AppError from '../../builder/app-error';
+import { resolveNotificationRecipients } from '../../utils/notification-recipient';
+import { sendEmail } from '../../utils/send-email';
 import {
   getOrCreateSiteSetting,
   getOrCreateSiteSettingDocument,
 } from './site-setting.model';
-import { TPublicSiteSetting, TSiteSetting } from './site-setting.type';
+import {
+  TAdminSiteSetting,
+  TPublicSiteSetting,
+  TSiteSetting,
+} from './site-setting.type';
 
-export const getSiteSetting = async (): Promise<TSiteSetting> => {
-  return await getOrCreateSiteSetting();
+export const getSiteSetting = async (): Promise<TAdminSiteSetting> => {
+  const setting = await getOrCreateSiteSetting();
+  return {
+    ...setting,
+    notification_recipients_effective: await resolveNotificationRecipients(),
+  };
 };
 
 export const getPublicSiteSetting = async (): Promise<TPublicSiteSetting> => {
@@ -28,6 +40,56 @@ export const getPublicSiteSetting = async (): Promise<TPublicSiteSetting> => {
     contact_page: setting.contact_page,
     footer: setting.footer,
   };
+};
+
+const testEmailHtml = (recipients: string[]): string => `
+  <div style="font-family:system-ui,sans-serif">
+    <h2>Notification email is working</h2>
+    <p style="font-size:14px;color:#444">
+      This is a test from the Twelve Creative admin panel. Booking and contact
+      form notifications will arrive at this address.
+    </p>
+    <p style="font-size:14px;color:#444">
+      Currently notifying: <strong>${recipients.join(', ')}</strong>
+    </p>
+    <p style="font-size:12px;color:#888">Sent ${new Date().toUTCString()}</p>
+  </div>`;
+
+/**
+ * Sends a real notification-shaped email to whoever is configured right now,
+ * so an admin can confirm the address actually receives mail rather than
+ * finding out when a lead goes missing.
+ *
+ * Deliberately targets the saved recipients rather than an address supplied in
+ * the request — that keeps the endpoint from becoming a way to send mail to
+ * arbitrary addresses.
+ */
+export const sendTestNotificationEmail = async (): Promise<{
+  recipients: string[];
+}> => {
+  const recipients = await resolveNotificationRecipients();
+  if (!recipients.length) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'No notification email is configured, and no fallback sender is set up on the server.',
+    );
+  }
+
+  try {
+    await sendEmail({
+      to: recipients,
+      subject: 'Twelve Creative — notification email test',
+      text: `This is a test from the Twelve Creative admin panel. Notifications will arrive at: ${recipients.join(', ')}`,
+      html: testEmailHtml(recipients),
+    });
+  } catch (error) {
+    throw new AppError(
+      httpStatus.BAD_GATEWAY,
+      `Could not send the test email: ${(error as Error).message}`,
+    );
+  }
+
+  return { recipients };
 };
 
 export const updateSiteSetting = async (

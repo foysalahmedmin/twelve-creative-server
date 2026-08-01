@@ -28,8 +28,20 @@ describe('SiteSettingService', () => {
   it('gets or creates the singleton settings document', async () => {
     (getOrCreateSiteSetting as jest.Mock).mockResolvedValue(setting);
 
-    await expect(SiteSettingService.getSiteSetting()).resolves.toEqual(setting);
+    await expect(SiteSettingService.getSiteSetting()).resolves.toMatchObject(
+      setting,
+    );
     expect(getOrCreateSiteSetting).toHaveBeenCalledWith();
+  });
+
+  it('tells the admin where notifications actually land right now', async () => {
+    (getOrCreateSiteSetting as jest.Mock).mockResolvedValue(setting);
+
+    const result = await SiteSettingService.getSiteSetting();
+
+    expect(result.notification_recipients_effective).toEqual([
+      'private-notifications@example.com',
+    ]);
   });
 
   it('projects only renderable fields for the public endpoint', async () => {

@@ -6,7 +6,7 @@ import * as ContactMessageRepository from './contact-message.repository';
 import { TContactMessage } from './contact-message.type';
 import { createSystemNotification } from '../../utils/create-system-notification';
 import { deleteSystemNotificationsByReference } from '../../utils/delete-system-notifications';
-import { resolveNotificationRecipient } from '../../utils/notification-recipient';
+import { resolveNotificationRecipients } from '../../utils/notification-recipient';
 
 const escapeHtml = (s: string) =>
   s
@@ -34,8 +34,8 @@ const buildNotificationHtml = (msg: TContactMessage): string => {
     </div>`;
 };
 
-const fireAndForgetEmail = (msg: TContactMessage, to?: string) => {
-  if (!to) return;
+const fireAndForgetEmail = (msg: TContactMessage, to: string[]) => {
+  if (!to.length) return;
   void (async () => {
     try {
       await sendEmail({
@@ -58,8 +58,8 @@ export const createContactMessage = async (
     is_read: false,
     is_archived: false,
   });
-  const notificationRecipient = await resolveNotificationRecipient();
-  fireAndForgetEmail(msg, notificationRecipient);
+  const notificationRecipients = await resolveNotificationRecipients();
+  fireAndForgetEmail(msg, notificationRecipients);
   createSystemNotification({
     title: `New message from ${msg.name}`,
     message: msg.subject || msg.email,

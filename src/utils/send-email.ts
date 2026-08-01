@@ -5,7 +5,8 @@ import { Resend } from 'resend';
 import config from '../config/env';
 
 export type EmailOptions = {
-  to: string;
+  /** One address, or several to notify a whole team. */
+  to: string | string[];
   subject: string;
   text: string;
   html: string;
@@ -160,6 +161,16 @@ export const sendEmailSendgrid = async ({
 };
 
 export const sendEmail = async (options: EmailOptions) => {
+  // An empty recipient list reaches the providers as a hard error, so treat it
+  // as "nobody is configured to be notified" and stop here instead.
+  const hasRecipient = Array.isArray(options.to)
+    ? options.to.length > 0
+    : Boolean(options.to?.trim());
+  if (!hasRecipient) {
+    console.warn('Email skipped: no recipient configured');
+    return;
+  }
+
   if (config.email_provider === 'smtp') {
     await sendEmailSMTP(options);
   } else if (config.email_provider === 'resend') {
