@@ -114,7 +114,9 @@ function buildScaleFilter(width: number, height: number): string | null {
  * new file size when a swap happened, or null when the original was left
  * untouched (compression skipped, failed, or didn't help).
  */
-async function compressInPlace(filePath: string): Promise<number | null> {
+export async function compressInPlace(
+  filePath: string,
+): Promise<number | null> {
   const probe = await probeVideo(filePath);
   if (!probe) return null;
 

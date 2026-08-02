@@ -51,7 +51,8 @@
     "prepare": "husky install",
     "test": "jest",
     "test:watch": "jest --watch --maxWorkers=1",
-    "test:coverage": "jest --coverage --maxWorkers=1"
+    "test:coverage": "jest --coverage --maxWorkers=1",
+    "compress:videos": "node dist/scripts/compress-existing-videos.js"
   },
   "keywords": [],
   "author": "",

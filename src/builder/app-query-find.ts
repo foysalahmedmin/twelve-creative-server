@@ -121,8 +121,23 @@ class AppQueryFind<T> {
       });
     }
 
-    const sortOrder = fields.length > 0 ? fields.join(' ') : '-createdAt';
-    this.query = this.query.sort(sortOrder);
+    // Every schema maps its timestamps to created_at/updated_at, so the old
+    // default of '-createdAt' named a field no document has. Sorting by an
+    // absent field lets Mongo answer in storage order, which is not stable
+    // between calls — with skip/limit on top, the same row could come back on
+    // two pages while another never appeared on any.
+    if (fields.length === 0) fields = ['-created_at'];
+
+    // created_at ties (bulk-imported rows share a timestamp) and explicit
+    // sorts like `order` tie constantly — several records legitimately hold
+    // order 0. A unique final key makes the ordering total, which is what
+    // skip/limit needs to be repeatable.
+    const hasIdTiebreak = fields.some(
+      (field) => field === '_id' || field === '-_id',
+    );
+    if (!hasIdTiebreak) fields.push('-_id');
+
+    this.query = this.query.sort(fields.join(' '));
     return this;
   }
 
