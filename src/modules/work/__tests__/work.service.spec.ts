@@ -298,3 +298,41 @@ describe('WorkService', () => {
     expect(WorkRepository.hardDeleteById).not.toHaveBeenCalled();
   });
 });
+
+// Restore is the counterpart to the soft delete these modules already had:
+// without it a soft-deleted record was unreachable from the API entirely, and
+// could only be brought back by editing the database by hand.
+describe('WorkService.restoreWork', () => {
+  beforeEach(() => {
+    jest.resetAllMocks();
+  });
+
+  it('restores a soft-deleted record and returns the fresh copy', async () => {
+    (WorkRepository.findByIdWithDeleted as jest.Mock).mockResolvedValue(work);
+    (WorkRepository.restoreById as jest.Mock).mockResolvedValue(work);
+    (WorkRepository.findByIdLean as jest.Mock).mockResolvedValue(work);
+
+    await expect(WorkService.restoreWork(WORK_ID)).resolves.toEqual(work);
+    expect(WorkRepository.restoreById).toHaveBeenCalledWith(WORK_ID);
+  });
+
+  it('throws 404 without attempting a restore when the id does not exist', async () => {
+    (WorkRepository.findByIdWithDeleted as jest.Mock).mockResolvedValue(null);
+
+    await expect(WorkService.restoreWork(WORK_ID)).rejects.toMatchObject({
+      status: httpStatus.NOT_FOUND,
+      message: 'Work not found',
+    });
+    expect(WorkRepository.restoreById).not.toHaveBeenCalled();
+  });
+
+  it('throws 404 when the record exists but was never deleted', async () => {
+    (WorkRepository.findByIdWithDeleted as jest.Mock).mockResolvedValue(work);
+    (WorkRepository.restoreById as jest.Mock).mockResolvedValue(null);
+
+    await expect(WorkService.restoreWork(WORK_ID)).rejects.toMatchObject({
+      status: httpStatus.NOT_FOUND,
+      message: 'Work not found or not deleted',
+    });
+  });
+});

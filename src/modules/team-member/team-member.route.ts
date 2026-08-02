@@ -38,6 +38,13 @@ router.patch(
   TeamMemberControllers.updateTeamMember,
 );
 
+router.post(
+  '/:id/restore',
+  auth('admin'),
+  validation(TeamMemberValidations.teamMemberIdSchema),
+  TeamMemberControllers.restoreTeamMember,
+);
+
 router.delete(
   '/:id/permanent',
   auth('admin'),

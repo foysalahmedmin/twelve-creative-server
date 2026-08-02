@@ -35,6 +35,13 @@ router.patch(
   InsightControllers.updateInsight,
 );
 
+router.post(
+  '/:id/restore',
+  auth('admin'),
+  validation(InsightValidations.insightIdSchema),
+  InsightControllers.restoreInsight,
+);
+
 router.delete(
   '/:id/permanent',
   auth('admin'),

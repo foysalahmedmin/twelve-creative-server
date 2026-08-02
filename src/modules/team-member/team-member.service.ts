@@ -62,3 +62,18 @@ export const deleteTeamMemberPermanent = async (id: string): Promise<void> => {
     throw new AppError(httpStatus.NOT_FOUND, 'Team member not found');
   await TeamMemberRepository.hardDeleteById(id);
 };
+
+export const restoreTeamMember = async (id: string): Promise<TTeamMember> => {
+  const exists = await TeamMemberRepository.findByIdWithDeleted(id);
+  if (!exists)
+    throw new AppError(httpStatus.NOT_FOUND, 'Team member not found');
+
+  const restored = await TeamMemberRepository.restoreById(id);
+  if (!restored) {
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      'Team member not found or not deleted',
+    );
+  }
+  return (await TeamMemberRepository.findByIdLean(id))!;
+};

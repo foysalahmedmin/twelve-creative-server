@@ -37,6 +37,13 @@ router.patch(
   FaqControllers.updateFaq,
 );
 
+router.post(
+  '/:id/restore',
+  auth('admin'),
+  validation(FaqValidations.faqIdSchema),
+  FaqControllers.restoreFaq,
+);
+
 router.delete(
   '/:id/permanent',
   auth('admin'),

@@ -128,3 +128,20 @@ export const hardDeleteById = async (id: string): Promise<void> => {
 export const countByIndustry = async (industry: string): Promise<number> => {
   return await Work.countDocuments({ industry });
 };
+
+export const findByIdWithDeleted = async (
+  id: string,
+): Promise<TWorkDocument | null> => {
+  return await Work.findById(id).setOptions({ bypassDeleted: true });
+};
+
+/** Clears the soft-delete marker. Returns null when the row was not deleted. */
+export const restoreById = async (
+  id: string,
+): Promise<TWorkDocument | null> => {
+  return await Work.findOneAndUpdate(
+    { _id: id, is_deleted: true },
+    { is_deleted: false, $unset: { deleted_at: 1 } },
+    { new: true },
+  ).setOptions({ bypassDeleted: true });
+};

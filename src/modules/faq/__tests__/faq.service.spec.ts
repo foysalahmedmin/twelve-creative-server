@@ -151,3 +151,41 @@ describe('FaqService', () => {
     expect(FaqRepository.hardDeleteById).not.toHaveBeenCalled();
   });
 });
+
+// Restore is the counterpart to the soft delete these modules already had:
+// without it a soft-deleted record was unreachable from the API entirely, and
+// could only be brought back by editing the database by hand.
+describe('FaqService.restoreFaq', () => {
+  beforeEach(() => {
+    jest.resetAllMocks();
+  });
+
+  it('restores a soft-deleted record and returns the fresh copy', async () => {
+    (FaqRepository.findByIdWithDeleted as jest.Mock).mockResolvedValue(faq);
+    (FaqRepository.restoreById as jest.Mock).mockResolvedValue(faq);
+    (FaqRepository.findByIdLean as jest.Mock).mockResolvedValue(faq);
+
+    await expect(FaqService.restoreFaq(FAQ_ID)).resolves.toEqual(faq);
+    expect(FaqRepository.restoreById).toHaveBeenCalledWith(FAQ_ID);
+  });
+
+  it('throws 404 without attempting a restore when the id does not exist', async () => {
+    (FaqRepository.findByIdWithDeleted as jest.Mock).mockResolvedValue(null);
+
+    await expect(FaqService.restoreFaq(FAQ_ID)).rejects.toMatchObject({
+      status: httpStatus.NOT_FOUND,
+      message: 'FAQ not found',
+    });
+    expect(FaqRepository.restoreById).not.toHaveBeenCalled();
+  });
+
+  it('throws 404 when the record exists but was never deleted', async () => {
+    (FaqRepository.findByIdWithDeleted as jest.Mock).mockResolvedValue(faq);
+    (FaqRepository.restoreById as jest.Mock).mockResolvedValue(null);
+
+    await expect(FaqService.restoreFaq(FAQ_ID)).rejects.toMatchObject({
+      status: httpStatus.NOT_FOUND,
+      message: 'FAQ not found or not deleted',
+    });
+  });
+});

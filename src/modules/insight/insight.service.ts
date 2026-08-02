@@ -78,3 +78,17 @@ export const deleteInsightPermanent = async (id: string): Promise<void> => {
   if (!exists) throw new AppError(httpStatus.NOT_FOUND, 'Insight not found');
   await InsightRepository.hardDeleteById(id);
 };
+
+export const restoreInsight = async (id: string): Promise<TInsight> => {
+  const exists = await InsightRepository.findByIdWithDeleted(id);
+  if (!exists) throw new AppError(httpStatus.NOT_FOUND, 'Insight not found');
+
+  const restored = await InsightRepository.restoreById(id);
+  if (!restored) {
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      'Insight not found or not deleted',
+    );
+  }
+  return (await InsightRepository.findByIdLean(id))!;
+};

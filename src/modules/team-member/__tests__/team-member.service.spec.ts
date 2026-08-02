@@ -164,3 +164,53 @@ describe('TeamMemberService', () => {
     });
   });
 });
+
+// Restore is the counterpart to the soft delete these modules already had:
+// without it a soft-deleted record was unreachable from the API entirely, and
+// could only be brought back by editing the database by hand.
+describe('TeamMemberService.restoreTeamMember', () => {
+  beforeEach(() => {
+    jest.resetAllMocks();
+  });
+
+  it('restores a soft-deleted record and returns the fresh copy', async () => {
+    (TeamMemberRepository.findByIdWithDeleted as jest.Mock).mockResolvedValue(
+      member,
+    );
+    (TeamMemberRepository.restoreById as jest.Mock).mockResolvedValue(member);
+    (TeamMemberRepository.findByIdLean as jest.Mock).mockResolvedValue(member);
+
+    await expect(
+      TeamMemberService.restoreTeamMember(MEMBER_ID),
+    ).resolves.toEqual(member);
+    expect(TeamMemberRepository.restoreById).toHaveBeenCalledWith(MEMBER_ID);
+  });
+
+  it('throws 404 without attempting a restore when the id does not exist', async () => {
+    (TeamMemberRepository.findByIdWithDeleted as jest.Mock).mockResolvedValue(
+      null,
+    );
+
+    await expect(
+      TeamMemberService.restoreTeamMember(MEMBER_ID),
+    ).rejects.toMatchObject({
+      status: httpStatus.NOT_FOUND,
+      message: 'Team member not found',
+    });
+    expect(TeamMemberRepository.restoreById).not.toHaveBeenCalled();
+  });
+
+  it('throws 404 when the record exists but was never deleted', async () => {
+    (TeamMemberRepository.findByIdWithDeleted as jest.Mock).mockResolvedValue(
+      member,
+    );
+    (TeamMemberRepository.restoreById as jest.Mock).mockResolvedValue(null);
+
+    await expect(
+      TeamMemberService.restoreTeamMember(MEMBER_ID),
+    ).rejects.toMatchObject({
+      status: httpStatus.NOT_FOUND,
+      message: 'Team member not found or not deleted',
+    });
+  });
+});

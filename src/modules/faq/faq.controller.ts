@@ -83,3 +83,13 @@ export const deleteFaqPermanent = catchAsync(async (req, res) => {
     data: null,
   });
 });
+
+export const restoreFaq = catchAsync(async (req, res) => {
+  const result = await FaqServices.restoreFaq(req.params.id);
+  sendResponse(res, {
+    status: httpStatus.OK,
+    success: true,
+    message: 'FAQ restored successfully',
+    data: result,
+  });
+});

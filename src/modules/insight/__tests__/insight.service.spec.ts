@@ -215,3 +215,53 @@ describe('InsightService', () => {
     expect(InsightRepository.hardDeleteById).not.toHaveBeenCalled();
   });
 });
+
+// Restore is the counterpart to the soft delete these modules already had:
+// without it a soft-deleted record was unreachable from the API entirely, and
+// could only be brought back by editing the database by hand.
+describe('InsightService.restoreInsight', () => {
+  beforeEach(() => {
+    jest.resetAllMocks();
+  });
+
+  it('restores a soft-deleted record and returns the fresh copy', async () => {
+    (InsightRepository.findByIdWithDeleted as jest.Mock).mockResolvedValue(
+      insight,
+    );
+    (InsightRepository.restoreById as jest.Mock).mockResolvedValue(insight);
+    (InsightRepository.findByIdLean as jest.Mock).mockResolvedValue(insight);
+
+    await expect(InsightService.restoreInsight(INSIGHT_ID)).resolves.toEqual(
+      insight,
+    );
+    expect(InsightRepository.restoreById).toHaveBeenCalledWith(INSIGHT_ID);
+  });
+
+  it('throws 404 without attempting a restore when the id does not exist', async () => {
+    (InsightRepository.findByIdWithDeleted as jest.Mock).mockResolvedValue(
+      null,
+    );
+
+    await expect(
+      InsightService.restoreInsight(INSIGHT_ID),
+    ).rejects.toMatchObject({
+      status: httpStatus.NOT_FOUND,
+      message: 'Insight not found',
+    });
+    expect(InsightRepository.restoreById).not.toHaveBeenCalled();
+  });
+
+  it('throws 404 when the record exists but was never deleted', async () => {
+    (InsightRepository.findByIdWithDeleted as jest.Mock).mockResolvedValue(
+      insight,
+    );
+    (InsightRepository.restoreById as jest.Mock).mockResolvedValue(null);
+
+    await expect(
+      InsightService.restoreInsight(INSIGHT_ID),
+    ).rejects.toMatchObject({
+      status: httpStatus.NOT_FOUND,
+      message: 'Insight not found or not deleted',
+    });
+  });
+});

@@ -53,6 +53,13 @@ router.patch(
   WorkControllers.updateWork,
 );
 
+router.post(
+  '/:id/restore',
+  auth('admin'),
+  validation(WorkValidations.workIdSchema),
+  WorkControllers.restoreWork,
+);
+
 router.delete(
   '/:id/permanent',
   auth('admin'),

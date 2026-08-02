@@ -54,3 +54,14 @@ export const deleteFaqPermanent = async (id: string): Promise<void> => {
   if (!exists) throw new AppError(httpStatus.NOT_FOUND, 'FAQ not found');
   await FaqRepository.hardDeleteById(id);
 };
+
+export const restoreFaq = async (id: string): Promise<TFaq> => {
+  const exists = await FaqRepository.findByIdWithDeleted(id);
+  if (!exists) throw new AppError(httpStatus.NOT_FOUND, 'FAQ not found');
+
+  const restored = await FaqRepository.restoreById(id);
+  if (!restored) {
+    throw new AppError(httpStatus.NOT_FOUND, 'FAQ not found or not deleted');
+  }
+  return (await FaqRepository.findByIdLean(id))!;
+};

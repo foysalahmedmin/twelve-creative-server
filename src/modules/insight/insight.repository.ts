@@ -75,3 +75,20 @@ export const softDeleteById = async (id: string): Promise<void> => {
 export const hardDeleteById = async (id: string): Promise<void> => {
   await Insight.findByIdAndDelete(id).setOptions({ bypassDeleted: true });
 };
+
+export const findByIdWithDeleted = async (
+  id: string,
+): Promise<TInsightDocument | null> => {
+  return await Insight.findById(id).setOptions({ bypassDeleted: true });
+};
+
+/** Clears the soft-delete marker. Returns null when the row was not deleted. */
+export const restoreById = async (
+  id: string,
+): Promise<TInsightDocument | null> => {
+  return await Insight.findOneAndUpdate(
+    { _id: id, is_deleted: true },
+    { is_deleted: false, $unset: { deleted_at: 1 } },
+    { new: true },
+  ).setOptions({ bypassDeleted: true });
+};

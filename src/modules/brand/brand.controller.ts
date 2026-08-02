@@ -83,3 +83,13 @@ export const deleteBrandPermanent = catchAsync(async (req, res) => {
     data: null,
   });
 });
+
+export const restoreBrand = catchAsync(async (req, res) => {
+  const result = await BrandServices.restoreBrand(req.params.id);
+  sendResponse(res, {
+    status: httpStatus.OK,
+    success: true,
+    message: 'Brand restored successfully',
+    data: result,
+  });
+});

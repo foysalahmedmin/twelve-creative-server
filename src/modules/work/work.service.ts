@@ -124,3 +124,14 @@ export const deleteWorkPermanent = async (id: string): Promise<void> => {
   if (!exists) throw new AppError(httpStatus.NOT_FOUND, 'Work not found');
   await WorkRepository.hardDeleteById(id);
 };
+
+export const restoreWork = async (id: string): Promise<TWorkPopulated> => {
+  const exists = await WorkRepository.findByIdWithDeleted(id);
+  if (!exists) throw new AppError(httpStatus.NOT_FOUND, 'Work not found');
+
+  const restored = await WorkRepository.restoreById(id);
+  if (!restored) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Work not found or not deleted');
+  }
+  return (await WorkRepository.findByIdLean(id))!;
+};

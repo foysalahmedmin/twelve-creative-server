@@ -152,3 +152,41 @@ describe('BrandService', () => {
     expect(BrandRepository.hardDeleteById).not.toHaveBeenCalled();
   });
 });
+
+// Restore is the counterpart to the soft delete these modules already had:
+// without it a soft-deleted record was unreachable from the API entirely, and
+// could only be brought back by editing the database by hand.
+describe('BrandService.restoreBrand', () => {
+  beforeEach(() => {
+    jest.resetAllMocks();
+  });
+
+  it('restores a soft-deleted record and returns the fresh copy', async () => {
+    (BrandRepository.findByIdWithDeleted as jest.Mock).mockResolvedValue(brand);
+    (BrandRepository.restoreById as jest.Mock).mockResolvedValue(brand);
+    (BrandRepository.findByIdLean as jest.Mock).mockResolvedValue(brand);
+
+    await expect(BrandService.restoreBrand(BRAND_ID)).resolves.toEqual(brand);
+    expect(BrandRepository.restoreById).toHaveBeenCalledWith(BRAND_ID);
+  });
+
+  it('throws 404 without attempting a restore when the id does not exist', async () => {
+    (BrandRepository.findByIdWithDeleted as jest.Mock).mockResolvedValue(null);
+
+    await expect(BrandService.restoreBrand(BRAND_ID)).rejects.toMatchObject({
+      status: httpStatus.NOT_FOUND,
+      message: 'Brand not found',
+    });
+    expect(BrandRepository.restoreById).not.toHaveBeenCalled();
+  });
+
+  it('throws 404 when the record exists but was never deleted', async () => {
+    (BrandRepository.findByIdWithDeleted as jest.Mock).mockResolvedValue(brand);
+    (BrandRepository.restoreById as jest.Mock).mockResolvedValue(null);
+
+    await expect(BrandService.restoreBrand(BRAND_ID)).rejects.toMatchObject({
+      status: httpStatus.NOT_FOUND,
+      message: 'Brand not found or not deleted',
+    });
+  });
+});

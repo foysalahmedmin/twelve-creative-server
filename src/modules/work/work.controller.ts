@@ -101,3 +101,13 @@ export const deleteWorkPermanent = catchAsync(async (req, res) => {
     data: null,
   });
 });
+
+export const restoreWork = catchAsync(async (req, res) => {
+  const result = await WorkServices.restoreWork(req.params.id);
+  sendResponse(res, {
+    status: httpStatus.OK,
+    success: true,
+    message: 'Work restored successfully',
+    data: result,
+  });
+});

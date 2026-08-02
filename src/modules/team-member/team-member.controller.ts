@@ -86,3 +86,13 @@ export const deleteTeamMemberPermanent = catchAsync(async (req, res) => {
     data: null,
   });
 });
+
+export const restoreTeamMember = catchAsync(async (req, res) => {
+  const result = await TeamMemberServices.restoreTeamMember(req.params.id);
+  sendResponse(res, {
+    status: httpStatus.OK,
+    success: true,
+    message: 'Team member restored successfully',
+    data: result,
+  });
+});

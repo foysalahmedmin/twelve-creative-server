@@ -54,3 +54,14 @@ export const deleteBrandPermanent = async (id: string): Promise<void> => {
   if (!exists) throw new AppError(httpStatus.NOT_FOUND, 'Brand not found');
   await BrandRepository.hardDeleteById(id);
 };
+
+export const restoreBrand = async (id: string): Promise<TBrand> => {
+  const exists = await BrandRepository.findByIdWithDeleted(id);
+  if (!exists) throw new AppError(httpStatus.NOT_FOUND, 'Brand not found');
+
+  const restored = await BrandRepository.restoreById(id);
+  if (!restored) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Brand not found or not deleted');
+  }
+  return (await BrandRepository.findByIdLean(id))!;
+};

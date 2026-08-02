@@ -85,3 +85,13 @@ export const deleteInsightPermanent = catchAsync(async (req, res) => {
     data: null,
   });
 });
+
+export const restoreInsight = catchAsync(async (req, res) => {
+  const result = await InsightServices.restoreInsight(req.params.id);
+  sendResponse(res, {
+    status: httpStatus.OK,
+    success: true,
+    message: 'Insight restored successfully',
+    data: result,
+  });
+});

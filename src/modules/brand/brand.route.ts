@@ -37,6 +37,13 @@ router.patch(
   BrandControllers.updateBrand,
 );
 
+router.post(
+  '/:id/restore',
+  auth('admin'),
+  validation(BrandValidations.brandIdSchema),
+  BrandControllers.restoreBrand,
+);
+
 router.delete(
   '/:id/permanent',
   auth('admin'),
