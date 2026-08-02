@@ -42,10 +42,18 @@ export type ShowcaseVideoSeedDefinition = {
   is_active: boolean;
 };
 
-const SAMPLE_VIDEO =
-  'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4';
+// Placeholder clips for a fresh install, one per orientation. These are
+// YouTube links rather than hot-linked media files: the sample .mp4s that
+// used to sit here were served from third-party hosts that have since
+// stopped serving them, so a freshly seeded site came up with every player
+// broken. A YouTube id is at least stable, and obvious as a placeholder.
+const SAMPLE_REEL_VIDEO = 'https://www.youtube.com/shorts/sOxloXyOAKA';
+const SAMPLE_LANDSCAPE_VIDEO = 'https://youtu.be/668nUCeBHyY';
 
-const sampleVideo = (): VideoRef => ({ source: 'url', value: SAMPLE_VIDEO });
+const sampleVideo = (aspect: MediaAspect): VideoRef => ({
+  source: 'youtube',
+  value: aspect === 'reel' ? SAMPLE_REEL_VIDEO : SAMPLE_LANDSCAPE_VIDEO,
+});
 
 /**
  * Canonical reel media for the four launch Industries. Keeping this manifest
@@ -56,22 +64,22 @@ export const INDUSTRY_REEL_MEDIA_SEEDS = {
   hospitality: {
     reel_thumbnail:
       'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=720&h=1280&fit=crop&auto=format',
-    reel_video: sampleVideo(),
+    reel_video: sampleVideo('reel'),
   },
   'real-estate': {
     reel_thumbnail:
       'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=720&h=1280&fit=crop&auto=format',
-    reel_video: sampleVideo(),
+    reel_video: sampleVideo('reel'),
   },
   ventures: {
     reel_thumbnail:
       'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=720&h=1280&fit=crop&auto=format',
-    reel_video: sampleVideo(),
+    reel_video: sampleVideo('reel'),
   },
   'professional-services': {
     reel_thumbnail:
       'https://images.unsplash.com/photo-1497366216548-37526070297c?w=720&h=1280&fit=crop&auto=format',
-    reel_video: sampleVideo(),
+    reel_video: sampleVideo('reel'),
   },
 } satisfies Record<IndustrySeedSlug, IndustryReelMediaSeed>;
 
@@ -82,7 +90,7 @@ export const FEATURED_PROJECT_SEEDS: FeaturedProjectSeedDefinition[] = [
     aspect: 'reel',
     thumbnail:
       'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1200&h=675&fit=crop&auto=format',
-    video: sampleVideo(),
+    video: sampleVideo('reel'),
     order: 1,
     is_active: true,
   },
@@ -92,7 +100,7 @@ export const FEATURED_PROJECT_SEEDS: FeaturedProjectSeedDefinition[] = [
     aspect: 'reel',
     thumbnail:
       'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&h=675&fit=crop&auto=format',
-    video: sampleVideo(),
+    video: sampleVideo('reel'),
     order: 2,
     is_active: true,
   },
@@ -102,7 +110,7 @@ export const FEATURED_PROJECT_SEEDS: FeaturedProjectSeedDefinition[] = [
     aspect: 'reel',
     thumbnail:
       'https://images.unsplash.com/photo-1559339352-11d035aa65de?w=1200&h=675&fit=crop&auto=format',
-    video: sampleVideo(),
+    video: sampleVideo('reel'),
     order: 3,
     is_active: true,
   },
@@ -112,7 +120,7 @@ export const FEATURED_PROJECT_SEEDS: FeaturedProjectSeedDefinition[] = [
     aspect: 'reel',
     thumbnail:
       'https://images.unsplash.com/photo-1424847651672-bf20a4b0982b?w=675&h=1200&fit=crop&auto=format',
-    video: sampleVideo(),
+    video: sampleVideo('reel'),
     order: 4,
     is_active: true,
   },
@@ -122,7 +130,7 @@ export const FEATURED_PROJECT_SEEDS: FeaturedProjectSeedDefinition[] = [
     aspect: 'reel',
     thumbnail:
       'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&h=675&fit=crop&auto=format',
-    video: sampleVideo(),
+    video: sampleVideo('reel'),
     order: 1,
     is_active: true,
   },
@@ -132,7 +140,7 @@ export const FEATURED_PROJECT_SEEDS: FeaturedProjectSeedDefinition[] = [
     aspect: 'reel',
     thumbnail:
       'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=1200&h=675&fit=crop&auto=format',
-    video: sampleVideo(),
+    video: sampleVideo('reel'),
     order: 2,
     is_active: true,
   },
@@ -142,7 +150,7 @@ export const FEATURED_PROJECT_SEEDS: FeaturedProjectSeedDefinition[] = [
     aspect: 'reel',
     thumbnail:
       'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1200&h=675&fit=crop&auto=format',
-    video: sampleVideo(),
+    video: sampleVideo('reel'),
     order: 3,
     is_active: true,
   },
@@ -152,7 +160,7 @@ export const FEATURED_PROJECT_SEEDS: FeaturedProjectSeedDefinition[] = [
     aspect: 'reel',
     thumbnail:
       'https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=675&h=1200&fit=crop&auto=format',
-    video: sampleVideo(),
+    video: sampleVideo('reel'),
     order: 4,
     is_active: true,
   },
@@ -162,7 +170,7 @@ export const FEATURED_PROJECT_SEEDS: FeaturedProjectSeedDefinition[] = [
     aspect: 'reel',
     thumbnail:
       'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=1200&h=675&fit=crop&auto=format',
-    video: sampleVideo(),
+    video: sampleVideo('reel'),
     order: 1,
     is_active: true,
   },
@@ -172,7 +180,7 @@ export const FEATURED_PROJECT_SEEDS: FeaturedProjectSeedDefinition[] = [
     aspect: 'reel',
     thumbnail:
       'https://images.unsplash.com/photo-1540962351504-03099e0a754b?w=1200&h=675&fit=crop&auto=format',
-    video: sampleVideo(),
+    video: sampleVideo('reel'),
     order: 2,
     is_active: true,
   },
@@ -182,7 +190,7 @@ export const FEATURED_PROJECT_SEEDS: FeaturedProjectSeedDefinition[] = [
     aspect: 'reel',
     thumbnail:
       'https://images.unsplash.com/photo-1556388158-158ea5ccacbd?w=1200&h=675&fit=crop&auto=format',
-    video: sampleVideo(),
+    video: sampleVideo('reel'),
     order: 3,
     is_active: true,
   },
@@ -192,7 +200,7 @@ export const FEATURED_PROJECT_SEEDS: FeaturedProjectSeedDefinition[] = [
     aspect: 'reel',
     thumbnail:
       'https://images.unsplash.com/photo-1474302770737-173ee21bab63?w=675&h=1200&fit=crop&auto=format',
-    video: sampleVideo(),
+    video: sampleVideo('reel'),
     order: 4,
     is_active: true,
   },
@@ -202,7 +210,7 @@ export const FEATURED_PROJECT_SEEDS: FeaturedProjectSeedDefinition[] = [
     aspect: 'reel',
     thumbnail:
       'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1200&h=675&fit=crop&auto=format',
-    video: sampleVideo(),
+    video: sampleVideo('reel'),
     order: 1,
     is_active: true,
   },
@@ -212,7 +220,7 @@ export const FEATURED_PROJECT_SEEDS: FeaturedProjectSeedDefinition[] = [
     aspect: 'reel',
     thumbnail:
       'https://images.unsplash.com/photo-1556157382-97eda2d62296?w=1200&h=675&fit=crop&auto=format',
-    video: sampleVideo(),
+    video: sampleVideo('reel'),
     order: 2,
     is_active: true,
   },
@@ -222,7 +230,7 @@ export const FEATURED_PROJECT_SEEDS: FeaturedProjectSeedDefinition[] = [
     aspect: 'reel',
     thumbnail:
       'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=1200&h=675&fit=crop&auto=format',
-    video: sampleVideo(),
+    video: sampleVideo('reel'),
     order: 3,
     is_active: true,
   },
@@ -232,7 +240,7 @@ export const FEATURED_PROJECT_SEEDS: FeaturedProjectSeedDefinition[] = [
     aspect: 'reel',
     thumbnail:
       'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=675&h=1200&fit=crop&auto=format',
-    video: sampleVideo(),
+    video: sampleVideo('reel'),
     order: 4,
     is_active: true,
   },
@@ -241,7 +249,7 @@ export const FEATURED_PROJECT_SEEDS: FeaturedProjectSeedDefinition[] = [
 export const SHOWCASE_VIDEO_SEEDS: ShowcaseVideoSeedDefinition[] = [
   {
     industry_slug: 'hospitality',
-    video: sampleVideo(),
+    video: sampleVideo('reel'),
     thumbnail:
       'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=512&h=912&fit=crop&auto=format',
     alt: 'Hospitality brand film — restaurant interior',
@@ -251,7 +259,7 @@ export const SHOWCASE_VIDEO_SEEDS: ShowcaseVideoSeedDefinition[] = [
   },
   {
     industry_slug: 'real-estate',
-    video: sampleVideo(),
+    video: sampleVideo('reel'),
     thumbnail:
       'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=512&h=912&fit=crop&auto=format',
     alt: 'Real estate project reveal — luxury residential',
@@ -261,7 +269,7 @@ export const SHOWCASE_VIDEO_SEEDS: ShowcaseVideoSeedDefinition[] = [
   },
   {
     industry_slug: 'ventures',
-    video: sampleVideo(),
+    video: sampleVideo('reel'),
     thumbnail:
       'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=512&h=912&fit=crop&auto=format',
     alt: 'Aviation charter — founder film',
@@ -271,7 +279,7 @@ export const SHOWCASE_VIDEO_SEEDS: ShowcaseVideoSeedDefinition[] = [
   },
   {
     industry_slug: 'hospitality',
-    video: sampleVideo(),
+    video: sampleVideo('reel'),
     thumbnail:
       'https://images.unsplash.com/photo-1559339352-11d035aa65de?w=512&h=912&fit=crop&auto=format',
     alt: 'Restaurant menu launch — campaign asset',
@@ -281,7 +289,7 @@ export const SHOWCASE_VIDEO_SEEDS: ShowcaseVideoSeedDefinition[] = [
   },
   {
     industry_slug: 'professional-services',
-    video: sampleVideo(),
+    video: sampleVideo('reel'),
     thumbnail:
       'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=512&h=912&fit=crop&auto=format',
     alt: 'Founder interview — professional services',
@@ -291,7 +299,7 @@ export const SHOWCASE_VIDEO_SEEDS: ShowcaseVideoSeedDefinition[] = [
   },
   {
     industry_slug: 'ventures',
-    video: sampleVideo(),
+    video: sampleVideo('reel'),
     thumbnail:
       'https://images.unsplash.com/photo-1540962351504-03099e0a754b?w=512&h=912&fit=crop&auto=format',
     alt: 'Aviation hangar walkthrough — charter brand',
@@ -301,7 +309,7 @@ export const SHOWCASE_VIDEO_SEEDS: ShowcaseVideoSeedDefinition[] = [
   },
   {
     industry_slug: 'hospitality',
-    video: sampleVideo(),
+    video: sampleVideo('reel'),
     thumbnail:
       'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=512&h=912&fit=crop&auto=format',
     alt: 'Cocktail bar opening — hospitality teaser',
@@ -311,7 +319,7 @@ export const SHOWCASE_VIDEO_SEEDS: ShowcaseVideoSeedDefinition[] = [
   },
   {
     industry_slug: 'real-estate',
-    video: sampleVideo(),
+    video: sampleVideo('reel'),
     thumbnail:
       'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=512&h=912&fit=crop&auto=format',
     alt: 'Luxury property reveal — penthouse tour',
@@ -321,7 +329,7 @@ export const SHOWCASE_VIDEO_SEEDS: ShowcaseVideoSeedDefinition[] = [
   },
   {
     industry_slug: 'hospitality',
-    video: sampleVideo(),
+    video: sampleVideo('landscape'),
     thumbnail:
       'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1280&h=720&fit=crop&auto=format',
     alt: 'Hudson Hospitality — opening night recap',
@@ -331,7 +339,7 @@ export const SHOWCASE_VIDEO_SEEDS: ShowcaseVideoSeedDefinition[] = [
   },
   {
     industry_slug: 'real-estate',
-    video: sampleVideo(),
+    video: sampleVideo('landscape'),
     thumbnail:
       'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1280&h=720&fit=crop&auto=format',
     alt: 'Meridian Properties — project reveal',
@@ -341,7 +349,7 @@ export const SHOWCASE_VIDEO_SEEDS: ShowcaseVideoSeedDefinition[] = [
   },
   {
     industry_slug: 'ventures',
-    video: sampleVideo(),
+    video: sampleVideo('landscape'),
     thumbnail:
       'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=1280&h=720&fit=crop&auto=format',
     alt: 'Skyline Charter — founder interview',
@@ -351,7 +359,7 @@ export const SHOWCASE_VIDEO_SEEDS: ShowcaseVideoSeedDefinition[] = [
   },
   {
     industry_slug: 'hospitality',
-    video: sampleVideo(),
+    video: sampleVideo('landscape'),
     thumbnail:
       'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1280&h=720&fit=crop&auto=format',
     alt: 'Vesta Group — year in review',
@@ -361,7 +369,7 @@ export const SHOWCASE_VIDEO_SEEDS: ShowcaseVideoSeedDefinition[] = [
   },
   {
     industry_slug: 'hospitality',
-    video: sampleVideo(),
+    video: sampleVideo('landscape'),
     thumbnail:
       'https://images.unsplash.com/photo-1559339352-11d035aa65de?w=1280&h=720&fit=crop&auto=format',
     alt: 'Casa del Mar — brand story',
@@ -371,7 +379,7 @@ export const SHOWCASE_VIDEO_SEEDS: ShowcaseVideoSeedDefinition[] = [
   },
   {
     industry_slug: 'professional-services',
-    video: sampleVideo(),
+    video: sampleVideo('landscape'),
     thumbnail:
       'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=1280&h=720&fit=crop&auto=format',
     alt: 'Monarch Consulting — founder film',

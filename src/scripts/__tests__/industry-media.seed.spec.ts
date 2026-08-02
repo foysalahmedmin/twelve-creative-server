@@ -26,9 +26,35 @@ describe('industry media seed manifest', () => {
       const media = INDUSTRY_REEL_MEDIA_SEEDS[slug];
       expect(media.reel_thumbnail).toContain('w=720&h=1280');
       expect(media.reel_video).toMatchObject({
-        source: 'url',
-        value: expect.stringMatching(/^https:\/\//),
+        source: 'youtube',
+        value: expect.stringMatching(
+          /^https:\/\/(www\.youtube\.com|youtu\.be)\//,
+        ),
       });
+    }
+  });
+
+  // The previous placeholders were hot-linked sample .mp4s whose hosts later
+  // stopped serving them, leaving a freshly seeded site full of dead players.
+  // These assertions are about that failure, not about the specific clips:
+  // every seeded video must be playable and pointed at the orientation it is
+  // actually rendered in.
+  it('seeds only playable placeholder videos, matched to their aspect', () => {
+    const REEL = 'https://www.youtube.com/shorts/sOxloXyOAKA';
+    const LANDSCAPE = 'https://youtu.be/668nUCeBHyY';
+
+    const withAspect = [...FEATURED_PROJECT_SEEDS, ...SHOWCASE_VIDEO_SEEDS];
+    expect(withAspect.length).toBeGreaterThan(0);
+
+    for (const item of withAspect) {
+      expect(item.video.source).toBe('youtube');
+      expect(item.video.value).toBe(item.aspect === 'reel' ? REEL : LANDSCAPE);
+    }
+
+    // Industry reel media is portrait by definition — there is no aspect field
+    // to consult, so it is asserted directly.
+    for (const slug of REQUIRED_INDUSTRY_SLUGS) {
+      expect(INDUSTRY_REEL_MEDIA_SEEDS[slug].reel_video.value).toBe(REEL);
     }
   });
 

@@ -23,8 +23,10 @@ import {
   REQUIRED_INDUSTRY_SLUGS,
 } from './seeds/industry-media.seed';
 
-const SAMPLE_VIDEO =
-  'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4';
+// Landscape placeholder: this patch only ever fills the Industry detail
+// hero, which renders 16:9. See industry-media.seed.ts for why these are
+// YouTube links and not hot-linked media files.
+const SAMPLE_VIDEO = 'https://youtu.be/668nUCeBHyY';
 const VIDEO_SOURCES = ['youtube', 'url', 'upload'] as const;
 
 async function run(): Promise<void> {
@@ -59,7 +61,7 @@ async function run(): Promise<void> {
 
       const heroVideoResult = await Industry.updateOne(
         { ...activeIndustryFilter, video: null },
-        { $set: { video: { source: 'url', value: SAMPLE_VIDEO } } },
+        { $set: { video: { source: 'youtube', value: SAMPLE_VIDEO } } },
       );
       if (heroVideoResult.modifiedCount > 0) fields.push('video');
 

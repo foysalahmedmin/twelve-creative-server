@@ -55,8 +55,21 @@ const FORCE = process.argv.includes('--force');
 
 // Stable, HTTPS, CC0 fallback media. Client-owned project footage can replace
 // these references through the admin without changing the seed contract.
-const SAMPLE_VIDEO =
-  'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4';
+// Placeholder clips for a fresh install, one per orientation. YouTube links
+// rather than hot-linked media files: the sample .mp4 that used to sit here
+// was served from a third-party host that has since stopped serving it, so a
+// freshly seeded site came up with every player broken.
+const SAMPLE_REEL_VIDEO = 'https://www.youtube.com/shorts/sOxloXyOAKA';
+const SAMPLE_LANDSCAPE_VIDEO = 'https://youtu.be/668nUCeBHyY';
+
+const reelVideo = () => ({
+  source: 'youtube' as const,
+  value: SAMPLE_REEL_VIDEO,
+});
+const landscapeVideo = () => ({
+  source: 'youtube' as const,
+  value: SAMPLE_LANDSCAPE_VIDEO,
+});
 
 // ─── Testimonials ────────────────────────────────────────────────────────────
 const TESTIMONIALS = [
@@ -67,7 +80,7 @@ const TESTIMONIALS = [
     image:
       'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=400&h=400&fit=crop&auto=format',
     category: 'video_message' as const,
-    video_message: { source: 'url' as const, value: SAMPLE_VIDEO },
+    video_message: reelVideo(),
     thumbnail:
       'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=768&h=512&fit=crop&auto=format',
     order: 1,
@@ -79,7 +92,7 @@ const TESTIMONIALS = [
     image:
       'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400&h=400&fit=crop&auto=format',
     category: 'video_message' as const,
-    video_message: { source: 'url' as const, value: SAMPLE_VIDEO },
+    video_message: reelVideo(),
     thumbnail:
       'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=768&h=512&fit=crop&auto=format',
     order: 2,
@@ -91,7 +104,7 @@ const TESTIMONIALS = [
     image:
       'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&auto=format',
     category: 'video_message' as const,
-    video_message: { source: 'url' as const, value: SAMPLE_VIDEO },
+    video_message: reelVideo(),
     thumbnail:
       'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=768&h=512&fit=crop&auto=format',
     order: 3,
@@ -103,7 +116,7 @@ const TESTIMONIALS = [
     image:
       'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&h=400&fit=crop&auto=format',
     category: 'video_message' as const,
-    video_message: { source: 'url' as const, value: SAMPLE_VIDEO },
+    video_message: reelVideo(),
     thumbnail:
       'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=768&h=512&fit=crop&auto=format',
     order: 4,
@@ -287,7 +300,7 @@ const INDUSTRIES = [
     tagline: 'Seats filled. Tables turned.',
     thumbnail:
       'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&h=675&fit=crop&auto=format',
-    video: { source: 'url' as const, value: SAMPLE_VIDEO },
+    video: landscapeVideo(),
     ...INDUSTRY_REEL_MEDIA_SEEDS.hospitality,
   },
   {
@@ -312,7 +325,7 @@ const INDUSTRIES = [
     tagline: 'From listing to sellout.',
     thumbnail:
       'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&h=675&fit=crop&auto=format',
-    video: { source: 'url' as const, value: SAMPLE_VIDEO },
+    video: landscapeVideo(),
     ...INDUSTRY_REEL_MEDIA_SEEDS['real-estate'],
   },
   {
@@ -337,7 +350,7 @@ const INDUSTRIES = [
     tagline: 'Trust first. Revenue follows.',
     thumbnail:
       'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=1200&h=675&fit=crop&auto=format',
-    video: { source: 'url' as const, value: SAMPLE_VIDEO },
+    video: landscapeVideo(),
     ...INDUSTRY_REEL_MEDIA_SEEDS.ventures,
   },
   {
@@ -362,7 +375,7 @@ const INDUSTRIES = [
     tagline: 'Clarity converts.',
     thumbnail:
       'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200&h=675&fit=crop&auto=format',
-    video: { source: 'url' as const, value: SAMPLE_VIDEO },
+    video: landscapeVideo(),
     ...INDUSTRY_REEL_MEDIA_SEEDS['professional-services'],
   },
 ];
@@ -567,7 +580,7 @@ const WORKS = [
     ],
     outcome_desc:
       'After one year of working together, revenue increased by approximately 40%. The improved visibility and consistency helped attract buyers and contributed to the successful sale of all three locations.',
-    outcome_video: { source: 'url' as const, value: SAMPLE_VIDEO },
+    outcome_video: landscapeVideo(),
     testimonial: {
       quote:
         "They didn't just make our content look better. They made the business easier to talk about — and easier to sell.",
@@ -647,7 +660,7 @@ const WORKS = [
     ],
     outcome_desc:
       'Qualified inquiries increased 145% versus the prior launch, and the average buyer commitment timeline compressed by roughly 30%. Brokers engaged the materials three times more than before.',
-    outcome_video: { source: 'url' as const, value: SAMPLE_VIDEO },
+    outcome_video: landscapeVideo(),
     testimonial: {
       quote:
         'They positioned the project, built the film, ran the campaign, and installed the CRM. We finally saw the path from interest to qualified buyer.',
@@ -727,7 +740,7 @@ const WORKS = [
     ],
     outcome_desc:
       'Qualified calls increased 180% quarter over quarter while the founder spent less time on unqualified leads. Close rate on qualified opportunities improved by 22%.',
-    outcome_video: { source: 'url' as const, value: SAMPLE_VIDEO },
+    outcome_video: landscapeVideo(),
     testimonial: {
       quote:
         'Aviation buyers move on trust. Twelve Creative built the founder content and follow-up system that finally matched the level of our service.',
@@ -978,7 +991,7 @@ const PAGE_HEROES = [
     trust_label: 'Trusted across industries',
     primary_cta: { label: 'Start a Conversation', href: '/contact' },
     secondary_cta: { label: 'View Our Work', href: '/works' },
-    video: { source: 'url', value: SAMPLE_VIDEO },
+    video: landscapeVideo(),
     seo: {
       title: 'Twelve Creative — We Build the Structure Behind Growth',
       description:
