@@ -31,16 +31,19 @@ jest.mock('../../../middlewares/rate-limit.middleware', () => ({
 }));
 
 // ── Stub file middleware ───────────────────────────────────────────────────────
+// Deliberately leaves req.files untouched (undefined) instead of setting {}:
+// the real multer-based middleware only populates req.files for an actual
+// multipart/form-data request, and the signup form this route serves sends
+// plain JSON with no image field, so req.files is undefined in production.
 jest.mock('../../../middlewares/file.middleware', () => {
   return jest.fn(
     () =>
       (
-        req: express.Request,
+        _req: express.Request,
         res: express.Response,
         next: express.NextFunction,
       ) => {
         res.set('x-test-file-middleware', 'ran');
-        req.files = {};
         next();
       },
   );

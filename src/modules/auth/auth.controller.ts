@@ -57,7 +57,10 @@ export const googleLogin = catchAsync(async (req, res) => {
 });
 
 export const signup = catchAsync(async (req, res) => {
-  const files = req.files as Record<string, Express.Multer.File[]>;
+  // req.files is only populated when the request is multipart/form-data.
+  // The admin "create user" form sends plain JSON (no image field at all),
+  // so multer's file() middleware never runs and leaves this undefined.
+  const files = (req.files ?? {}) as Record<string, Express.Multer.File[]>;
   const filename = files.image?.[0]?.filename;
   // Root-relative public path, not a bare filename — matches the /uploads/
   // folder the file() middleware wrote it to (folder: '/users').
