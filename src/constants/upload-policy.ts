@@ -1,19 +1,18 @@
 /**
  * Largest file accepted by the generic upload endpoint.
  *
- * Sized for video: the real clips already on the site are 42–47 MB, so the
- * previous 50 MB ceiling left almost no headroom and a slightly longer or
- * higher-quality export would fail.
+ * Raised to 1 GB on the client's request, to leave real headroom for longer
+ * or higher-quality video exports than the 300 MB ceiling allowed.
  *
  * ⚠️ Three places must agree, or uploads fail in confusing ways:
  *   1. this constant                      (multer rejects with "File too large")
  *   2. nginx `client_max_body_size`       (must be HIGHER — it rejects first,
- *      currently 320m, with a raw 413 before the request ever reaches Node)
+ *      currently 1100m, with a raw 413 before the request ever reaches Node)
  *   3. MAX_UPLOAD_BYTES in the frontend   (src/lib/admin/upload-limits.ts —
  *      pre-checks the file so the user is told instantly instead of waiting
  *      for a long upload to fail)
  */
-export const MAX_UPLOAD_BYTES = 300 * 1024 * 1024; // 300 MB
+export const MAX_UPLOAD_BYTES = 1024 * 1024 * 1024; // 1 GB
 
 /**
  * Public uploads are served directly by Nginx, which determines Content-Type

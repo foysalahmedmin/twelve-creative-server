@@ -9,7 +9,11 @@ module.exports = {
       instances: 1,
       autorestart: true,
       watch: false,
-      max_memory_restart: '512M',
+      // /api/file/cloud (storage.middleware.ts) uses multer.memoryStorage(),
+      // buffering the whole upload before it reaches GCS. Must clear
+      // baseline usage plus a full MAX_UPLOAD_BYTES (1G) file, or PM2 kills
+      // the process mid-upload.
+      max_memory_restart: '2048M',
       env: {
         NODE_ENV: 'production',
         HOST: '127.0.0.1',
