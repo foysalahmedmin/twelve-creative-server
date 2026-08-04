@@ -73,4 +73,40 @@ describe('Site setting validation', () => {
   ])('rejects unsafe managed references: %o', (body) => {
     expect(parse(body).success).toBe(false);
   });
+
+  describe('contact_map_embed_url', () => {
+    it('accepts the /maps/embed path form', () => {
+      expect(
+        parse({
+          contact_map_embed_url:
+            'https://www.google.com/maps/embed?pb=!1m18!1m12',
+        }).success,
+      ).toBe(true);
+    });
+
+    it('accepts non-Google map providers as any safe HTTP(S) URL', () => {
+      expect(
+        parse({
+          contact_map_embed_url: 'https://www.openstreetmap.org/export/embed',
+        }).success,
+      ).toBe(true);
+    });
+
+    it('rejects a Google Maps share/place link — valid URL, but refuses to load in an iframe', () => {
+      expect(
+        parse({
+          contact_map_embed_url:
+            'https://www.google.com/maps/place/Miami,+FL/@25.76,-80.19,11z',
+        }).success,
+      ).toBe(false);
+    });
+
+    it('rejects a plain Google Maps search URL missing output=embed', () => {
+      expect(
+        parse({
+          contact_map_embed_url: 'https://maps.google.com/maps?q=Miami',
+        }).success,
+      ).toBe(false);
+    });
+  });
 });

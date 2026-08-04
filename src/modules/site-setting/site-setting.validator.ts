@@ -6,6 +6,7 @@ import {
   parseRecipientList,
 } from '../../utils/notification-recipient';
 import {
+  isEmbeddableMapUrl,
   isHttpUrl,
   isSafeImageReference,
   isSafeLinkReference,
@@ -66,6 +67,11 @@ const optionalHttpUrl = optionalSafeReference(
   isHttpUrl,
   'URL must use HTTP(S)',
 );
+const optionalEmbeddableMapUrl = optionalSafeReference(
+  isEmbeddableMapUrl,
+  'This is a Google Maps link, not an embed link, so it will refuse to load. ' +
+    'On Google Maps: Share → Embed a map → copy the URL inside src="..." from the code shown, and paste that here.',
+);
 const optionalImageReference = optionalSafeReference(
   isSafeImageReference,
   'Image must be a safe HTTP(S) URL or absolute application path',
@@ -89,7 +95,7 @@ export const updateSiteSettingValidationSchema = z.object({
     contact_phone: z.string().trim().max(40).optional(),
     contact_address: z.string().trim().max(400).optional(),
     contact_whatsapp: z.string().trim().max(40).optional(),
-    contact_map_embed_url: optionalHttpUrl,
+    contact_map_embed_url: optionalEmbeddableMapUrl,
     booking_notification_email: optionalEmailList,
     social: z
       .object({

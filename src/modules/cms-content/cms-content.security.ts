@@ -110,6 +110,34 @@ export const isSafeYoutubeUrl = (value: string): boolean => {
   );
 };
 
+const GOOGLE_MAPS_HOSTS = new Set([
+  'google.com',
+  'www.google.com',
+  'maps.google.com',
+]);
+
+/**
+ * A regular Google Maps browsing/share link (e.g. google.com/maps/place/...)
+ * is a perfectly valid HTTPS URL, so isHttpUrl alone accepts it — but Google
+ * sends X-Frame-Options on those pages, so an <iframe src="..."> pointed at
+ * one fails with "refused to connect" instead of showing a map. Only the
+ * dedicated embed form (/maps/embed/... or ...&output=embed) is iframe-safe.
+ * Other providers (Mapbox, OpenStreetMap, etc.) have no equivalent trap, so
+ * they're accepted as soon as they're a plain http(s) URL.
+ */
+export const isEmbeddableMapUrl = (value: string): boolean => {
+  if (!isHttpUrl(value)) return false;
+  const url = new URL(value);
+  const hostname = url.hostname.toLowerCase();
+
+  if (!GOOGLE_MAPS_HOSTS.has(hostname)) return true;
+
+  return (
+    url.pathname.startsWith('/maps/embed') ||
+    url.searchParams.get('output') === 'embed'
+  );
+};
+
 export const isSafeVideoReference = (
   source: 'youtube' | 'url' | 'upload',
   value: string,

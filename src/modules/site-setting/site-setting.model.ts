@@ -1,5 +1,6 @@
 import mongoose, { Schema } from 'mongoose';
 import {
+  isEmbeddableMapUrl,
   isHttpUrl,
   isSafeImageReference,
   isSafeLinkReference,
@@ -32,6 +33,10 @@ const optionalSafeValidator = (
 const httpUrlValidator = optionalSafeValidator(
   isHttpUrl,
   'URL must use HTTP(S)',
+);
+const embeddableMapUrlValidator = optionalSafeValidator(
+  isEmbeddableMapUrl,
+  'This is a Google Maps link, not an embed link, so it will refuse to load.',
 );
 const imageValidator = optionalSafeValidator(
   isSafeImageReference,
@@ -146,7 +151,7 @@ const siteSettingSchema = new Schema<TSiteSettingDocument>(
       type: String,
       trim: true,
       maxlength: 2048,
-      validate: httpUrlValidator,
+      validate: embeddableMapUrlValidator,
     },
     social: { type: socialsSchema, default: () => ({}) },
     // Comma-separated recipient list, so several people can be notified.
