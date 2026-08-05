@@ -25,6 +25,21 @@ const systemLogSchema = new Schema<TSystemLogDocument>(
 systemLogSchema.index({ created_at: -1 });
 systemLogSchema.index({ level: 1 });
 
+/**
+ * Now that every 5xx is recorded (see error.middleware.ts) this collection
+ * would otherwise grow without bound on a long-running install. 90 days is
+ * far longer than anyone needs to diagnose a live incident, and Mongo prunes
+ * expired entries itself so there is no cleanup job to forget about.
+ */
+const LOG_RETENTION_DAYS = 90;
+systemLogSchema.index(
+  { created_at: 1 },
+  {
+    expireAfterSeconds: LOG_RETENTION_DAYS * 24 * 60 * 60,
+    name: 'system_log_ttl',
+  },
+);
+
 systemLogSchema.statics.log = async function (
   level: string,
   message: string,
