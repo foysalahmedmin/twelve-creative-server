@@ -13,6 +13,7 @@ export const SHARED_HEADING_SECTION_KEYS = [
   'home-services',
   'home-featured-projects',
   'home-industries',
+  'home-insights',
   'testimonials',
   'faq',
   'core-verticals',

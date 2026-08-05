@@ -288,6 +288,15 @@ export const SHARED_SECTION_SEED_INPUT: TSharedSectionInput[] = [
     is_active: true,
   },
   {
+    key: 'home-insights',
+    label: 'Insights',
+    title: 'Notes from the work',
+    description:
+      'Field-tested thinking on positioning, creative, distribution, and the systems that turn attention into revenue.',
+    content: {},
+    is_active: true,
+  },
+  {
     key: 'testimonials',
     label: 'Client Voices',
     title: 'Built for operators who need real outcomes.',
