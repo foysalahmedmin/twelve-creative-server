@@ -39,14 +39,17 @@ describe('User role assignment', () => {
   // Promoting a teammate to admin is the documented flow on the "New admin
   // user" screen ("Promote to admin from the Users list if needed"), but the
   // schema used to allow only 'editor', so every promotion failed validation.
-  it.each(['admin', 'editor'])('accepts role "%s" on a single update', (role) => {
-    expect(
-      updateUserValidationSchema.safeParse({
-        params: { id },
-        body: { role },
-      }).success,
-    ).toBe(true);
-  });
+  it.each(['admin', 'editor'])(
+    'accepts role "%s" on a single update',
+    (role) => {
+      expect(
+        updateUserValidationSchema.safeParse({
+          params: { id },
+          body: { role },
+        }).success,
+      ).toBe(true);
+    },
+  );
 
   it.each(['admin', 'editor'])('accepts role "%s" on a bulk update', (role) => {
     expect(

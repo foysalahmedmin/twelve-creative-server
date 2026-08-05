@@ -18,8 +18,8 @@
 /* eslint-disable no-console */
 import mongoose from 'mongoose';
 import { z } from 'zod';
-import { disconnectDB, initializeDB } from '../config/db';
-import { User } from '../modules/user/user.model';
+import { disconnectDB, initializeDB } from '../../config/db';
+import { User } from '../../modules/user/user.model';
 
 const run = async (): Promise<void> => {
   const name = process.env.ADMIN_SEED_NAME?.trim() || 'Twelve Creative Admin';
