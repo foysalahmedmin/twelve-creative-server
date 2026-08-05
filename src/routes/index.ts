@@ -11,6 +11,7 @@ import industryRoutes from '../modules/industry/industry.route';
 import legalPageRoutes from '../modules/legal-page/legal-page.route';
 import pageCtaRoutes from '../modules/page-cta/page-cta.route';
 import pageHeroRoutes from '../modules/page-hero/page-hero.route';
+import bookingSettingRoutes from '../modules/booking-setting/booking-setting.route';
 import processSectionRoutes from '../modules/process-section/process-section.route';
 import ticketRoutes from '../modules/ticket/ticket.route';
 import taskRoutes from '../modules/task/task.route';
@@ -121,6 +122,10 @@ const moduleRoutes = [
   {
     path: '/legal-pages',
     route: legalPageRoutes,
+  },
+  {
+    path: '/booking-setting',
+    route: bookingSettingRoutes,
   },
   {
     path: '/process-section',

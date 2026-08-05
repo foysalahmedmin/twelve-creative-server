@@ -40,6 +40,7 @@ import {
   attachIndustriesToWorks,
   backfillIndustryContentRelations,
 } from './industry-content.seed';
+import { seedBookingSetting } from './booking-setting.seed';
 import { seedProcessSection } from './process-section.seed';
 import { seedAboutPage } from './about-page.seed';
 import { seedLegalPages } from './legal-page.seed';
@@ -309,6 +310,7 @@ async function run(): Promise<void> {
     reports.push(await seedPageHeroes());
     reports.push(await seedSiteSetting());
     reports.push(await seedProcessSection(FORCE));
+    reports.push(await seedBookingSetting(FORCE));
     reports.push(await seedPageCtas(FORCE));
 
     const existingAbout = FORCE ? true : await AboutPage.exists({});
