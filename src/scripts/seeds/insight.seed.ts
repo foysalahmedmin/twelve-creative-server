@@ -228,4 +228,39 @@ By the end of week 1, you've built a system that catches what was leaking before
 
 The CRM isn't the boring backend. It's where marketing ROI actually lives.`,
   },
+  {
+    slug: 'measuring-what-actually-matters',
+    title: 'Measuring what actually matters, not what is easy to count',
+    excerpt:
+      'Impressions and follower counts are easy to report and rarely tell you anything. Here is the shorter list of numbers that reflect whether the business is actually growing.',
+    cover:
+      'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1280&h=720&fit=crop&auto=format',
+    category: 'Systems',
+    status: 'published' as const,
+    content: `## Vanity metrics survive because they are flattering
+
+Reach, impressions, and follower growth all go up when you publish more. That makes them comfortable to report and nearly useless for deciding what to do next. None of them tell you whether a single additional customer arrived.
+
+A metric earns its place only if a bad number would change a decision.
+
+## The short list
+
+- **Qualified conversations started** — how many real buying conversations began this month, from any source.
+- **Cost per qualified conversation** — total spend divided by that number. This is the honest cost of demand.
+- **Conversion rate by stage** — where interested people stop moving. This tells you which part of the system to fix.
+- **Time to first response** — how long a new enquiry waits. This is usually the cheapest thing to improve and the most expensive to ignore.
+- **Revenue by source** — which channels produce money, not just traffic.
+
+## Attribution does not have to be perfect
+
+Teams often avoid measuring because attribution is messy. It will always be messy. You do not need a perfect model — you need a consistent one, applied the same way each month, so the direction of travel is visible.
+
+Ask every new enquiry how they found you and log the answer. It is imperfect and self-reported, and it will still be more useful than most dashboards.
+
+## Review on a rhythm
+
+Look at these monthly, not daily. Marketing systems need enough time to produce signal, and daily checking mostly produces noise and premature changes.
+
+The point of measurement is not reporting. It is knowing which single thing to fix next.`,
+  },
 ];

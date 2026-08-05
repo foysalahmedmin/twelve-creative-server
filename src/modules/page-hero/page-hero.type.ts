@@ -8,7 +8,7 @@ export const PAGE_KEYS = [
   'what-we-build',
   'contact',
   'faq',
-  'blogs',
+  'insights',
   'process',
 ] as const;
 

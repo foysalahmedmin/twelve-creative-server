@@ -120,7 +120,7 @@ export const PAGE_HERO_SEED = [
     is_active: true,
   },
   {
-    page: 'blogs',
+    page: 'insights',
     label: 'Insights',
     title: 'Notes on positioning, creative, and growth systems.',
     description:
