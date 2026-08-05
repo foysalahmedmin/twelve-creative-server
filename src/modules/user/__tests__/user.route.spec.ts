@@ -15,15 +15,18 @@ import supertest from 'supertest';
 jest.mock('../user.service');
 
 // ── Mock file middleware (pass-through) ───────────────────────────────────────
+// Deliberately leaves req.files undefined rather than setting {}: multer only
+// populates it for a multipart/form-data body, and these routes are normally
+// called with plain JSON (a role change carries no image). Setting {} here
+// would hide controllers that read a field straight off req.files.
 jest.mock('../../../middlewares/file.middleware', () => {
   return jest.fn(
     () =>
       (
-        req: express.Request,
+        _req: express.Request,
         _res: express.Response,
         next: express.NextFunction,
       ) => {
-        req.files = {};
         next();
       },
   );

@@ -47,7 +47,9 @@ export const getUsers = catchAsync(async (req, res) => {
 });
 
 export const updateSelf = catchAsync(async (req, res) => {
-  const files = req.files as Record<string, Express.Multer.File[]>;
+  // Defaulted because this route is usually called with plain JSON (no image),
+  // which leaves req.files undefined. See file.middleware.ts.
+  const files = (req.files ?? {}) as Record<string, Express.Multer.File[]>;
   const filename = files.image?.[0]?.filename;
   // Root-relative public path, not a bare filename — matches the /uploads/
   // folder the file() middleware wrote it to (folder: '/users').
@@ -70,7 +72,9 @@ export const updateSelf = catchAsync(async (req, res) => {
 export const updateUser = catchAsync(async (req, res) => {
   const { id } = req.params;
 
-  const files = req.files as Record<string, Express.Multer.File[]>;
+  // Defaulted because a role/status change is sent as plain JSON with no
+  // image, which leaves req.files undefined. See file.middleware.ts.
+  const files = (req.files ?? {}) as Record<string, Express.Multer.File[]>;
   const filename = files.image?.[0]?.filename;
   const image = filename ? `/uploads/users/${filename}` : '';
 

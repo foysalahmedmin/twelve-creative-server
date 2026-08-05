@@ -188,6 +188,13 @@ const file = (...files: TFile[]) => {
         );
       }
 
+      // Multer only populates req.files for a multipart/form-data body. A
+      // route that merely *supports* an optional upload is often called with
+      // plain JSON (no file at all), which would otherwise leave req.files
+      // undefined and crash any controller that reads a field off it.
+      // Guarantee the shape every downstream controller already assumes.
+      if (!req.files) req.files = {};
+
       // Multer has finished writing at this point. If validation, a controller,
       // or the error handler later returns a failure, remove only these newly
       // created files. Successful responses deliberately retain them.
