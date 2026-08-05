@@ -42,7 +42,10 @@ export const updateUserValidationSchema = z.object({
       .optional(),
     email: z.string().email('Invalid email format').optional(),
     status: z.enum(['in-progress', 'blocked']).optional(),
-    role: z.enum(['editor']).optional(),
+    // Both roles are assignable: this route is already auth('admin')-only, so
+    // only an existing admin can promote anyone, and updateUser bumps
+    // token_version on a role change so live sessions re-validate immediately.
+    role: z.enum(['admin', 'editor']).optional(),
     is_verified: z
       .preprocess((val) => {
         if (val === 'true' || val === true) return true;
@@ -63,7 +66,7 @@ export const updateUsersValidationSchema = z.object({
       })
       .nonempty('At least one user ID is required'),
     status: z.enum(['in-progress', 'blocked']).optional(),
-    role: z.enum(['editor']).optional(),
+    role: z.enum(['admin', 'editor']).optional(),
     is_verified: z.boolean().optional(),
   }),
 });
