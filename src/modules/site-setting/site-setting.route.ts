@@ -25,16 +25,19 @@ router.get('/public', SiteSettingControllers.getPublicSiteSetting);
 
 router.get('/', auth('admin', 'editor'), SiteSettingControllers.getSiteSetting);
 
+// Editors own the day-to-day site copy, including the footer and the address
+// leads are mailed to, so they can both verify that address and save it. The
+// rate limiter above, not the role, is what protects the shared mailbox quota.
 router.post(
   '/notification-email/test',
-  auth('admin'),
+  auth('admin', 'editor'),
   testEmailRateLimiter,
   SiteSettingControllers.sendTestNotificationEmail,
 );
 
 router.patch(
   '/',
-  auth('admin'),
+  auth('admin', 'editor'),
   validation(SiteSettingValidations.updateSiteSettingValidationSchema),
   SiteSettingControllers.updateSiteSetting,
 );
